@@ -1,6 +1,6 @@
 # Global and accessible writing
 
-Rules for the [`docs-writing`](../SKILL.md) skill that help readers who use translation tools, read in a second language, or use assistive technology.
+Rules for the [`dot-docs-writing`](../SKILL.md) skill that help readers who use translation tools, read in a second language, or use assistive technology.
 
 ## Global audience
 

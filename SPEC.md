@@ -42,6 +42,7 @@ The following table lists each decision and the reason for it:
 | 12 | Test the CLI against temporary Git repositories and lint the content in CI. | The main risk is changing files in a team repository. |
 | 13 | Ship the ponytail ruleset as an always-on rule, not as a skill. | Smallest-change discipline must apply to every interaction, and it reduces generated code and tokens. |
 | 14 | Add an always-on rule for code comments. | Agents tend to write comments that restate code or narrate changes. |
+| 15 | Prefix every skill name with `dot-`, such as `dot-plan`. | Claude Code runs a personal skill over a project skill with the same name, so an unprefixed dotagents skill would hide a repository's own skill. The prefix also tells the skills apart in the `/` menu. Rules need no prefix: they live in dotagents-named files and blocks. |
 
 ## Install modes
 
@@ -167,15 +168,15 @@ budget in `scripts/lint-content.ts`. A vendored rule has a
 
 | Skill | Origin |
 | ------- | -------- |
-| `plan` | Original |
-| `code-review` | Original |
-| `commit` | Original |
-| `docs-writing` | Original, based on the Google developer documentation style guide (CC BY 4.0) |
-| `grill-me` | Vendored from `mattpocock/skills` (MIT), adapted |
-| `grilling` | Vendored from `mattpocock/skills` (MIT) |
-| `writing-for-agents` | Vendored from `mattpocock/skills` (MIT) |
-| `debug` | Vendored from `mattpocock/skills` as `diagnosing-bugs` (MIT), renamed |
-| `handoff` | Vendored from `mattpocock/skills` (MIT) |
+| `dot-plan` | Original |
+| `dot-code-review` | Original |
+| `dot-commit` | Original |
+| `dot-docs-writing` | Original, based on the Google developer documentation style guide (CC BY 4.0) |
+| `dot-grill-me` | Vendored from `mattpocock/skills` (MIT), adapted |
+| `dot-grilling` | Vendored from `mattpocock/skills` (MIT) |
+| `dot-writing-for-agents` | Vendored from `mattpocock/skills` (MIT) |
+| `dot-debug` | Vendored from `mattpocock/skills` as `diagnosing-bugs` (MIT), renamed |
+| `dot-handoff` | Vendored from `mattpocock/skills` (MIT) |
 
 Each vendored skill has an `UPSTREAM.json` file with the source repository,
 path, commit, license, and a summary of local changes. dotagents doesn't

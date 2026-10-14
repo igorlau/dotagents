@@ -1,5 +1,5 @@
 ---
-name: plan
+name: dot-plan
 description: Plan a change as small, verifiable steps before writing code. Use when the user asks for a plan, or before a feature, refactor, or migration that touches more than one file.
 ---
 
@@ -27,7 +27,7 @@ Facts are your job: look them up instead of asking. Done when you can name every
 
 List the choices that the facts don't settle: behavior in edge cases, trade-offs, naming that users see, anything hard to reverse. Give your recommendation for each one.
 
-If the list is long or the decisions depend on each other, use the `grilling` skill to resolve them with the user. Done when every decision has an answer or is marked as an open question in the plan.
+If the list is long or the decisions depend on each other, use the `dot-grilling` skill to resolve them with the user. Done when every decision has an answer or is marked as an open question in the plan.
 
 ## 4. Slice the work
 

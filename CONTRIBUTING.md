@@ -32,7 +32,7 @@ To preview the changes first, add `--dry-run`.
 
 To add a skill, follow these steps:
 
-1. Read the `writing-for-agents` skill.
+1. Read the `dot-writing-for-agents` skill.
 1. Create `content/skills/SKILL_NAME/SKILL.md`. Replace `SKILL_NAME` with a
    lowercase name that uses hyphens between words. The `name` field in the
    frontmatter must match it.

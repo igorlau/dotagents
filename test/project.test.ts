@@ -28,7 +28,7 @@ test("project init adds a block to AGENTS.md and leaves files for commit", () =>
   const changes = status(repo);
   assert.match(changes, /^ M AGENTS\.md$/m);
   assert.match(changes, /^\?\? \.dotagents\.json$/m);
-  assert.match(changes, /^\?\? \.claude\/skills\/plan\/SKILL\.md$/m);
+  assert.match(changes, /^\?\? \.claude\/skills\/dot-plan\/SKILL\.md$/m);
 
   const manifest = JSON.parse(read(path.join(repo, ".dotagents.json")));
   assert.equal(manifest.mode, "project");

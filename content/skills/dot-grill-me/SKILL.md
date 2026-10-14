@@ -1,10 +1,10 @@
 ---
-name: grill-me
+name: dot-grill-me
 description: A relentless interview to sharpen a plan or design.
 disable-model-invocation: true
 ---
 
-Use the `grilling` skill to interview the user about the plan or design they describe.
+Use the `dot-grilling` skill to interview the user about the plan or design they describe.
 
 ## Repository conventions first
 

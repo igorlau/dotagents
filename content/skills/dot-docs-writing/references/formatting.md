@@ -1,6 +1,6 @@
 # Formatting reference
 
-Detailed formatting rules for the [`docs-writing`](../SKILL.md) skill.
+Detailed formatting rules for the [`dot-docs-writing`](../SKILL.md) skill.
 
 ## Headings and titles
 

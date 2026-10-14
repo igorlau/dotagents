@@ -8,6 +8,9 @@ import { parseFrontmatter } from "../src/frontmatter.ts";
 // Rules load into every conversation, so they cost tokens on every turn.
 // Raise this only with a reason. About 4 characters make one token.
 const RULES_CHAR_BUDGET = 6000;
+// Personal skills win name clashes in Claude Code, so the prefix keeps
+// dotagents skills from hiding a repository's own skills.
+const SKILL_PREFIX = "dot-";
 // Limits from the Agent Skills specification.
 const NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const NAME_MAX = 64;
@@ -57,6 +60,7 @@ for (const name of fs.readdirSync(skillsDir)) {
   const { data } = frontmatter;
   if (data.name !== name) fail(skillFile, `name "${data.name}" must match the directory name "${name}"`);
   if (!NAME_PATTERN.test(name) || name.length > NAME_MAX) fail(skillFile, `name must be lowercase words joined by hyphens, at most ${NAME_MAX} characters`);
+  if (!name.startsWith(SKILL_PREFIX)) fail(skillFile, `name must start with "${SKILL_PREFIX}"`);
   if (!data.description) fail(skillFile, "missing description");
   else if (data.description.length > DESCRIPTION_MAX) fail(skillFile, `description exceeds ${DESCRIPTION_MAX} characters`);
 

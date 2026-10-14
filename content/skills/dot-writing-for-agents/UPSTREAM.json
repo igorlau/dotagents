@@ -1,8 +1,8 @@
 {
   "repository": "https://github.com/mattpocock/skills",
-  "path": "skills/productivity/grilling",
+  "path": "skills/productivity/writing-for-agents",
   "commit": "49dd158d1076134a641b33efb035946536778336",
   "license": "MIT",
   "modified": true,
-  "notes": "Added a 'Repository conventions first' section."
+  "notes": "Added a 'Repository conventions first' section. Renamed with the dot- prefix."
 }

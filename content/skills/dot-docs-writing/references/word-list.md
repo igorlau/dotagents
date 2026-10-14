@@ -1,6 +1,6 @@
 # Word list
 
-Words and phrases for the [`docs-writing`](../SKILL.md) skill. Each entry lists the word to replace and what to write instead.
+Words and phrases for the [`dot-docs-writing`](../SKILL.md) skill. Each entry lists the word to replace and what to write instead.
 
 ## Filler and judgment words
 

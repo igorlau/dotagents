@@ -1,5 +1,5 @@
 ---
-name: docs-writing
+name: dot-docs-writing
 description: Write and edit developer documentation in the Google developer documentation style. Use when creating or revising a README, guide, tutorial, reference page, changelog, or code comments meant for readers.
 ---
 

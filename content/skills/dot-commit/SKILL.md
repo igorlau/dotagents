@@ -1,5 +1,5 @@
 ---
-name: commit
+name: dot-commit
 description: Commit changes as small, logical commits, with the user reviewing each one. Use when the user asks to commit, write a commit message, or split work into commits.
 ---
 

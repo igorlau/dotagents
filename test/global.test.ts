@@ -15,9 +15,9 @@ test("install writes skills and rules for every agent", () => {
   assert.equal(result.status, 0, result.output);
 
   for (const dir of [".claude/skills", ".agents/skills"]) {
-    assert.ok(exists(p(dir, "plan", "SKILL.md")), `${dir}/plan`);
-    assert.ok(exists(p(dir, "debug", "scripts", "hitl-loop.template.sh")), `${dir}/debug script`);
-    assert.ok(!exists(p(dir, "grill-me", "UPSTREAM.json")), "UPSTREAM.json isn't installed");
+    assert.ok(exists(p(dir, "dot-plan", "SKILL.md")), `${dir}/dot-plan`);
+    assert.ok(exists(p(dir, "dot-debug", "scripts", "hitl-loop.template.sh")), `${dir}/dot-debug script`);
+    assert.ok(!exists(p(dir, "dot-grill-me", "UPSTREAM.json")), "UPSTREAM.json isn't installed");
   }
   const claudeRules = read(p(".claude", "rules", "dotagents.md"));
   assert.match(claudeRules, /## Working agreements[\s\S]*## Code comments[\s\S]*## Ponytail/);
@@ -39,7 +39,7 @@ test("install is idempotent", () => {
 
 test("--agents limits the install", () => {
   box.run(["install", "--agents", "claude"]);
-  assert.ok(exists(p(".claude", "skills", "plan", "SKILL.md")));
+  assert.ok(exists(p(".claude", "skills", "dot-plan", "SKILL.md")));
   assert.ok(!exists(p(".agents")));
   assert.ok(!exists(p(".codex")));
   assert.ok(!exists(p(".copilot")));
@@ -66,19 +66,19 @@ test("uninstall removes exactly what install wrote", () => {
 });
 
 test("an existing file that dotagents didn't write is a conflict", () => {
-  write(p(".agents", "skills", "grill-me", "SKILL.md"), "someone else's grill-me");
+  write(p(".agents", "skills", "dot-grill-me", "SKILL.md"), "someone else's dot-grill-me");
   const result = box.run(["install"]);
   assert.equal(result.status, 1);
-  assert.match(result.output, /grill-me\/SKILL\.md: exists and wasn't written by dotagents/);
-  assert.equal(read(p(".agents", "skills", "grill-me", "SKILL.md")), "someone else's grill-me");
+  assert.match(result.output, /dot-grill-me\/SKILL\.md: exists and wasn't written by dotagents/);
+  assert.equal(read(p(".agents", "skills", "dot-grill-me", "SKILL.md")), "someone else's dot-grill-me");
 
   assert.equal(box.run(["install", "--force"]).status, 0);
-  assert.match(read(p(".agents", "skills", "grill-me", "SKILL.md")), /name: grill-me/);
+  assert.match(read(p(".agents", "skills", "dot-grill-me", "SKILL.md")), /name: dot-grill-me/);
 });
 
 test("update skips locally modified files unless forced", () => {
   box.run(["install"]);
-  const file = p(".claude", "skills", "plan", "SKILL.md");
+  const file = p(".claude", "skills", "dot-plan", "SKILL.md");
   write(file, "my edits");
 
   const result = box.run(["update"]);
@@ -87,7 +87,7 @@ test("update skips locally modified files unless forced", () => {
   assert.equal(read(file), "my edits");
 
   assert.equal(box.run(["update", "--force"]).status, 0);
-  assert.match(read(file), /name: plan/);
+  assert.match(read(file), /name: dot-plan/);
 });
 
 test("update removes skills that left the catalog", () => {

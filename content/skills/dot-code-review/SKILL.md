@@ -1,5 +1,5 @@
 ---
-name: code-review
+name: dot-code-review
 description: Review a diff for correctness bugs. Use when the user asks to review code, a commit, a branch, or a pull request, or before committing a non-trivial change.
 ---
 

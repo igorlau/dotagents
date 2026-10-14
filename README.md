@@ -63,15 +63,15 @@ The following skills load when a task needs them:
 
 | Skill | Purpose |
 | ----- | ------- |
-| `plan` | Plan a change as small, verifiable steps. |
-| `code-review` | Review a diff for correctness bugs. |
-| `commit` | Commit changes as small, logical commits. |
-| `docs-writing` | Write docs in the Google developer documentation style. |
-| `debug` | Diagnose hard bugs with a feedback loop. |
-| `grill-me` | Start an interview that sharpens a plan. |
-| `grilling` | Run the interview method behind `grill-me`. |
-| `handoff` | Summarize a conversation for another agent. |
-| `writing-for-agents` | Write skills, `AGENTS.md`, and `CLAUDE.md` files. |
+| `dot-plan` | Plan a change as small, verifiable steps. |
+| `dot-code-review` | Review a diff for correctness bugs. |
+| `dot-commit` | Commit changes as small, logical commits. |
+| `dot-docs-writing` | Write docs in the Google developer documentation style. |
+| `dot-debug` | Diagnose hard bugs with a feedback loop. |
+| `dot-grill-me` | Start an interview that sharpens a plan. |
+| `dot-grilling` | Run the interview method behind `dot-grill-me`. |
+| `dot-handoff` | Summarize a conversation for another agent. |
+| `dot-writing-for-agents` | Write skills, `AGENTS.md`, and `CLAUDE.md` files. |
 
 ## More information
 
