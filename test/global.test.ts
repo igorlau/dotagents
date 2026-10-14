@@ -22,7 +22,7 @@ test("install writes skills and rules for every agent", () => {
   const claudeRules = read(p(".claude", "rules", "dotagents.md"));
   assert.match(claudeRules, /## Working agreements[\s\S]*## Code comments[\s\S]*## Ponytail/);
   assert.match(read(p(".codex", "AGENTS.md")), /<!-- dotagents:start -->[\s\S]*Working agreements[\s\S]*<!-- dotagents:end -->/);
-  assert.match(read(p(".copilot", "instructions", "dotagents.instructions.md")), /^---\napplyTo: "\*\*"\n---/);
+  assert.match(read(p(".copilot", "copilot-instructions.md")), /<!-- dotagents:start -->[\s\S]*Working agreements[\s\S]*<!-- dotagents:end -->/);
   assert.ok(exists(p(".config", "dotagents", "manifest.json")));
 });
 

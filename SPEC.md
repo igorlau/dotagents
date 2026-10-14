@@ -80,7 +80,7 @@ change these locations often. When they change, update `src/targets.ts`.
 
 | Mode | Claude Code | Codex | Copilot |
 | ------ | ------------- | ------- | --------- |
-| Global | `~/.claude/rules/dotagents.md` | Block in `~/.codex/AGENTS.md` | `~/.copilot/instructions/dotagents.instructions.md` |
+| Global | `~/.claude/rules/dotagents.md` | Block in `~/.codex/AGENTS.md` | Block in `~/.copilot/copilot-instructions.md` |
 | Project | `.claude/rules/dotagents.md` | Block in `AGENTS.md` | Block in `AGENTS.md` |
 
 Notes on these choices:
@@ -92,17 +92,20 @@ Notes on these choices:
   `AGENTS.override.md` replaces `AGENTS.md`, so Codex rules go in a block.
 - A block is the content between `<!-- dotagents:start -->` and
   `<!-- dotagents:end -->`. dotagents never changes text outside the block.
+- Copilot rules go in `~/.copilot/copilot-instructions.md`, which VS Code and
+  the Copilot CLI load in every session. Files in `~/.copilot/instructions/`
+  load only when their `applyTo` pattern matches a file being edited.
 - `CODEX_HOME`, `COPILOT_HOME`, `CLAUDE_CONFIG_DIR`, and `XDG_CONFIG_HOME`
   override the default directories.
 
 ### Known limitations
 
-- In project mode, Copilot reads skills from both
-  `.claude/skills/` and `.agents/skills/`, so it can list each skill twice.
+- Copilot in VS Code reads skills from both `~/.claude/skills/` and
+  `~/.agents/skills/` (and `.claude/skills/` and `.agents/skills/` in project
+  mode), so it can list each skill twice. Claude Code reads only the first
+  location and Codex only the second, so dotagents writes both.
 - In project mode, Claude Code reads `AGENTS.md` when the project has no
   `CLAUDE.md`, so it can see the rules twice.
-- Personal instructions for Copilot in VS Code use a different location than
-  the Copilot CLI. v1 targets the Copilot CLI location.
 
 ## Commands
 
@@ -217,5 +220,4 @@ report versions such as `1.0.0-dev+30d0533`.
 ## Future work
 
 - Profiles, such as `core`, `frontend`, and `backend`, when the catalog grows.
-- Copilot personal instructions for VS Code.
 - Skill evaluations.

@@ -14,14 +14,13 @@ export type Op =
 
 const HEADER = "<!-- Managed by dotagents. Run `dotagents update` instead of editing this file. -->";
 const RULES_FILE = "dotagents.md";
-const COPILOT_RULES_FILE = "dotagents.instructions.md";
 
 // Paths where each agent reads skills and rules. See SPEC.md, "Agent targets".
 interface Layout {
   skillDirs: Record<Agent, string>;
   claudeRules: string;
   codexRules: string;
-  copilotRules: { kind: "file" | "block"; path: string };
+  copilotRules: string;
 }
 
 function layout(mode: Mode, root: string): Layout {
@@ -34,7 +33,9 @@ function layout(mode: Mode, root: string): Layout {
       },
       claudeRules: path.join(claudeHome(), "rules", RULES_FILE),
       codexRules: path.join(codexHome(), "AGENTS.md"),
-      copilotRules: { kind: "file", path: path.join(copilotHome(), "instructions", COPILOT_RULES_FILE) },
+      // Copilot loads this file in every session; files in ~/.copilot/instructions/
+      // load only when their applyTo pattern matches a file being edited.
+      copilotRules: path.join(copilotHome(), "copilot-instructions.md"),
     };
   }
   // Copilot reads AGENTS.md too, so both agents share one block.
@@ -47,7 +48,7 @@ function layout(mode: Mode, root: string): Layout {
     },
     claudeRules: path.join(root, ".claude", "rules", RULES_FILE),
     codexRules: agentsMd,
-    copilotRules: { kind: "block", path: agentsMd },
+    copilotRules: agentsMd,
   };
 }
 
@@ -74,11 +75,7 @@ export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root 
     add({ kind: "file", path: target.claudeRules, content: `${HEADER}\n\n${rules}\n` });
   }
   if (agents.includes("codex")) add({ kind: "block", path: target.codexRules, content: rules });
-  if (agents.includes("copilot")) {
-    const { kind, path: rulesPath } = target.copilotRules;
-    if (kind === "block") add({ kind, path: rulesPath, content: rules });
-    else add({ kind, path: rulesPath, content: `---\napplyTo: "**"\n---\n\n${HEADER}\n\n${rules}\n` });
-  }
+  if (agents.includes("copilot")) add({ kind: "block", path: target.copilotRules, content: rules });
 
   return [...ops.values()];
 }
