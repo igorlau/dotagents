@@ -40,6 +40,8 @@ The following table lists each decision and the reason for it:
 | 10 | Keep the repository private and distribute it through Git, not npm. | npm private packages need a paid plan. `npx` installs directly from a Git URL. |
 | 11 | Use a read-only deploy key on machines without access to the personal GitHub account. | Enterprise Managed User (EMU) accounts can't access repositories outside the enterprise. |
 | 12 | Test the CLI against temporary Git repositories and lint the content in CI. | The main risk is changing files in a team repository. |
+| 13 | Ship the ponytail ruleset as an always-on rule, not as a skill. | Smallest-change discipline must apply to every interaction, and it reduces generated code and tokens. |
+| 14 | Add an always-on rule for code comments. | Agents tend to write comments that restate code or narrate changes. |
 
 ## Install modes
 
@@ -145,9 +147,21 @@ The hashes let dotagents tell its own files apart from your edits:
 
 ### Rules
 
-`content/rules/core.md` holds a short list of always-on working agreements.
-Rules load into every conversation, so CI fails if the file exceeds the
-line budget in `scripts/lint-content.ts`.
+Rules load into every conversation. dotagents joins every file in
+`content/rules/` into one rules document, with `core.md` first:
+
+| File | Content | Origin |
+| ---- | ------- | ------ |
+| `core.md` | Working agreements: verification, scope, destructive actions | Original |
+| `ponytail.md` | Smallest complete change, reuse before writing, concise replies | Vendored from the `AGENTS.md` file in `DietrichGebert/ponytail` (MIT), adapted |
+| `comments.md` | When and how to write code comments | Original |
+
+Each rule says one thing in one place. For example, `comments.md` owns
+comment guidance, so the comment bullet was removed from `ponytail.md`.
+
+Rules cost tokens on every turn, so CI fails if they exceed the character
+budget in `scripts/lint-content.ts`. A vendored rule has a
+`NAME.upstream.json` file next to it.
 
 ### Skills
 

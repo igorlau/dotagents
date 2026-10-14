@@ -1,4 +1,4 @@
-// Shows what changed upstream since each vendored skill was copied.
+// Shows what changed upstream since each vendored skill or rule was copied.
 // Usage: npm run check-upstream [-- --diff]
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -34,9 +34,15 @@ function clone(repository: string): string {
 
 try {
   const skillsDir = path.join(contentRoot, "skills");
-  for (const name of fs.readdirSync(skillsDir).sort()) {
-    const file = path.join(skillsDir, name, "UPSTREAM.json");
-    if (!fs.existsSync(file)) continue;
+  const rulesDir = path.join(contentRoot, "rules");
+  const sources = [
+    ...fs.readdirSync(skillsDir).map((name) => ({ name, file: path.join(skillsDir, name, "UPSTREAM.json") })),
+    ...fs
+      .readdirSync(rulesDir)
+      .filter((file) => file.endsWith(".upstream.json"))
+      .map((file) => ({ name: `rules/${file.replace(".upstream.json", "")}`, file: path.join(rulesDir, file) })),
+  ].filter((source) => fs.existsSync(source.file));
+  for (const { name, file } of sources) {
     const upstream = JSON.parse(fs.readFileSync(file, "utf8")) as Upstream;
     const dir = clone(upstream.repository);
     const head = git(dir, ["rev-parse", "HEAD"]).trim();

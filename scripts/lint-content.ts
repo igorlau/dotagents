@@ -1,12 +1,13 @@
 // Checks the structure of content/: skill frontmatter, relative links, the
-// rules line budget, and UPSTREAM.json files. Exits 1 on any problem.
+// rules size budget, and upstream metadata. Exits 1 on any problem.
 import fs from "node:fs";
 import path from "node:path";
 import { contentRoot } from "../src/paths.ts";
 import { parseFrontmatter } from "../src/frontmatter.ts";
 
-// Rules load into every conversation. Raise this only with a reason.
-const RULES_LINE_BUDGET = 25;
+// Rules load into every conversation, so they cost tokens on every turn.
+// Raise this only with a reason. About 4 characters make one token.
+const RULES_CHAR_BUDGET = 6000;
 // Limits from the Agent Skills specification.
 const NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const NAME_MAX = 64;
@@ -16,9 +17,21 @@ const UPSTREAM_FIELDS = ["repository", "path", "commit", "license", "modified"];
 const problems: string[] = [];
 const fail = (file: string, message: string) => problems.push(`${path.relative(contentRoot, file)}: ${message}`);
 
-const rulesFile = path.join(contentRoot, "rules", "core.md");
-const ruleLines = fs.readFileSync(rulesFile, "utf8").trim().split("\n").length;
-if (ruleLines > RULES_LINE_BUDGET) fail(rulesFile, `${ruleLines} lines exceeds the budget of ${RULES_LINE_BUDGET}`);
+const rulesDir = path.join(contentRoot, "rules");
+let ruleChars = 0;
+for (const name of fs.readdirSync(rulesDir)) {
+  const file = path.join(rulesDir, name);
+  if (name.endsWith(".md")) {
+    ruleChars += fs.readFileSync(file, "utf8").length;
+    checkLinks(file);
+  } else if (name.endsWith(".upstream.json")) {
+    checkUpstream(file);
+    if (!fs.existsSync(file.replace(/\.upstream\.json$/, ".md"))) fail(file, "no matching rules file");
+  } else {
+    fail(file, "unexpected file; rules are .md files with optional .upstream.json files");
+  }
+}
+if (ruleChars > RULES_CHAR_BUDGET) fail(rulesDir, `${ruleChars} characters exceeds the budget of ${RULES_CHAR_BUDGET}`);
 
 const skillsDir = path.join(contentRoot, "skills");
 for (const name of fs.readdirSync(skillsDir)) {
@@ -50,12 +63,14 @@ for (const name of fs.readdirSync(skillsDir)) {
   for (const file of markdownFiles(dir)) checkLinks(file);
 
   const upstreamFile = path.join(dir, "UPSTREAM.json");
-  if (fs.existsSync(upstreamFile)) {
-    const upstream = JSON.parse(fs.readFileSync(upstreamFile, "utf8"));
-    for (const field of UPSTREAM_FIELDS) if (!(field in upstream)) fail(upstreamFile, `missing "${field}"`);
-    if (upstream.commit && !/^[0-9a-f]{40}$/.test(upstream.commit)) fail(upstreamFile, "commit must be a full SHA");
-    if (upstream.modified && !upstream.notes) fail(upstreamFile, "modified skills must describe their changes in notes");
-  }
+  if (fs.existsSync(upstreamFile)) checkUpstream(upstreamFile);
+}
+
+function checkUpstream(file: string): void {
+  const upstream = JSON.parse(fs.readFileSync(file, "utf8"));
+  for (const field of UPSTREAM_FIELDS) if (!(field in upstream)) fail(file, `missing "${field}"`);
+  if (upstream.commit && !/^[0-9a-f]{40}$/.test(upstream.commit)) fail(file, "commit must be a full SHA");
+  if (upstream.modified && !upstream.notes) fail(file, "modified content must describe its changes in notes");
 }
 
 function markdownFiles(dir: string): string[] {

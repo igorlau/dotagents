@@ -24,7 +24,7 @@ export interface Catalog {
 const META_FILES = new Set(["UPSTREAM.json"]);
 
 export function loadCatalog(root: string = contentRoot): Catalog {
-  const rules = fs.readFileSync(path.join(root, "rules", "core.md"), "utf8");
+  const rules = loadRules(path.join(root, "rules"));
   const skillsDir = path.join(root, "skills");
   const skills = fs
     .readdirSync(skillsDir, { withFileTypes: true })
@@ -32,6 +32,17 @@ export function loadCatalog(root: string = contentRoot): Catalog {
     .map((entry) => loadSkill(path.join(skillsDir, entry.name)))
     .sort((a, b) => a.name.localeCompare(b.name));
   return { rules, skills };
+}
+
+// Joins rules/*.md, core first. Headings drop one level because the rules
+// often land inside someone else's AGENTS.md, which owns the top level.
+function loadRules(dir: string): string {
+  return fs
+    .readdirSync(dir)
+    .filter((name) => name.endsWith(".md"))
+    .sort((a, b) => Number(b === "core.md") - Number(a === "core.md") || a.localeCompare(b))
+    .map((name) => fs.readFileSync(path.join(dir, name), "utf8").trim().replace(/^#/gm, "##"))
+    .join("\n\n");
 }
 
 function loadSkill(dir: string): Skill {

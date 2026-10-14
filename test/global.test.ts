@@ -19,7 +19,8 @@ test("install writes skills and rules for every agent", () => {
     assert.ok(exists(p(dir, "debug", "scripts", "hitl-loop.template.sh")), `${dir}/debug script`);
     assert.ok(!exists(p(dir, "grill-me", "UPSTREAM.json")), "UPSTREAM.json isn't installed");
   }
-  assert.match(read(p(".claude", "rules", "dotagents.md")), /Working agreements/);
+  const claudeRules = read(p(".claude", "rules", "dotagents.md"));
+  assert.match(claudeRules, /## Working agreements[\s\S]*## Code comments[\s\S]*## Ponytail/);
   assert.match(read(p(".codex", "AGENTS.md")), /<!-- dotagents:start -->[\s\S]*Working agreements[\s\S]*<!-- dotagents:end -->/);
   assert.match(read(p(".copilot", "instructions", "dotagents.instructions.md")), /^---\napplyTo: "\*\*"\n---/);
   assert.ok(exists(p(".config", "dotagents", "manifest.json")));
