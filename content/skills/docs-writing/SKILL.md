@@ -7,6 +7,10 @@ description: Write and edit developer documentation in the Google developer docu
 
 Write documentation that a developer in a hurry, reading in their second language, can follow on the first pass. The rules come from the Google developer documentation style guide.
 
+## Repository conventions first
+
+Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the surrounding code. They take precedence over this skill: where they differ, follow the repository, and point out the difference instead of changing the repository's standard. This includes the project's documentation style guide, prose linter configuration such as Vale, and the structure and terms of its existing docs.
+
 ## 1. Frame the document
 
 Before drafting, answer these questions:
@@ -14,8 +18,6 @@ Before drafting, answer these questions:
 - **Reader**: who is "you" in this document (an app developer, an operator, a contributor), and what do they already know?
 - **Goal**: what can the reader do after reading?
 - **Type**: a task (how to do something), a concept (how something works), or reference (facts to look up). Use a task title with a bare verb, such as "Deploy the service", and a concept title with a noun phrase, such as "Deployment model".
-
-Read the existing docs in the project and follow their structure and terms. Project conventions override this skill.
 
 ## 2. Draft with the core rules
 

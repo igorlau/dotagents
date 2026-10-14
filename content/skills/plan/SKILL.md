@@ -7,6 +7,10 @@ description: Plan a change as small, verifiable steps before writing code. Use w
 
 A plan turns a request into a sequence of **vertical slices**: each slice is a small change that leaves the system working and ends on a check you can run.
 
+## Repository conventions first
+
+Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the surrounding code. They take precedence over this skill: where they differ, follow the repository, and point out the difference instead of changing the repository's standard. Plan changes that fit those conventions.
+
 ## 1. Pin the goal
 
 Restate the goal in one or two sentences, and name the **done criterion**: the observable result that tells the user the work is finished (a passing test, a command's output, a behavior in the UI).

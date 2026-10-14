@@ -4,5 +4,5 @@
   "commit": "49dd158d1076134a641b33efb035946536778336",
   "license": "MIT",
   "modified": true,
-  "notes": "Replaced the Claude-specific 'Call the Skill tool' instruction with an agent-neutral one."
+  "notes": "Replaced the Claude-specific 'Call the Skill tool' instruction with an agent-neutral one. Added a 'Repository conventions first' section."
 }

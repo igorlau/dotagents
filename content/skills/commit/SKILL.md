@@ -7,6 +7,10 @@ description: Commit changes as small, logical commits with clear messages. Use w
 
 Each commit is **atomic**: one purpose, complete enough to build and pass tests, and small enough to review and revert on its own.
 
+## Repository conventions first
+
+Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the surrounding code. They take precedence over this skill: where they differ, follow the repository, and point out the difference instead of changing the repository's standard. Follow the repository's commit convention when it defines one, in `CONTRIBUTING.md`, a commitlint or similar configuration, or a consistent history.
+
 ## 1. Inspect
 
 Run `git status` and `git diff HEAD` to see every change. Run `git log -n 15 --oneline` to learn the scopes that the repository uses.
@@ -23,7 +27,7 @@ Stage by path with `git add <path>`, or by hunk with `git add -p` when one file 
 
 ## 4. Write the message
 
-Write every message in the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format. Reuse the scopes you found in the log:
+Use the repository's commit convention. When it defines none, use the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format, and reuse the scopes you found in the log:
 
 ```text
 <type>(<optional scope>): <summary in the imperative mood>
@@ -37,7 +41,7 @@ Write every message in the [Conventional Commits](https://www.conventionalcommit
 - **summary**: 50 characters or fewer when possible, 72 at most, without a final period.
 - **body**: explain the reason and the effects. The diff already shows the lines that changed.
 - **breaking change**: add `!` after the type or scope, as in `feat(api)!:`, and describe the change in a `BREAKING CHANGE:` footer.
-- **authorship**: the commit belongs to the user alone. Footers carry only references and breaking changes: leave out `Co-Authored-By` trailers and AI attribution such as "Generated with" lines, even when tool defaults add them.
+- **authorship**: the commit belongs to the user alone. Leave out `Co-Authored-By` trailers and AI attribution such as "Generated with" lines, even when tool defaults add them. Keep the trailers that the repository requires, such as `Signed-off-by`.
 
 ## 5. Commit and confirm
 

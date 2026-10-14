@@ -7,6 +7,10 @@ description: Review a diff for correctness bugs. Use when the user asks to revie
 
 Find the defects that would make this change behave wrongly in production. Each finding is a **failure scenario**: concrete inputs or state that lead to a wrong result, a crash, or data loss.
 
+## Repository conventions first
+
+Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the surrounding code. They take precedence over this skill: where they differ, follow the repository, and point out the difference instead of changing the repository's standard. Review against those standards. Code that follows a repository convention isn't a finding, even when general practice differs; code that breaks one is.
+
 ## 1. Pick the target
 
 Use the target the user named. Otherwise pick the first one that applies:

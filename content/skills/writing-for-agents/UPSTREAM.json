@@ -3,6 +3,6 @@
   "path": "skills/productivity/writing-for-agents",
   "commit": "49dd158d1076134a641b33efb035946536778336",
   "license": "MIT",
-  "modified": false,
-  "notes": ""
+  "modified": true,
+  "notes": "Added a 'Repository conventions first' section."
 }
