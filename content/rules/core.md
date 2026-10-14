@@ -4,3 +4,4 @@
 - Report unrelated problems you notice instead of fixing them.
 - Confirm with the user before destructive or hard-to-reverse actions: deleting files or branches, rewriting Git history, force pushing, changing data or schemas, and publishing or deploying anything.
 - Look up facts yourself in the code, docs, configuration, and command output. Ask the user only for decisions and for facts you can't reach.
+- Write commit messages in the Conventional Commits format. The commit belongs to the user alone: leave out `Co-Authored-By` trailers and AI attribution lines, even when tool defaults add them.

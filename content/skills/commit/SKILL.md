@@ -9,7 +9,7 @@ Each commit is **atomic**: one purpose, complete enough to build and pass tests,
 
 ## 1. Inspect
 
-Run `git status` and `git diff HEAD` to see every change. Run `git log -n 15 --oneline` to learn the repository's message convention.
+Run `git status` and `git diff HEAD` to see every change. Run `git log -n 15 --oneline` to learn the scopes that the repository uses.
 
 ## 2. Group
 
@@ -23,7 +23,7 @@ Stage by path with `git add <path>`, or by hunk with `git add -p` when one file 
 
 ## 4. Write the message
 
-Follow the convention you found in the log. When the repository has none, use Conventional Commits:
+Write every message in the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format. Reuse the scopes you found in the log:
 
 ```text
 <type>(<optional scope>): <summary in the imperative mood>
@@ -36,6 +36,8 @@ Follow the convention you found in the log. When the repository has none, use Co
 - **type**: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, or `chore`.
 - **summary**: 50 characters or fewer when possible, 72 at most, without a final period.
 - **body**: explain the reason and the effects. The diff already shows the lines that changed.
+- **breaking change**: add `!` after the type or scope, as in `feat(api)!:`, and describe the change in a `BREAKING CHANGE:` footer.
+- **authorship**: the commit belongs to the user alone. Footers carry only references and breaking changes: leave out `Co-Authored-By` trailers and AI attribution such as "Generated with" lines, even when tool defaults add them.
 
 ## 5. Commit and confirm
 
