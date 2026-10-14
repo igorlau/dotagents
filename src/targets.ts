@@ -6,17 +6,11 @@ export const AGENTS = ["claude", "codex", "copilot"] as const;
 export type Agent = (typeof AGENTS)[number];
 
 // global: user-level directories. project: committed to the repository.
-// local: written to the repository but excluded from Git.
-export type Mode = "global" | "project" | "local";
+export type Mode = "global" | "project";
 
 export type Op =
   | { kind: "file"; path: string; content: string; executable?: boolean }
   | { kind: "block"; path: string; content: string };
-
-export interface Plan {
-  ops: Op[];
-  notes: string[];
-}
 
 const HEADER = "<!-- Managed by dotagents. Run `dotagents update` instead of editing this file. -->";
 const RULES_FILE = "dotagents.md";
@@ -26,7 +20,7 @@ const COPILOT_RULES_FILE = "dotagents.instructions.md";
 interface Layout {
   skillDirs: Record<Agent, string>;
   claudeRules: string;
-  codexRules?: string;
+  codexRules: string;
   copilotRules: { kind: "file" | "block"; path: string };
 }
 
@@ -43,32 +37,23 @@ function layout(mode: Mode, root: string): Layout {
       copilotRules: { kind: "file", path: path.join(copilotHome(), "instructions", COPILOT_RULES_FILE) },
     };
   }
-  const shared = {
+  // Copilot reads AGENTS.md too, so both agents share one block.
+  const agentsMd = path.join(root, "AGENTS.md");
+  return {
     skillDirs: {
       claude: path.join(root, ".claude", "skills"),
       codex: path.join(root, ".agents", "skills"),
       copilot: path.join(root, ".agents", "skills"),
     },
     claudeRules: path.join(root, ".claude", "rules", RULES_FILE),
-  };
-  if (mode === "project") {
-    // Copilot reads AGENTS.md too, so both agents share one block.
-    const agentsMd = path.join(root, "AGENTS.md");
-    return { ...shared, codexRules: agentsMd, copilotRules: { kind: "block", path: agentsMd } };
-  }
-  // Codex reads one instruction file per directory, so local mode can't add
-  // a sibling file for it without editing a tracked AGENTS.md.
-  return {
-    ...shared,
-    codexRules: undefined,
-    copilotRules: { kind: "file", path: path.join(root, ".github", "instructions", COPILOT_RULES_FILE) },
+    codexRules: agentsMd,
+    copilotRules: { kind: "block", path: agentsMd },
   };
 }
 
-export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root = ""): Plan {
+export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root = ""): Op[] {
   const target = layout(mode, root);
   const ops = new Map<string, Op>();
-  const notes: string[] = [];
   const add = (op: Op) => ops.set(op.path, op);
 
   for (const agent of agents) {
@@ -88,17 +73,14 @@ export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root 
   if (agents.includes("claude")) {
     add({ kind: "file", path: target.claudeRules, content: `${HEADER}\n\n${rules}\n` });
   }
-  if (agents.includes("codex")) {
-    if (target.codexRules) add({ kind: "block", path: target.codexRules, content: rules });
-    else notes.push("Codex rules aren't installed in local-only mode. Run `dotagents install` to get them globally.");
-  }
+  if (agents.includes("codex")) add({ kind: "block", path: target.codexRules, content: rules });
   if (agents.includes("copilot")) {
     const { kind, path: rulesPath } = target.copilotRules;
     if (kind === "block") add({ kind, path: rulesPath, content: rules });
     else add({ kind, path: rulesPath, content: `---\napplyTo: "**"\n---\n\n${HEADER}\n\n${rules}\n` });
   }
 
-  return { ops: [...ops.values()], notes };
+  return [...ops.values()];
 }
 
 export function parseAgents(value: string | undefined): Agent[] {

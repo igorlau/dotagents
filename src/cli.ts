@@ -7,7 +7,7 @@ const HELP = `dotagents: install curated agent skills and rules
 
 Usage:
   dotagents install                 Install globally (default for all projects)
-  dotagents init [--local-only]     Install into the current repository
+  dotagents init                    Install into the current repository (commit the files)
   dotagents update [--global|--project]
   dotagents uninstall [--global|--project]
   dotagents doctor                  Check installs for problems
@@ -16,7 +16,6 @@ Usage:
 
 Options:
   --agents <list>   Comma-separated: claude,codex,copilot (default: all)
-  --local-only      With init: keep every file out of Git
   --dry-run         Print changes without writing them
   --force           Overwrite files that were modified or not written by dotagents
   --source <spec>   With install: where self-update fetches dotagents from
@@ -30,7 +29,6 @@ function main(argv: string[]): number {
     allowPositionals: true,
     options: {
       agents: { type: "string" },
-      "local-only": { type: "boolean", default: false },
       "dry-run": { type: "boolean", default: false },
       force: { type: "boolean", default: false },
       global: { type: "boolean", default: false },
@@ -60,7 +58,7 @@ function main(argv: string[]): number {
       if (values.source && !options.dryRun) saveSource(values.source);
       return install(options) ? 0 : 1;
     case "init":
-      return init(cwd, values["local-only"], options) ? 0 : 1;
+      return init(cwd, options) ? 0 : 1;
     case "update":
       return update(cwd, which, options) ? 0 : 1;
     case "uninstall":

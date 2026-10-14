@@ -7,8 +7,6 @@ import type { Op } from "./targets.ts";
 export interface ApplyOptions {
   dryRun: boolean;
   force: boolean;
-  // Returns a reason to refuse writing a path, such as "tracked by Git".
-  guard?: (absPath: string) => string | undefined;
 }
 
 export interface ApplyResult {
@@ -27,27 +25,14 @@ export function apply(ops: Op[], previous: Entry[], options: ApplyOptions): Appl
   const owned = new Map(previous.map((entry) => [entry.path, entry]));
   const result: ApplyResult = { entries: [], changes: [], problems: [] };
 
-  // Refused paths are never written or removed, and stop being tracked.
-  const refused = new Set<string>();
   for (const op of ops) {
-    const refusal = options.guard?.(op.path);
-    if (refusal) {
-      result.problems.push(`${op.path}: ${refusal}`);
-      refused.add(op.path);
-      continue;
-    }
     const entry = op.kind === "file" ? applyFile(op, owned.get(op.path), options, result) : applyBlock(op, owned.get(op.path), options, result);
     if (entry) result.entries.push(entry);
   }
 
   const kept = new Set(result.entries.map((entry) => entry.path));
   for (const entry of previous) {
-    if (kept.has(entry.path) || refused.has(entry.path)) continue;
-    const refusal = options.guard?.(entry.path);
-    if (refusal) {
-      result.problems.push(`${entry.path}: ${refusal}, not removed`);
-      continue;
-    }
+    if (kept.has(entry.path)) continue;
     if (!removeEntry(entry, options, result)) result.entries.push(entry);
   }
 

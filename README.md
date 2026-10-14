@@ -19,14 +19,15 @@ machine with only a company GitHub account, see
 
 ## Use dotagents in a repository
 
-The global install covers most cases. To add the skills and rules to a
-single repository, choose a mode based on who owns the repository:
+The global install covers every project, including team repositories, and
+writes nothing to them.
 
-- **Your repository:** run `npx --yes github:igorlau/dotagents init`, and
-  commit the new files.
-- **A team repository:** run
-  `npx --yes github:igorlau/dotagents init --local-only`. dotagents keeps its
-  files out of Git and never edits tracked files.
+To share the skills and rules with collaborators in a repository that you
+own, run the following command in the repository, and commit the new files:
+
+```bash
+npx --yes github:igorlau/dotagents init
+```
 
 ## Commands
 
@@ -36,10 +37,10 @@ The following table summarizes the commands. For options, run
 | Command | Description |
 | ------- | ----------- |
 | `install` | Install globally. |
-| `init [--local-only]` | Install into the current repository. |
+| `init` | Install into the current repository for collaborators. |
 | `update` | Apply the latest catalog to existing installs. |
 | `uninstall` | Remove everything that dotagents installed. |
-| `doctor` | Check installs for missing, modified, or Git-visible files. |
+| `doctor` | Check installs for missing or modified files. |
 | `list` | List the skills. |
 | `self-update` | Run `update` with the latest release. |
 
