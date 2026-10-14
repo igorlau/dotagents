@@ -1,6 +1,6 @@
 {
   "name": "dotagents",
-  "version": "0.1.0-dev",
+  "version": "0.1.6",
   "description": "Install a curated set of agent skills and rules into Claude Code, Codex, and GitHub Copilot.",
   "private": true,
   "license": "UNLICENSED",
