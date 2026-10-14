@@ -1,6 +1,6 @@
 {
   "name": "@igorlau/dotagents",
-  "version": "1.0.0-dev",
+  "version": "1.0.7",
   "description": "Install a curated set of agent skills and rules into Claude Code, Codex, and GitHub Copilot.",
   "license": "MIT",
   "repository": {
