@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/mattpocock/skills",
+  "path": "skills/engineering/diagnosing-bugs",
+  "commit": "49dd158d1076134a641b33efb035946536778336",
+  "license": "MIT",
+  "modified": true,
+  "notes": "Renamed from diagnosing-bugs to debug (frontmatter name and display_name)."
+}
