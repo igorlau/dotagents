@@ -69,5 +69,7 @@ table in [the design specification](SPEC.md), and add a test in `test/`.
 
 Write commit messages in the Conventional Commits format. Every push to
 `main` that passes the checks becomes a release with the tag
-`vMAJOR.MINOR.RUN_NUMBER`. To start a new minor or major series, change the
-version in `package.json`.
+`vMAJOR.MINOR.RUN_NUMBER`. On `main`, `package.json` keeps the version
+`MAJOR.MINOR.0-dev`, and builds from a branch report the commit, such as
+`0.1.0-dev+30d0533`. To start a new minor or major series, change
+`MAJOR.MINOR` in `package.json`, and keep the `.0-dev` suffix.

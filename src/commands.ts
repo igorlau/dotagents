@@ -33,8 +33,14 @@ interface Scope {
 
 export const DEFAULT_SOURCE = "github:igorlau/dotagents";
 
+// Release tags carry a real version. Builds from a branch carry X.Y.0-dev,
+// so the commit tells them apart.
 export function version(): string {
-  return JSON.parse(fs.readFileSync(path.join(packageRoot, "package.json"), "utf8")).version;
+  const base: string = JSON.parse(fs.readFileSync(path.join(packageRoot, "package.json"), "utf8")).version;
+  const buildInfo = path.join(packageRoot, "dist", "build-info.json");
+  if (!base.endsWith("-dev") || !fs.existsSync(buildInfo)) return base;
+  const { commit } = JSON.parse(fs.readFileSync(buildInfo, "utf8"));
+  return commit ? `${base}+${commit}` : base;
 }
 
 function log(message = ""): void {

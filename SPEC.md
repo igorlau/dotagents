@@ -195,7 +195,10 @@ npx git+ssh://git@github-dotagents/igorlau/dotagents.git install
 ```
 
 npm runs the `prepare` script when it installs from Git, which compiles the
-TypeScript. The release workflow runs on every push to `main`. If the tests
+TypeScript and records the commit in `dist/build-info.json`. Release tags
+report their version, such as `0.1.2`. Builds from a branch report the
+development version and the commit, such as `0.1.0-dev+30d0533`. The release
+workflow runs on every push to `main`. If the tests
 pass, it tags the commit and attaches an `npm pack` tarball to a GitHub
 release as an offline fallback.
 
