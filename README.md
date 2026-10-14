@@ -10,12 +10,18 @@ To install the skills and rules for all your projects, run the following
 command:
 
 ```bash
-npx --yes github:igorlau/dotagents install
+npx --yes @igorlau/dotagents install
 ```
 
-The repository is private, so your Git credentials need access to it. On a
-machine with only a company GitHub account, see
-[Install dotagents with a deploy key](docs/deploy-key.md).
+`npx` runs dotagents without installing it. To run `dotagents` as a command
+in any terminal, install it globally:
+
+```bash
+npm install --global @igorlau/dotagents
+```
+
+To upgrade a global install, run
+`npm install --global @igorlau/dotagents@latest`.
 
 ## Use dotagents in a repository
 
@@ -26,7 +32,7 @@ To share the skills and rules with collaborators in a repository that you
 own, run the following command in the repository, and commit the new files:
 
 ```bash
-npx --yes github:igorlau/dotagents init
+npx --yes @igorlau/dotagents init
 ```
 
 ## Commands
@@ -70,5 +76,7 @@ The following skills load when a task needs them:
 ## More information
 
 - [Design specification](SPEC.md)
-- [Contributing guide](CONTRIBUTING.md)
+- [Contributing guide](CONTRIBUTING.md): report problems and propose changes
+  through pull requests
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
+- [License (MIT)](LICENSE)

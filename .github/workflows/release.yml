@@ -1,12 +1,15 @@
 name: Release
 
-# Every push to main that passes the checks becomes a tagged release.
+# Every push to main that passes the checks is staged on npm and tagged.
+# The maintainer approves each staged version on npmjs.com with 2FA.
 on:
   push:
     branches: [main]
 
 permissions:
   contents: write
+  # Lets npm trusted publishing exchange a GitHub OIDC token for publish rights.
+  id-token: write
 
 concurrency:
   group: release
@@ -21,6 +24,9 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          registry-url: https://registry.npmjs.org
+      # Staged publishing needs npm 11.15.0 or later.
+      - run: npm install --global npm@^11.15.0
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint:content
@@ -33,13 +39,16 @@ jobs:
           base=$(node -p "require('./package.json').version.split('.').slice(0, 2).join('.')")
           echo "VERSION=$base.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
 
-      # The tag points to a commit outside main that records the version, so
-      # `dotagents --version` reports it when installed from the tag.
+      - name: Stage the npm release
+        run: |
+          npm version "$VERSION" --no-git-tag-version
+          npm stage publish
+
+      # The tag points to a commit outside main that records the version.
       - name: Tag the release
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          npm version "$VERSION" --no-git-tag-version
           git commit --quiet -am "release: v$VERSION"
           git tag "v$VERSION"
           git push origin "v$VERSION"
@@ -49,4 +58,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           npm pack
-          gh release create "v$VERSION" "dotagents-$VERSION.tgz" --title "v$VERSION" --generate-notes
+          gh release create "v$VERSION" "igorlau-dotagents-$VERSION.tgz" --title "v$VERSION" --generate-notes

@@ -3,6 +3,14 @@
 This guide explains how to change the catalog and the CLI. For the design and
 the reasons behind it, see the [design specification](SPEC.md).
 
+## Report a problem or propose a change
+
+This repository doesn't use issues. To report a problem or propose a change,
+fork the repository and open a pull request. For a problem without a fix,
+open a pull request that adds a failing test or describes the problem in its
+description. The maintainer reviews every pull request, and workflows on pull
+requests from forks run only after approval.
+
 ## Set up
 
 You need Node.js 22.18 or later, which runs the TypeScript sources directly.
@@ -68,8 +76,10 @@ table in [the design specification](SPEC.md), and add a test in `test/`.
 ## Commit and release
 
 Write commit messages in the Conventional Commits format. Every push to
-`main` that passes the checks becomes a release with the tag
-`vMAJOR.MINOR.RUN_NUMBER`. On `main`, `package.json` keeps the version
+`main` that passes the checks is staged on npm as
+`@igorlau/dotagents@MAJOR.MINOR.RUN_NUMBER` and tagged
+`vMAJOR.MINOR.RUN_NUMBER`. The version becomes available after the
+maintainer approves it on npmjs.com, under **Staged Packages**. On `main`, `package.json` keeps the version
 `MAJOR.MINOR.0-dev`, and builds from a branch report the commit, such as
-`0.1.0-dev+30d0533`. To start a new minor or major series, change
+`1.0.0-dev+30d0533`. To start a new minor or major series, change
 `MAJOR.MINOR` in `package.json`, and keep the `.0-dev` suffix.

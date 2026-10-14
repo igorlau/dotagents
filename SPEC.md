@@ -37,8 +37,8 @@ The following table lists each decision and the reason for it:
 | 7 | Install the whole catalog. | The catalog is small. Revisit with profiles when it grows. The manifest already records skills by name. |
 | 8 | Write skills and rules in English. | Models follow English instructions slightly more precisely, and vendored skills are in English. |
 | 9 | Vendor third-party skills and record their origin. | Upstream renames or rewrites can't break installs. A script shows upstream changes on demand. |
-| 10 | Keep the repository private and distribute it through Git, not npm. | npm private packages need a paid plan. `npx` installs directly from a Git URL. |
-| 11 | Use a read-only deploy key on machines without access to the personal GitHub account. | Enterprise Managed User (EMU) accounts can't access repositories outside the enterprise. |
+| 10 | Publish a public npm package, `@igorlau/dotagents`, from a public repository under the MIT license. | Any machine can install without Git credentials, including machines with only an Enterprise Managed User (EMU) account. The content is generic, so it can be public. The unscoped `dotagents` name belongs to another project. |
+| 11 | Stage releases from GitHub Actions with npm trusted publishing, and approve each one on npmjs.com. | No npm token to store or leak, npm records provenance for each version, and nothing reaches users without the maintainer's security key. Earlier versions installed from Git, with a deploy key for EMU machines. |
 | 12 | Test the CLI against temporary Git repositories and lint the content in CI. | The main risk is changing files in a team repository. |
 | 13 | Ship the ponytail ruleset as an always-on rule, not as a skill. | Smallest-change discipline must apply to every interaction, and it reduces generated code and tokens. |
 | 14 | Add an always-on rule for code comments. | Agents tend to write comments that restate code or narrate changes. |
@@ -181,28 +181,28 @@ the recorded commit.
 
 ## Distribution
 
-The repository is private, so dotagents installs from Git:
+dotagents is published to npm as `@igorlau/dotagents`:
 
 ```bash
-# Personal machines, using your normal GitHub credentials
-npx github:igorlau/dotagents install
+# The latest release
+npx --yes @igorlau/dotagents install
 
 # A pinned release
-npx github:igorlau/dotagents#v0.1.42 install
-
-# Machines with only an EMU account, using a deploy key
-npx git+ssh://git@github-dotagents/igorlau/dotagents.git install
+npx --yes @igorlau/dotagents@1.0.7 install
 ```
 
-npm runs the `prepare` script when it installs from Git, which compiles the
-TypeScript and records the commit in `dist/build-info.json`. Release tags
-report their version, such as `0.1.2`. Builds from a branch report the
-development version and the commit, such as `0.1.0-dev+30d0533`. The release
-workflow runs on every push to `main`. If the tests
-pass, it tags the commit and attaches an `npm pack` tarball to a GitHub
-release as an offline fallback.
+The release workflow runs on every push to `main`. If the checks pass, it
+sets the version to `MAJOR.MINOR.RUN_NUMBER`, stages the package on npm with
+trusted publishing, tags the release commit, and attaches the `npm pack`
+tarball to a GitHub release as an offline fallback. The trusted publisher
+allows only staging, so a version reaches users only after the maintainer
+approves it on npmjs.com, under **Staged Packages**, with two-factor
+authentication.
 
-For the deploy key setup, see [`docs/deploy-key.md`](docs/deploy-key.md).
+Installing from Git, such as `npx github:igorlau/dotagents`, still works for
+testing unreleased commits. npm runs the `prepare` script, which compiles the
+TypeScript and records the commit in `dist/build-info.json`, so these builds
+report versions such as `1.0.0-dev+30d0533`.
 
 ## Testing
 

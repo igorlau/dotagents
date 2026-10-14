@@ -31,7 +31,7 @@ interface Scope {
   manifestPath: string;
 }
 
-export const DEFAULT_SOURCE = "github:igorlau/dotagents";
+export const DEFAULT_SOURCE = "@igorlau/dotagents@latest";
 
 // Release tags carry a real version. Builds from a branch carry X.Y.0-dev,
 // so the commit tells them apart.
