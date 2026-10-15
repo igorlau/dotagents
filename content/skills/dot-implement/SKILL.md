@@ -39,7 +39,7 @@ Done when every requirement of the task, plan, or request has code that meets it
 
 ## 4. Verify
 
-Run the task's "Verify" section, the plan's final check, or the repository's tests, type checker, and linter, and show the output. Check every acceptance criterion one by one.
+Run the task's "Verify" section, the plan's final check, or the repository's tests, type checker, and linter, and show the output. Check every acceptance criterion one by one. Reread your diff against the code comments rule, and fix what it flags.
 
 When verification fails, or the task or plan turns out wrong (a fact contradicts it, or meeting it needs work outside its scope), stop. Report the failing check or the conflicting fact and propose a change to the task or plan. Keep the task file, the roadmap's decisions, and the plan as they are until the user agrees, and keep the change inside its scope.
 
