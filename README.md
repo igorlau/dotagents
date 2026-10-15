@@ -88,6 +88,7 @@ The following skills load when a task needs them:
 | Skill | Purpose |
 | ----- | ------- |
 | `dot-plan` | Plan a change as small, verifiable steps. |
+| `dot-implement` | Implement a change or roadmap task to the repository's and language's standards. |
 | `dot-code-review` | Review a diff for correctness bugs. |
 | `dot-commit` | Commit changes as small, logical commits. |
 | `dot-docs-writing` | Write docs in the Google developer documentation style. |

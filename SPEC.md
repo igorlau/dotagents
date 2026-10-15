@@ -172,6 +172,7 @@ budget in `scripts/lint-content.ts`. A vendored rule has a
 | Skill | Origin |
 | ------- | -------- |
 | `dot-plan` | Original |
+| `dot-implement` | Original, based on the Google TypeScript style guide (CC BY 3.0) |
 | `dot-code-review` | Original |
 | `dot-commit` | Original |
 | `dot-docs-writing` | Original, based on the Google developer documentation style guide (CC BY 4.0) |
