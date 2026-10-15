@@ -31,6 +31,8 @@ For each language the change touches, read its reference if one exists:
 
 - [`references/typescript.md`](references/typescript.md): TypeScript and TSX.
 
+When you write or change tests, use the `dot-testing` skill.
+
 Work through the plan one step at a time, and run each step's check before you start the next one.
 
 Done when every requirement of the task, plan, or request has code that meets it.
