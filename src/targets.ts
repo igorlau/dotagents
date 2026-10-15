@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { Catalog } from "./catalog.ts";
+import type { Catalog, ScaffoldFile } from "./catalog.ts";
 import { agentsHome, claudeHome, codexHome, copilotHome } from "./paths.ts";
 
 export const AGENTS = ["claude", "codex", "copilot"] as const;
@@ -78,6 +78,14 @@ export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root 
   if (agents.includes("copilot")) add({ kind: "block", path: target.copilotRules, content: rules });
 
   return [...ops.values()];
+}
+
+// AGENTS.md serves every agent; CLAUDE.md and .claude/ serve only Claude Code.
+export function planScaffold(files: ScaffoldFile[], agents: Agent[], root: string): Op[] {
+  const claudeOnly = (rel: string) => rel === "CLAUDE.md" || rel.startsWith(".claude/");
+  return files
+    .filter((file) => agents.includes("claude") || !claudeOnly(file.rel))
+    .map((file) => ({ kind: "file", path: path.join(root, ...file.rel.split("/")), content: file.content }));
 }
 
 export function parseAgents(value: string | undefined): Agent[] {

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { apply, type ApplyResult } from "./apply.ts";
 import { readBlock } from "./blocks.ts";
-import { loadCatalog } from "./catalog.ts";
+import { loadCatalog, loadScaffold } from "./catalog.ts";
 import { repoRoot } from "./git.ts";
 import {
   fromStored,
@@ -16,7 +16,7 @@ import {
   type Manifest,
 } from "./manifest.ts";
 import { codexHome, configDir, packageRoot } from "./paths.ts";
-import { planInstall, type Agent, type Mode } from "./targets.ts";
+import { planInstall, planScaffold, type Agent, type Mode } from "./targets.ts";
 
 export interface Options {
   agents: Agent[];
@@ -107,6 +107,17 @@ export function init(cwd: string, options: Options): boolean {
   const ok = run(scope, options.agents, options);
   if (!options.dryRun) log("Commit the new files so that collaborators get them too.");
   return ok;
+}
+
+// Scaffold files belong to the repository once written, so no manifest tracks
+// them, and update and uninstall leave them alone.
+export function scaffold(cwd: string, options: Options): boolean {
+  const root = projectScope(cwd).root!;
+  log(`Scaffolding agent instructions into ${root}:`);
+  const result = apply(planScaffold(loadScaffold(), options.agents, root), [], options);
+  report(result, options.dryRun);
+  if (!options.dryRun) log("Review the files, keep AGENTS.md current as the project takes shape, and commit them.");
+  return result.problems.length === 0;
 }
 
 function selectScopes(cwd: string, which: "global" | "project" | undefined): Scope[] {

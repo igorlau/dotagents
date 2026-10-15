@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
-import { doctor, init, install, list, saveSource, selfUpdate, uninstall, update, version } from "./commands.ts";
+import { doctor, init, install, list, saveSource, scaffold, selfUpdate, uninstall, update, version } from "./commands.ts";
 import { parseAgents } from "./targets.ts";
 
 const HELP = `dotagents: install curated agent skills and rules
@@ -8,6 +8,7 @@ const HELP = `dotagents: install curated agent skills and rules
 Usage:
   dotagents install                 Install globally (default for all projects)
   dotagents init                    Install into the current repository (commit the files)
+  dotagents scaffold                Create starter AGENTS.md, CLAUDE.md, and settings in the current repository
   dotagents update [--global|--project]
   dotagents uninstall [--global|--project]
   dotagents doctor                  Check installs for problems
@@ -59,6 +60,8 @@ function main(argv: string[]): number {
       return install(options) ? 0 : 1;
     case "init":
       return init(cwd, options) ? 0 : 1;
+    case "scaffold":
+      return scaffold(cwd, options) ? 0 : 1;
     case "update":
       return update(cwd, which, options) ? 0 : 1;
     case "uninstall":

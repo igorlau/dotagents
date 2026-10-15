@@ -35,6 +35,29 @@ own, run the following command in the repository, and commit the new files:
 npx --yes @igorlau/dotagents init
 ```
 
+## Start a new repository
+
+To create starter agent instructions in a new repository, run the following
+command in the repository:
+
+```bash
+npx --yes @igorlau/dotagents scaffold
+```
+
+The command creates the following files, skips any that already exist, and
+never changes them afterward. They belong to the repository, so edit and
+commit them like any other file:
+
+| File | Purpose |
+| ---- | ------- |
+| `AGENTS.md` | Project instructions for every agent: how to work, code and tests, security, and Git. |
+| `CLAUDE.md` | Imports `AGENTS.md`, so Claude Code reads the same instructions. |
+| `.claude/settings.json` | Blocks Claude Code from reading secrets, and asks before `git push`. |
+| `.editorconfig`, `.gitattributes` | Keep whitespace and line endings consistent across editors and operating systems. |
+
+Run `scaffold` before `init`. `init` adds a block to `AGENTS.md`, and
+`scaffold` doesn't overwrite an existing `AGENTS.md`.
+
 ## Commands
 
 The following table summarizes the commands. For options, run
@@ -44,6 +67,7 @@ The following table summarizes the commands. For options, run
 | ------- | ----------- |
 | `install` | Install globally. |
 | `init` | Install into the current repository for collaborators. |
+| `scaffold` | Create starter agent instructions in the current repository. |
 | `update` | Apply the latest catalog to existing installs. |
 | `uninstall` | Remove everything that dotagents installed. |
 | `doctor` | Check installs for missing or modified files. |

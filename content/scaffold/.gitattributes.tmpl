@@ -1,0 +1,6 @@
+# Store text with LF line endings, so Windows and WSL checkouts produce clean diffs.
+* text=auto eol=lf
+
+# Windows scripts need CRLF to run.
+*.bat text eol=crlf
+*.cmd text eol=crlf

@@ -63,6 +63,18 @@ function loadSkill(dir: string): Skill {
   return { name, description, files };
 }
 
+export interface ScaffoldFile {
+  rel: string;
+  content: string;
+}
+
+// Templates carry a .tmpl suffix, so agents and Git working in this repository
+// don't load them as its own AGENTS.md, CLAUDE.md, or .gitattributes.
+export function loadScaffold(root: string = contentRoot): ScaffoldFile[] {
+  const dir = path.join(root, "scaffold");
+  return listFiles(dir).map((rel) => ({ rel: rel.replace(/\.tmpl$/, ""), content: fs.readFileSync(path.join(dir, rel), "utf8") }));
+}
+
 function listFiles(dir: string, prefix = ""): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const rel = prefix ? `${prefix}/${entry.name}` : entry.name;

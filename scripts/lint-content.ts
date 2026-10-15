@@ -1,5 +1,6 @@
 // Checks the structure of content/: skill frontmatter, relative links, the
-// rules size budget, and upstream metadata. Exits 1 on any problem.
+// rules size budget, upstream metadata, and scaffold templates. Exits 1 on
+// any problem.
 import fs from "node:fs";
 import path from "node:path";
 import { contentRoot } from "../src/paths.ts";
@@ -68,6 +69,26 @@ for (const name of fs.readdirSync(skillsDir)) {
 
   const upstreamFile = path.join(dir, "UPSTREAM.json");
   if (fs.existsSync(upstreamFile)) checkUpstream(upstreamFile);
+}
+
+// Scaffold templates need the .tmpl suffix; see loadScaffold in src/catalog.ts.
+const scaffoldDir = path.join(contentRoot, "scaffold");
+for (const file of allFiles(scaffoldDir)) {
+  if (!file.endsWith(".tmpl")) fail(file, "scaffold templates must end in .tmpl");
+  else if (file.endsWith(".json.tmpl")) {
+    try {
+      JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch (error) {
+      fail(file, `invalid JSON: ${(error as Error).message}`);
+    }
+  }
+}
+
+function allFiles(dir: string): string[] {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const abs = path.join(dir, entry.name);
+    return entry.isDirectory() ? allFiles(abs) : [abs];
+  });
 }
 
 function checkUpstream(file: string): void {

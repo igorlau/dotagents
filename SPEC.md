@@ -43,6 +43,7 @@ The following table lists each decision and the reason for it:
 | 13 | Ship the ponytail ruleset as an always-on rule, not as a skill. | Smallest-change discipline must apply to every interaction, and it reduces generated code and tokens. |
 | 14 | Add an always-on rule for code comments. | Agents tend to write comments that restate code or narrate changes. |
 | 15 | Prefix every skill name with `dot-`, such as `dot-plan`. | Claude Code runs a personal skill over a project skill with the same name, so an unprefixed dotagents skill would hide a repository's own skill. The prefix also tells the skills apart in the `/` menu. Rules need no prefix: they live in dotagents-named files and blocks. |
+| 16 | Add a `scaffold` command that creates starter project instructions once, and leaves them out of the manifest. | A new repository needs instructions written for the project, and those belong to the repository: `update` must never rewrite them. Write-once files also keep the command safe in a repository that already has instructions. |
 
 ## Install modes
 
@@ -107,6 +108,7 @@ Notes on these choices:
   location and Codex only the second, so dotagents writes both.
 - In project mode, Claude Code reads `AGENTS.md` when the project has no
   `CLAUDE.md`, so it can see the rules twice.
+  The same happens after `scaffold`, whose `CLAUDE.md` imports `AGENTS.md`.
 
 ## Commands
 
@@ -114,6 +116,7 @@ Notes on these choices:
 | --------- | ------------- |
 | `dotagents install` | Install skills and rules globally. |
 | `dotagents init` | Install into the current repository. |
+| `dotagents scaffold` | Create starter project instructions in the current repository. See "Scaffold". |
 | `dotagents update [--global \| --project]` | Reapply the current catalog to existing installs and remove skills that left the catalog. |
 | `dotagents uninstall [--global \| --project]` | Remove everything that dotagents installed. |
 | `dotagents doctor` | Check installs for missing or modified files, Git visibility, and agent-specific issues. |
@@ -182,6 +185,24 @@ Each vendored skill has an `UPSTREAM.json` file with the source repository,
 path, commit, license, and a summary of local changes. dotagents doesn't
 install this file. `npm run check-upstream` shows what changed upstream since
 the recorded commit.
+
+### Scaffold
+
+`content/scaffold/` holds the files that `dotagents scaffold` copies to the
+repository root. Each template ends in `.tmpl`, which the command strips, so
+agents and Git working in the dotagents repository don't load them as its own
+`AGENTS.md`, `CLAUDE.md`, or `.gitattributes`.
+
+- `AGENTS.md` is the single source of truth for every agent. `CLAUDE.md` only
+  imports it, because Claude Code reads `CLAUDE.md` instead of `AGENTS.md`
+  when both exist.
+- `AGENTS.md` covers what a new repository already needs and asks agents to
+  record each project decision as it lands. It leaves commands to their
+  source of truth, such as `package.json`.
+- The rules don't repeat in `AGENTS.md`: collaborators get them through
+  `init` and the maintainer through the global install.
+- With `--agents`, the command skips `CLAUDE.md` and `.claude/` when Claude
+  Code isn't selected.
 
 ## Distribution
 
