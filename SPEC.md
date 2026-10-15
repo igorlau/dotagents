@@ -175,6 +175,7 @@ budget in `scripts/lint-content.ts`. A vendored rule has a
 | `dot-code-review` | Original |
 | `dot-commit` | Original |
 | `dot-docs-writing` | Original, based on the Google developer documentation style guide (CC BY 4.0) |
+| `dot-roadmap` | Original, based on `to-tickets` from `mattpocock/skills` (MIT) |
 | `dot-grill-me` | Vendored from `mattpocock/skills` (MIT), adapted |
 | `dot-grilling` | Vendored from `mattpocock/skills` (MIT) |
 | `dot-writing-for-agents` | Vendored from `mattpocock/skills` (MIT) |

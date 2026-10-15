@@ -94,6 +94,7 @@ The following skills load when a task needs them:
 | `dot-debug` | Diagnose hard bugs with a feedback loop. |
 | `dot-grill-me` | Start an interview that sharpens a plan. |
 | `dot-grilling` | Run the interview method behind `dot-grill-me`. |
+| `dot-roadmap` | Split a grilled plan into phases and self-contained tasks. |
 | `dot-handoff` | Summarize a conversation for another agent. |
 | `dot-writing-for-agents` | Write skills, `AGENTS.md`, and `CLAUDE.md` files. |
 
