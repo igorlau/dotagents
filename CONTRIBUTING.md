@@ -33,7 +33,7 @@ To preview the changes first, add `--dry-run`.
 To add a skill, follow these steps:
 
 1. Read the `dot-writing-for-agents` skill.
-1. Create `content/skills/SKILL_NAME/SKILL.md`. Replace `SKILL_NAME` with a
+1. Create `plugin/skills/SKILL_NAME/SKILL.md`. Replace `SKILL_NAME` with a
    lowercase name that uses hyphens between words. The `name` field in the
    frontmatter must match it.
 1. Run `npm run lint:content`.
@@ -41,7 +41,7 @@ To add a skill, follow these steps:
 ## Change the rules
 
 Rules load into every conversation, so every word costs tokens on every turn.
-Each file in `content/rules/` covers one topic, and each piece of guidance
+Each file in `plugin/rules/` covers one topic, and each piece of guidance
 lives in one file. `npm run lint:content` fails when the rules exceed the
 character budget.
 
@@ -49,8 +49,8 @@ character budget.
 
 To copy a skill or a rule from another repository, follow these steps:
 
-1. Copy the skill directory to `content/skills/`, or the rules file to
-   `content/rules/`.
+1. Copy the skill directory to `plugin/skills/`, or the rules file to
+   `plugin/rules/`.
 1. Record the origin. For a skill, create `UPSTREAM.json` in the skill
    directory. For a rule, create `NAME.upstream.json` next to the rules file.
    Include the following fields:

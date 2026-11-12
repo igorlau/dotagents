@@ -1,9 +1,9 @@
-// Checks the structure of content/: skill frontmatter, relative links, the
+// Checks the structure of plugin/: skill frontmatter, relative links, the
 // rules size budget, upstream metadata, and scaffold templates. Exits 1 on
 // any problem.
 import fs from "node:fs";
 import path from "node:path";
-import { contentRoot } from "../src/paths.ts";
+import { pluginRoot } from "../src/paths.ts";
 import { parseFrontmatter } from "../src/frontmatter.ts";
 
 // Rules load into every conversation, so they cost tokens on every turn.
@@ -19,9 +19,9 @@ const DESCRIPTION_MAX = 1024;
 const UPSTREAM_FIELDS = ["repository", "path", "commit", "license", "modified"];
 
 const problems: string[] = [];
-const fail = (file: string, message: string) => problems.push(`${path.relative(contentRoot, file)}: ${message}`);
+const fail = (file: string, message: string) => problems.push(`${path.relative(pluginRoot, file)}: ${message}`);
 
-const rulesDir = path.join(contentRoot, "rules");
+const rulesDir = path.join(pluginRoot, "rules");
 let ruleChars = 0;
 for (const name of fs.readdirSync(rulesDir)) {
   const file = path.join(rulesDir, name);
@@ -37,7 +37,7 @@ for (const name of fs.readdirSync(rulesDir)) {
 }
 if (ruleChars > RULES_CHAR_BUDGET) fail(rulesDir, `${ruleChars} characters exceeds the budget of ${RULES_CHAR_BUDGET}`);
 
-const skillsDir = path.join(contentRoot, "skills");
+const skillsDir = path.join(pluginRoot, "skills");
 for (const name of fs.readdirSync(skillsDir)) {
   const dir = path.join(skillsDir, name);
   if (!fs.statSync(dir).isDirectory()) continue;
@@ -72,7 +72,7 @@ for (const name of fs.readdirSync(skillsDir)) {
 }
 
 // Scaffold templates need the .tmpl suffix; see loadScaffold in src/catalog.ts.
-const scaffoldDir = path.join(contentRoot, "scaffold");
+const scaffoldDir = path.join(pluginRoot, "scaffold");
 for (const file of allFiles(scaffoldDir)) {
   if (!file.endsWith(".tmpl")) fail(file, "scaffold templates must end in .tmpl");
   else if (file.endsWith(".json.tmpl")) {

@@ -79,7 +79,7 @@ To overwrite them, pass `--force`.
 
 ## What's included
 
-The always-on rules in [`content/rules/`](content/rules/) cover working
+The always-on rules in [`plugin/rules/`](plugin/rules/) cover working
 agreements, the smallest complete change from
 [ponytail](https://github.com/DietrichGebert/ponytail), and code comments.
 

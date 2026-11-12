@@ -29,4 +29,4 @@ export function configDir(): string {
 
 // Works from both src/ (tests, scripts) and dist/ (installed package).
 export const packageRoot = fileURLToPath(new URL("..", import.meta.url));
-export const contentRoot = path.join(packageRoot, "content");
+export const pluginRoot = path.join(packageRoot, "plugin");

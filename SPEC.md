@@ -152,7 +152,7 @@ The hashes let dotagents tell its own files apart from your edits:
 ### Rules
 
 Rules load into every conversation. dotagents joins every file in
-`content/rules/` into one rules document, with `core.md` first:
+`plugin/rules/` into one rules document, with `core.md` first:
 
 | File | Content | Origin |
 | ---- | ------- | ------ |
@@ -191,7 +191,7 @@ the recorded commit.
 
 ### Scaffold
 
-`content/scaffold/` holds the files that `dotagents scaffold` copies to the
+`plugin/scaffold/` holds the files that `dotagents scaffold` copies to the
 repository root. Each template ends in `.tmpl`, which the command strips, so
 agents and Git working in the dotagents repository don't load them as its own
 `AGENTS.md`, `CLAUDE.md`, or `.gitattributes`.

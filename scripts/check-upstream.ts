@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { contentRoot } from "../src/paths.ts";
+import { pluginRoot } from "../src/paths.ts";
 
 interface Upstream {
   repository: string;
@@ -33,8 +33,8 @@ function clone(repository: string): string {
 }
 
 try {
-  const skillsDir = path.join(contentRoot, "skills");
-  const rulesDir = path.join(contentRoot, "rules");
+  const skillsDir = path.join(pluginRoot, "skills");
+  const rulesDir = path.join(pluginRoot, "rules");
   const sources = [
     ...fs.readdirSync(skillsDir).map((name) => ({ name, file: path.join(skillsDir, name, "UPSTREAM.json") })),
     ...fs

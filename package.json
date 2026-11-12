@@ -17,7 +17,7 @@
   },
   "files": [
     "dist",
-    "content",
+    "plugin",
     "THIRD_PARTY_NOTICES.md"
   ],
   "engines": {

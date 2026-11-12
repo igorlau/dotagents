@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { contentRoot } from "./paths.ts";
+import { pluginRoot } from "./paths.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
 
 export interface SkillFile {
@@ -23,7 +23,7 @@ export interface Catalog {
 // Files that describe a skill's origin but aren't part of the skill itself.
 const META_FILES = new Set(["UPSTREAM.json"]);
 
-export function loadCatalog(root: string = contentRoot): Catalog {
+export function loadCatalog(root: string = pluginRoot): Catalog {
   const rules = loadRules(path.join(root, "rules"));
   const skillsDir = path.join(root, "skills");
   const skills = fs
@@ -70,7 +70,7 @@ export interface ScaffoldFile {
 
 // Templates carry a .tmpl suffix, so agents and Git working in this repository
 // don't load them as its own AGENTS.md, CLAUDE.md, or .gitattributes.
-export function loadScaffold(root: string = contentRoot): ScaffoldFile[] {
+export function loadScaffold(root: string = pluginRoot): ScaffoldFile[] {
   const dir = path.join(root, "scaffold");
   return listFiles(dir).map((rel) => ({ rel: rel.replace(/\.tmpl$/, ""), content: fs.readFileSync(path.join(dir, rel), "utf8") }));
 }

@@ -35,9 +35,9 @@ SOFTWARE.
 
 ## DietrichGebert/ponytail
 
-The `ponytail` rules in `content/rules/ponytail.md` come from the `AGENTS.md`
+The `ponytail` rules in `plugin/rules/ponytail.md` come from the `AGENTS.md`
 file in [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail).
-`content/rules/ponytail.upstream.json` records the source commit and local
+`plugin/rules/ponytail.upstream.json` records the source commit and local
 changes. The project is licensed under the MIT License:
 
 ```text
