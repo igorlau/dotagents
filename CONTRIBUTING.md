@@ -39,6 +39,9 @@ To add a skill, follow these steps:
 1. Create `plugin/skills/SKILL_NAME/SKILL.md`. Replace `SKILL_NAME` with a
    lowercase name that uses hyphens between words. The `name` field in the
    frontmatter must match it.
+1. Keep `SKILL.md` within 8,000 characters. Keep only what applies on every
+   run, and move conditional content, such as a language, a mode, or a rare
+   case, to `references/TOPIC.md`, behind a line that says when to read it.
 1. Run `npm run lint:content`.
 
 ## Change the rules

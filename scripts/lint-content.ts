@@ -1,5 +1,5 @@
 // Checks the structure of plugin/: skill frontmatter, relative links, the
-// rules size budget, upstream metadata, scaffold templates, and the plugin
+// rules and skill size budgets, upstream metadata, scaffold templates, and the plugin
 // and marketplace manifests. Exits 1 on any problem.
 import fs from "node:fs";
 import path from "node:path";
@@ -9,6 +9,8 @@ import { parseFrontmatter } from "../src/frontmatter.ts";
 // Rules load into every conversation, so they cost tokens on every turn.
 // Raise this only with a reason. About 4 characters make one token.
 const RULES_CHAR_BUDGET = 7500;
+// A SKILL.md loads in full when its skill runs; conditional content belongs in references/.
+const SKILL_CHAR_BUDGET = 8000;
 // Personal skills win name clashes in Claude Code, so the prefix keeps
 // dotagents skills from hiding a repository's own skills.
 const SKILL_PREFIX = "dot-";
@@ -47,9 +49,12 @@ for (const name of fs.readdirSync(skillsDir)) {
     continue;
   }
 
+  const skillText = fs.readFileSync(skillFile, "utf8");
+  if (skillText.length > SKILL_CHAR_BUDGET) fail(skillFile, `${skillText.length} characters exceeds the budget of ${SKILL_CHAR_BUDGET}; move conditional content to references/`);
+
   let frontmatter;
   try {
-    frontmatter = parseFrontmatter(fs.readFileSync(skillFile, "utf8"));
+    frontmatter = parseFrontmatter(skillText);
   } catch (error) {
     fail(skillFile, (error as Error).message);
     continue;
