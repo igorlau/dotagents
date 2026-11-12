@@ -14,6 +14,7 @@ The repository's conventions and its compiler and linter configuration come firs
 - Fix compiler errors at their cause. Leave out `@ts-ignore`, `@ts-expect-error`, and `@ts-nocheck`; in a test that must pass an unchecked value, cast that one expression and comment why.
 - Leave out annotations the compiler infers trivially, such as `const x = 5`. Annotate when inference would produce `unknown` or a wider type than intended, or when a complex return type is hard to read.
 - Use interfaces for object types, and type aliases for unions, tuples, functions, and other non-object types.
+- Sort the properties of interfaces and object types alphabetically.
 - Declare a structural implementation's type where you create it (`const horse: Animal = {...}`), so a mismatch fails there instead of at a distant call site.
 - Keep `| null` and `| undefined` out of type aliases. Add them where a value can actually be absent, and handle absence close to where it arises.
 - Use optional fields and parameters (`name?: string`) instead of `name: string | undefined`.
@@ -40,6 +41,7 @@ The repository's conventions and its compiler and linter configuration come firs
 - Spread only matching values: iterables into arrays, plain objects into objects. Never spread `null`, `undefined`, or primitives.
 - Iterate arrays with `for...of`. Iterate objects with `Object.keys`, `Object.values`, or `Object.entries`; a `for...in` loop also visits inherited properties.
 - Keep parameter destructuring to one level of shorthand properties, with defaults on the left side.
+- Sort the properties of an options object parameter alphabetically, in its type and its destructuring. Order positional parameters by relevance.
 - Parse numbers with `Number()` and check the result for `NaN`. Use `parseInt` only for a radix other than 10, after checking the digits. Never coerce with unary `+`.
 - Coerce with `String()`, `Boolean()`, or a template literal, never with the wrapper constructors (`new String()`).
 - Compare enum values explicitly, never by truthiness: the first member is `0`, which is falsy.
@@ -62,7 +64,8 @@ The repository's conventions and its compiler and linter configuration come firs
 ## Control flow and errors
 
 - Wrap every `if`, `for`, and `while` body in braces; only an `if` that fits on one line may skip them. Keep assignments out of conditions.
-- Give every `switch` a final `default` group, and end every non-empty `case` with `break`, `return`, or `throw`. When a `switch` covers every member of a union or an enum, make `default` assign the value to a `never` variable, so adding a member fails the type check.
+- When early returns cover every member of a union or an enum, end the function by assigning the value to a `never` variable, so adding a member fails the type check.
+- In a `switch` you keep, give it a final `default` group, and end every non-empty `case` with `break`, `return`, or `throw`.
 - Throw only `Error` objects or subclasses, created with `new`, and reject promises only with `Error`s. Prefer throwing to returning error objects.
 - Treat a caught value as an `Error`, and skip defensive handling of non-`Error` throws unless a dependency actually throws them.
 - Handle a caught error or comment why ignoring it is correct; never leave a `catch` block empty and silent.
