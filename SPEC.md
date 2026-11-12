@@ -169,7 +169,7 @@ Rules load into every conversation. dotagents joins every file in
 | ---- | ------- | ------ |
 | `core.md` | Working agreements: verification, scope, destructive actions | Original |
 | `ponytail.md` | Smallest complete change, reuse before writing, concise replies | Vendored from the `AGENTS.md` file in `DietrichGebert/ponytail` (MIT), adapted |
-| `comments.md` | When and how to write code comments | Original |
+| `comments.md` | Delete code comments by default, and keep only the named exceptions | Original, based on the `pstack` comment policy from `cursor/plugins` (MIT) |
 
 Each rule says one thing in one place. For example, `comments.md` owns
 comment guidance, so the comment bullet was removed from `ponytail.md`.
@@ -194,6 +194,7 @@ budget in `scripts/lint-content.ts`. A vendored rule has a
 | `dot-writing-for-agents` | Vendored from `mattpocock/skills` (MIT) |
 | `dot-debug` | Vendored from `mattpocock/skills` as `diagnosing-bugs` (MIT), renamed |
 | `dot-handoff` | Vendored from `mattpocock/skills` (MIT) |
+| `dot-comments` | Vendored from `pstack/skills/no-comments` in `cursor/plugins` (MIT), adapted |
 
 Each vendored skill has an `UPSTREAM.json` file with the source repository,
 path, commit, license, and a summary of local changes. dotagents doesn't

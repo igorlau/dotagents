@@ -6,12 +6,12 @@ The repository's conventions and its compiler and linter configuration come firs
 
 ## Types
 
-- Use `unknown` for values of unknown type, and narrow it with `typeof`, `instanceof`, `in`, or a type guard before use. Reach for `any` only where no type can express the value, such as a test mock, with a comment that says why.
+- Use `unknown` for values of unknown type, and narrow it with `typeof`, `instanceof`, `in`, or a type guard before use. Reach for `any` only where no type can express the value, such as a test mock, and keep it inside a typed test factory so `any` stays out of the tests.
 - Validate data that crosses a trust boundary at the boundary: `JSON.parse` output, request bodies, environment variables, and file contents. Parse it into a typed value once, instead of casting.
-- Prefer a runtime check to a type assertion (`as`) or a non-null assertion (`!`): both silence the compiler without checking anything. When an assertion is safe for a reason the code doesn't show, add a comment with the reason.
+- Prefer a runtime check to a type assertion (`as`) or a non-null assertion (`!`): both silence the compiler without checking anything. When an assertion is safe for a reason the code doesn't show, move it into a type guard or a helper whose name states that reason.
 - Write assertions with `as`, never `<T>value`. When a double assertion is unavoidable, go through `unknown`.
 - Annotate object literals with their type (`const foo: Foo = {...}`) or check them with `satisfies`, instead of asserting them with `as Foo`. An annotation catches misspelled and stale fields where the literal is declared.
-- Fix compiler errors at their cause. Leave out `@ts-ignore`, `@ts-expect-error`, and `@ts-nocheck`; in a test that must pass an unchecked value, cast that one expression and comment why.
+- Fix compiler errors at their cause. Leave out `@ts-ignore`, `@ts-expect-error`, and `@ts-nocheck`; in a test that must pass an unchecked value, cast it once inside a typed test factory whose name states the invalid value, such as `makeUserWithoutEmail`.
 - Leave out annotations the compiler infers trivially, such as `const x = 5`. Annotate when inference would produce `unknown` or a wider type than intended, or when a complex return type is hard to read.
 - Use interfaces for object types, and type aliases for unions, tuples, functions, and other non-object types.
 - Sort the properties of interfaces and object types alphabetically.
@@ -68,7 +68,7 @@ The repository's conventions and its compiler and linter configuration come firs
 - In a `switch` you keep, give it a final `default` group, and end every non-empty `case` with `break`, `return`, or `throw`.
 - Throw only `Error` objects or subclasses, created with `new`, and reject promises only with `Error`s. Prefer throwing to returning error objects.
 - Treat a caught value as an `Error`, and skip defensive handling of non-`Error` throws unless a dependency actually throws them.
-- Handle a caught error or comment why ignoring it is correct; never leave a `catch` block empty and silent.
+- Handle a caught error, or ignore it through a helper whose name states the case, such as `ignoreMissingFile`; never leave a `catch` block empty and silent.
 - Keep a `try` block to the statements that can throw.
 - Await every promise, return it, or handle its rejection. A promise left floating loses its errors; when fire-and-forget is intended, mark it with `void` and attach a `.catch`.
 

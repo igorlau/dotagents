@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/cursor/plugins",
+  "path": "pstack/agents/comment-sicko.md",
+  "commit": "a5539b15a3d56e04992565aafee2b37051329ce3",
+  "license": "MIT",
+  "modified": true,
+  "notes": "Rewrote the agent's exception list as an always-on rule in neutral wording. Added the ponytail shortcut: exception, the rules to reshape surprises and encode constraints, and a pointer to the dot-comments skill. Dropped the suppression and report instructions, which live in dot-comments."
+}

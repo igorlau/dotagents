@@ -26,7 +26,7 @@ Use `makeSut` when the subject needs setup: construction, configuration, depende
 2. In a test, change a dependency's behavior by spying on or stubbing the double that `makeSut` returned, for that test only.
 3. Restore every spy and stub in the hook that runs after each test, so the next test sees the happy-path doubles again.
 
-When the `sut` itself keeps mutable state between calls (an in-memory cache, a counter, a queue), resetting the doubles leaves that state behind. Give that `describe` its own `makeSut` call before each test and `cleanup` after each test, with a comment that names the state. Tests that run concurrently share the doubles the same way, so in a concurrent suite each test calls `makeSut` itself, calls `cleanup` when it ends, and drops the shared restore hook: a global restore undoes the spies of tests still running, and each test's doubles die with it.
+When the `sut` itself keeps mutable state between calls (an in-memory cache, a counter, a queue), resetting the doubles leaves that state behind. Give that `describe` its own `makeSut` call before each test and `cleanup` after each test, and name that `describe` after the state, such as `describe("with a warm cache")`. Tests that run concurrently share the doubles the same way, so in a concurrent suite each test calls `makeSut` itself, calls `cleanup` when it ends, and drops the shared restore hook: a global restore undoes the spies of tests still running, and each test's doubles die with it.
 
 ## Test principles
 

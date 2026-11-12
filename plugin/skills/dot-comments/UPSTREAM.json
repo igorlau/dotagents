@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/cursor/plugins",
+  "path": "pstack/skills/no-comments",
+  "commit": "a5539b15a3d56e04992565aafee2b37051329ce3",
+  "license": "MIT",
+  "modified": true,
+  "notes": "Merged the policy from pstack/agents/comment-sicko.md into the skill and ran it inline instead of in a subagent. Replaced the /how, /why, and /architect calls with reading the code. Changed the per-flag approval to one approval of the whole report. Rewrote it in neutral wording and renamed it with the dot- prefix."
+}

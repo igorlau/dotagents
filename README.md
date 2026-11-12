@@ -111,6 +111,7 @@ The following skills load when a task needs them:
 | `dot-grilling` | Run the interview method behind `dot-grill-me`. |
 | `dot-roadmap` | Split a grilled plan into phases and self-contained tasks. |
 | `dot-handoff` | Summarize a conversation for another agent. |
+| `dot-comments` | Delete the comments in a diff that no exception protects. |
 | `dot-writing-for-agents` | Write skills, `AGENTS.md`, and `CLAUDE.md` files. |
 
 ## More information
