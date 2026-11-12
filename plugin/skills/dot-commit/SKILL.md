@@ -56,6 +56,8 @@ Let pre-commit hooks run. When a hook fails, fix the cause, stage the fix, and s
 
 Show `git log --oneline` for the commits you created, and list the changes that remain uncommitted. Push only when the user asks.
 
+When the commits finish a task from a `dot-roadmap` roadmap, tick the checkbox of that task in the roadmap's `README.md`, and tell the user.
+
 Done when every group in the plan is committed or skipped, and the user has seen the summary.
 
 ## Message format

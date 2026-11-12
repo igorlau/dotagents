@@ -5,7 +5,7 @@ description: Implement a feature, fix, refactor, or roadmap task to the reposito
 
 # Implement
 
-Turn a request, an approved plan, or a roadmap task into a working change that ends **green**: every check the work names passes, and you've shown the output.
+Turn a request, an approved plan, or a roadmap task into a production code change that ends **green**: the type checker and the linter pass, no existing test fails by accident, and you have shown the output. Write no tests: a separate test step writes them.
 
 ## Repository conventions first
 
@@ -31,22 +31,35 @@ For each language the change touches, read its reference if one exists:
 
 - [`references/typescript.md`](references/typescript.md): TypeScript and TSX.
 
-When you write or change tests, use the `dot-testing` skill.
-
 Work through the plan one step at a time, and run each step's check before you start the next one.
 
 Done when every requirement of the task, plan, or request has code that meets it.
 
 ## 4. Verify
 
-Run the task's "Verify" section, the plan's final check, or the repository's tests, type checker, and linter, and show the output. Check every acceptance criterion one by one. Reread your diff against the code comments and code style rules, and fix what they flag.
+Run the type checker and the linter. They are hard checks: fix each error that they report. Then run the existing tests, the task's "Verify" section, or the plan's final check, and show the output. Classify each failed test:
 
-When verification fails, or the task or plan turns out wrong (a fact contradicts it, or meeting it needs work outside its scope), stop. Report the failing check or the conflicting fact and propose a change to the task or plan. Keep the task file, the roadmap's decisions, and the plan as they are until the user agrees, and keep the change inside its scope.
+- **Expected**: the test asserts behavior that the task changes on purpose. Keep it for the handoff, and continue.
+- **Unexpected**: a regression. Fix the production code.
 
-For a roadmap task, tick its checkbox in the roadmap's `README.md` once everything passes.
+Check every acceptance criterion one by one. When only an expected failure or a missing test blocks a criterion, leave the criterion open for the test step, and list it in the handoff.
 
-Done when the work is green.
+When a hard check or an unexpected failure stays red, or the task or plan turns out wrong (a fact contradicts it, or it needs work outside its scope), stop. Report the check that failed or the fact that conflicts, and propose a change to the task or plan. Keep the task file, the roadmap's decisions, and the plan as they are until the user agrees, and keep the change inside its scope.
+
+Do not tick the roadmap checkbox. The `dot-commit` skill ticks it after the review step.
+
+Done when the hard checks pass and no unexpected failure remains.
 
 ## 5. Hand off
 
-End with the verification output and anything you skipped or couldn't check. Suggest the `dot-code-review` skill for the diff, then the `dot-commit` skill. Leave the commit to the user.
+End with the verification output, anything that you skipped or could not check, and these fields for the fill mode of the `dot-testing` skill:
+
+```markdown
+**Expected failures:**
+- `<test file>`: <test name>: <the new behavior that the test must assert>
+
+**Behaviors that need tests:**
+- `<module>`: <a behavior that the change adds or changes, and that no test case covers>
+```
+
+Write "none" under a field that has no items. Suggest `dot-testing` in fill mode, then the `dot-code-review` skill, then the `dot-commit` skill. Leave the commit to the user.
