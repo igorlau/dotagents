@@ -117,6 +117,14 @@ The following skills load when a task needs them:
 | `dot-correct` | Turn a mistake that agents repeat into a check that prevents it. |
 | `dot-writing-for-agents` | Write skills, `AGENTS.md`, and `CLAUDE.md` files. |
 
+The plugin also ships these agents, which `dot-flow` starts for each step:
+
+| Agent | Purpose |
+| ----- | ------- |
+| `dot-tester` | Write the test stubs, or fill them after the code exists. |
+| `dot-implementer` | Write the production code of a task. |
+| `dot-reviewer` | Review the changes of a task. |
+
 ## More information
 
 - [Design specification](SPEC.md)

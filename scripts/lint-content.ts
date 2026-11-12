@@ -1,10 +1,12 @@
-// Checks the structure of plugin/: skill and agent frontmatter, relative links, the
-// rules and skill size budgets, upstream metadata, scaffold templates, and the plugin
-// and marketplace manifests. Exits 1 on any problem.
+// Checks the structure of plugin/: skill and agent frontmatter, relative links and
+// anchors, the rules and skill size budgets, upstream metadata, scaffold templates, and
+// the plugin and marketplace manifests. Also checks that the top-level docs and docs/
+// name only real skills and agents, with the right counts. Exits 1 on any problem.
 import fs from "node:fs";
 import path from "node:path";
 import { packageRoot, pluginRoot } from "../src/paths.ts";
 import { parseFrontmatter } from "../src/frontmatter.ts";
+import { headingAnchors, withoutFences } from "./markdown.ts";
 
 // Rules load into every conversation, so they cost tokens on every turn.
 // Raise this only with a reason. About 4 characters make one token.
@@ -19,9 +21,10 @@ const NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const NAME_MAX = 64;
 const DESCRIPTION_MAX = 1024;
 const UPSTREAM_FIELDS = ["repository", "path", "commit", "license", "modified"];
+const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"];
 
 const problems: string[] = [];
-const fail = (file: string, message: string) => problems.push(`${path.relative(pluginRoot, file)}: ${message}`);
+const fail = (file: string, message: string, line?: number) => problems.push(`${path.relative(packageRoot, file)}${line ? `:${line}` : ""}: ${message}`);
 
 const rulesDir = path.join(pluginRoot, "rules");
 let ruleChars = 0;
@@ -42,6 +45,7 @@ if (ruleChars > RULES_CHAR_BUDGET) fail(rulesDir, `${ruleChars} characters excee
 const skillsDir = path.join(pluginRoot, "skills");
 // Claude Code can't preload a skill that sets disable-model-invocation into an agent.
 const preloadableSkills = new Set<string>();
+const skillNames = new Set<string>();
 for (const name of fs.readdirSync(skillsDir)) {
   const dir = path.join(skillsDir, name);
   if (!fs.statSync(dir).isDirectory()) continue;
@@ -54,6 +58,7 @@ for (const name of fs.readdirSync(skillsDir)) {
   const skillText = fs.readFileSync(skillFile, "utf8");
   if (skillText.length > SKILL_CHAR_BUDGET) fail(skillFile, `${skillText.length} characters exceeds the budget of ${SKILL_CHAR_BUDGET}; move conditional content to references/`);
 
+  skillNames.add(name);
   const data = readFrontmatter(skillFile, skillText);
   if (!data) continue;
   if (data.name !== name) fail(skillFile, `name "${data.name}" must match the directory name "${name}"`);
@@ -82,15 +87,53 @@ for (const file of allFiles(scaffoldDir)) {
   }
 }
 
+const agentsDir = path.join(pluginRoot, "agents");
 const pluginName = checkManifests();
 if (pluginName) checkAgents(pluginName);
+
+const agentNames = new Set(fs.readdirSync(agentsDir).filter((name) => name.endsWith(".md")).map((name) => path.basename(name, ".md")));
+const docsDir = path.join(packageRoot, "docs");
+const readmeFile = path.join(packageRoot, "README.md");
+const docFiles = [readmeFile, ...["SPEC.md", "CONTRIBUTING.md"].map((name) => path.join(packageRoot, name))];
+if (fs.existsSync(docsDir)) docFiles.push(...markdownFiles(docsDir));
+for (const file of docFiles) checkDoc(file);
+
+/**
+ * Checks a doc's links, that every dot-* name in code or a link target is a real skill or agent,
+ * and that a count before "skills" or "agents" matches the catalog. The README must name every one.
+ */
+function checkDoc(file: string): void {
+  checkLinks(file);
+  const text = withoutFences(fs.readFileSync(file, "utf8"));
+  const catalog = new Set([...skillNames, ...agentNames]);
+  const named = new Set<string>();
+  // Inline code spans and link targets.
+  for (const span of text.matchAll(/`[^`\n]+`|\]\([^)\s]+\)/g)) {
+    for (const name of span[0].matchAll(/(?<![\w-])dot-[a-z0-9]+(?:-[a-z0-9]+)*/g)) {
+      named.add(name[0]);
+      if (!catalog.has(name[0])) fail(file, `"${name[0]}" is not a skill or an agent`, lineOf(text, span.index));
+    }
+  }
+  if (file === readmeFile) {
+    for (const name of catalog) if (!named.has(name)) fail(file, `does not list "${name}"`);
+  }
+  const counts: Record<string, number> = { skills: skillNames.size, agents: agentNames.size };
+  for (const match of text.matchAll(new RegExp(`\\b(\\d+|${NUMBER_WORDS.join("|")})\\s+(skills|agents)\\b`, "gi"))) {
+    const stated = /^\d+$/.test(match[1]) ? Number(match[1]) : NUMBER_WORDS.indexOf(match[1].toLowerCase());
+    const actual = counts[match[2].toLowerCase()];
+    if (stated !== actual) fail(file, `"${match[0].replace(/\s+/g, " ")}" must be ${actual} ${match[2]}`, lineOf(text, match.index));
+  }
+}
+
+function lineOf(text: string, index: number): number {
+  return text.slice(0, index).split("\n").length;
+}
 
 /**
  * Checks agent frontmatter. Each preloaded skill must carry the plugin's namespace: a bare
  * name loads a same-named skill from ~/.claude/skills/ first, such as a stale copy.
  */
 function checkAgents(pluginName: string): void {
-  const agentsDir = path.join(pluginRoot, "agents");
   for (const name of fs.readdirSync(agentsDir)) {
     const file = path.join(agentsDir, name);
     if (!name.endsWith(".md")) {
@@ -172,12 +215,24 @@ function markdownFiles(dir: string): string[] {
   });
 }
 
+/** Checks that relative links resolve, and that each #anchor matches a heading in the target markdown file. */
 function checkLinks(file: string): void {
-  const text = fs.readFileSync(file, "utf8").replace(/```[\s\S]*?```/g, "");
+  const text = withoutFences(fs.readFileSync(file, "utf8"));
   for (const match of text.matchAll(/\]\(([^)\s]+)\)/g)) {
-    const target = match[1].split("#")[0];
-    if (target === "" || /^[a-z]+:/i.test(target)) continue;
-    if (!fs.existsSync(path.resolve(path.dirname(file), target))) fail(file, `broken link to ${match[1]}`);
+    const [target, anchor] = match[1].split("#");
+    if (/^[a-z]+:/i.test(target)) continue;
+    const line = lineOf(text, match.index);
+    const targetFile = target === "" ? file : path.resolve(path.dirname(file), target);
+    let heading = anchor;
+    try {
+      heading = decodeURIComponent(anchor);
+    } catch {
+      // A malformed escape stays as written, and the anchor check reports it.
+    }
+    if (!fs.existsSync(targetFile)) fail(file, `broken link to ${match[1]}`, line);
+    else if (anchor && targetFile.endsWith(".md") && !headingAnchors(fs.readFileSync(targetFile, "utf8")).has(heading)) {
+      fail(file, `no heading in ${target || "this file"} matches #${anchor}`, line);
+    }
   }
 }
 
