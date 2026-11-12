@@ -104,7 +104,7 @@ The following skills load when a task needs them:
 | `dot-plan` | Plan a change as small, verifiable steps. |
 | `dot-implement` | Implement a change or roadmap task to the repository's and language's standards. |
 | `dot-testing` | Write tests around a shared makeSut factory. |
-| `dot-code-review` | Review a diff for correctness bugs. |
+| `dot-code-review` | Review a diff for correctness bugs and maintainability problems. |
 | `dot-commit` | Commit changes as small, logical commits. |
 | `dot-docs-writing` | Write docs in the Google developer documentation style. |
 | `dot-debug` | Diagnose hard bugs with a feedback loop. |

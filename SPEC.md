@@ -187,7 +187,7 @@ budget in `scripts/lint-content.ts`. A vendored rule has a
 | `dot-plan` | Original, with principles from `pstack` in `cursor/plugins` (MIT) |
 | `dot-implement` | Original, based on the Google TypeScript style guide (CC BY 3.0) and `pstack/skills/typescript-best-practices` in `cursor/plugins` (MIT) |
 | `dot-testing` | Original, with a principle from `pstack` in `cursor/plugins` (MIT) |
-| `dot-code-review` | Original |
+| `dot-code-review` | Original, with a maintainability pass adapted from `cursor-team-kit/skills/thermo-nuclear-code-quality-review` and principles from `pstack` in `cursor/plugins` (MIT) |
 | `dot-commit` | Original |
 | `dot-docs-writing` | Original, based on the Google developer documentation style guide (CC BY 4.0) |
 | `dot-roadmap` | Original, based on `to-tickets` from `mattpocock/skills` (MIT), with a principle from `pstack` in `cursor/plugins` (MIT) |

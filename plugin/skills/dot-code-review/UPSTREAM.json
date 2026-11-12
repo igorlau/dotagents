@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/cursor/plugins",
+  "path": "cursor-team-kit/skills/thermo-nuclear-code-quality-review/SKILL.md",
+  "commit": "a5539b15a3d56e04992565aafee2b37051329ce3",
+  "license": "MIT",
+  "modified": true,
+  "notes": "Adapted into references/maintainability.md as the maintainability pass: kept code judo, the 1,000-line blocker, the smells, the presumed blockers, and the direct tone, rewrote the text under plugin/rules/writing.md, and gave each rule a severity. The Reader load, Domain model, and Scope sections condense pstack/skills/principle-minimize-reader-load, pstack/skills/principle-model-the-domain, and pstack/skills/principle-subtract-before-you-add at the same commit. SKILL.md and the correctness pass are original and are not from cursor/plugins."
+}
