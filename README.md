@@ -6,11 +6,19 @@ AI workflow.
 
 ## Install
 
-To install the skills and rules for all your projects, run the following
-command:
+To install the rules for all your projects, and the skills for Codex and
+Copilot, run the following command:
 
 ```bash
 npx --yes @igorlau/dotagents install
+```
+
+Claude Code gets the skills, agents, and hooks from the dotagents plugin. To
+install the plugin, run the following commands in Claude Code:
+
+```text
+/plugin marketplace add igorlau/dotagents
+/plugin install dotagents@dotagents
 ```
 
 `npx` runs dotagents without installing it. To run `dotagents` as a command

@@ -15,7 +15,7 @@ import {
   writeManifest,
   type Manifest,
 } from "./manifest.ts";
-import { codexHome, configDir, packageRoot } from "./paths.ts";
+import { claudeHome, codexHome, configDir, packageRoot } from "./paths.ts";
 import { planInstall, planScaffold, type Agent, type Mode } from "./targets.ts";
 
 export interface Options {
@@ -32,6 +32,9 @@ interface Scope {
 }
 
 export const DEFAULT_SOURCE = "@igorlau/dotagents@latest";
+
+const PLUGIN_HINT =
+  "Claude Code gets the dotagents skills from the plugin. To install it, run `/plugin marketplace add igorlau/dotagents` and `/plugin install dotagents@dotagents` in Claude Code.";
 
 // Release tags carry a real version. Builds from a branch carry X.Y.0-dev,
 // so the commit tells them apart.
@@ -71,6 +74,7 @@ function run(scope: Scope, agents: Agent[], options: Options, uninstall = false)
   const ops = uninstall ? [] : planInstall(catalog, scope.mode, agents, scope.root);
   const result = apply(ops, fromStored(previous?.entries ?? [], scope.root), options);
   report(result, options.dryRun);
+  if (!uninstall && scope.mode === "global" && agents.includes("claude") && !dotagentsPluginInstalled()) log(PLUGIN_HINT);
   if (options.dryRun) return result.problems.length === 0;
 
   if (result.entries.length === 0) {
@@ -185,12 +189,34 @@ export function doctor(cwd: string): boolean {
     if (scope.mode === "global" && manifest.agents.includes("codex") && fs.existsSync(path.join(codexHome(), "AGENTS.override.md"))) {
       issues.push(`${path.join(codexHome(), "AGENTS.override.md")} exists, so Codex ignores the rules in AGENTS.md.`);
     }
+    if (scope.mode === "global" && manifest.agents.includes("claude")) {
+      issues.push(...(dotagentsPluginInstalled() ? duplicateClaudeSkills() : [PLUGIN_HINT]));
+    }
     if (version() !== manifest.version) log(`  Installed version ${manifest.version} differs from this CLI (${version()}). Run \`dotagents update\`.`);
   }
 
   for (const issue of issues) log(`  ! ${issue}`);
   if (issues.length === 0) log("  No problems found.");
   return issues.length === 0;
+}
+
+/** Lists `dot-*` skills in Claude Code's skills directory when the dotagents plugin also provides them. */
+function duplicateClaudeSkills(): string[] {
+  const skillsDir = path.join(claudeHome(), "skills");
+  if (!fs.existsSync(skillsDir)) return [];
+  return fs
+    .readdirSync(skillsDir)
+    .filter((name) => name.startsWith("dot-"))
+    .map((name) => `${path.join(skillsDir, name)}: Claude Code also loads this skill from the dotagents plugin. Delete the directory.`);
+}
+
+function dotagentsPluginInstalled(): boolean {
+  try {
+    const installed = JSON.parse(fs.readFileSync(path.join(claudeHome(), "plugins", "installed_plugins.json"), "utf8"));
+    return Object.keys(installed.plugins ?? {}).some((id) => id.startsWith("dotagents@"));
+  } catch {
+    return false;
+  }
 }
 
 export function list(): void {

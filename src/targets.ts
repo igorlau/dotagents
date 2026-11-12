@@ -58,6 +58,8 @@ export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root 
   const add = (op: Op) => ops.set(op.path, op);
 
   for (const agent of agents) {
+    // Claude Code gets its skills globally from the dotagents plugin. See SPEC.md, decision 19.
+    if (mode === "global" && agent === "claude") continue;
     for (const skill of catalog.skills) {
       for (const file of skill.files) {
         add({

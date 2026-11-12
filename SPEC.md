@@ -19,8 +19,10 @@ This document records the design decisions and the reasons behind them.
 
 - A general-purpose package manager for third-party skills. Use
   [`npx skills`](https://skills.sh) for that.
-- Commands, subagents, hooks, and MCP servers. They aren't portable across
-  the three agents, so each one needs its own adapter.
+- Commands, subagents, hooks, and MCP servers in the CLI. They aren't
+  portable across the three agents, so each one needs its own adapter. The
+  plugin ships agents and hooks, because Claude Code and Copilot load the
+  same plugin format.
 
 ## Decisions
 
@@ -46,6 +48,7 @@ The following table lists each decision and the reason for it:
 | 16 | Add a `scaffold` command that creates starter project instructions once, and leaves them out of the manifest. | A new repository needs instructions written for the project, and those belong to the repository: `update` must never rewrite them. Write-once files also keep the command safe in a repository that already has instructions. |
 | 17 | Keep the catalog in `plugin/`, which is also a Claude Code plugin, and list it in a marketplace at the repository root. | One source serves the CLI and the plugin. Adding the repository as a marketplace needs no registry and costs nothing. |
 | 18 | Ship one end-of-turn hook in the plugin that runs the repository's `check` script (type check and lint, not tests) and makes the agent continue when it fails. | Claude Code, Copilot, and Codex all load the plugin's `hooks/hooks.json`, and Claude Code, Copilot CLI, and Codex document a `block` decision, so one script covers the three agents. Tests stay out because `dot-implement` can leave expected test failures for `dot-testing`. The hook allows the second stop, so it can't loop. It runs the check only when the turn changed the working tree, compared with a snapshot taken when the prompt arrived, so a turn that changes nothing never makes the agent fix existing problems or runs repository code. |
+| 19 | The global CLI install writes rules for all three agents and skills only for Codex and Copilot. Claude Code gets the skills, agents, and hooks from the plugin. | Plugins can't ship always-on rules, and the CLI can't install agents and hooks safely. `update` removes the Claude Code skills that earlier versions installed, and `doctor` warns about leftover copies. Project installs still write `.claude/skills/`, so collaborators don't need the plugin. |
 
 ## Install modes
 
@@ -77,7 +80,7 @@ change these locations often. When they change, update `src/targets.ts`.
 
 | Mode | Claude Code | Codex | Copilot |
 |------|-------------|-------|---------|
-| Global | `~/.claude/skills/` | `~/.agents/skills/` | `~/.agents/skills/` |
+| Global | The dotagents plugin | `~/.agents/skills/` | `~/.agents/skills/` |
 | Project | `.claude/skills/` | `.agents/skills/` | `.agents/skills/` |
 
 ### Rules
@@ -108,11 +111,11 @@ Notes on these choices:
   Code and Codex on 2026-11-12. Codex 0.160 installs the Claude-format
   plugin unchanged and copies `hooks/`. A live run in each agent, and
   Copilot in VS Code, where hooks are in preview, are not verified yet.
-
-- Copilot in VS Code reads skills from both `~/.claude/skills/` and
-  `~/.agents/skills/` (and `.claude/skills/` and `.agents/skills/` in project
-  mode), so it can list each skill twice. Claude Code reads only the first
-  location and Codex only the second, so dotagents writes both.
+- In project mode, Copilot in VS Code reads skills from both `.claude/skills/`
+  and `.agents/skills/`, so it can list each skill twice. Claude Code reads
+  only the first location and Codex only the second, so dotagents writes
+  both. When Copilot also has the dotagents plugin, it can list the skills
+  twice in global mode too.
 - In project mode, Claude Code reads `AGENTS.md` when the project has no
   `CLAUDE.md`, so it can see the rules twice.
   The same happens after `scaffold`, whose `CLAUDE.md` imports `AGENTS.md`.

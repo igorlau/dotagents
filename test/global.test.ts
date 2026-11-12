@@ -9,16 +9,16 @@ beforeEach(() => (box = sandbox()));
 afterEach(() => box.cleanup());
 
 const p = (...parts: string[]) => path.join(box.home, ...parts);
+const installPlugin = () => write(p(".claude", "plugins", "installed_plugins.json"), JSON.stringify({ plugins: { "dotagents@dotagents": [] } }));
 
-test("install writes skills and rules for every agent", () => {
+test("install writes rules for every agent, and skills for every agent but Claude Code", () => {
   const result = box.run(["install"]);
   assert.equal(result.status, 0, result.output);
 
-  for (const dir of [".claude/skills", ".agents/skills"]) {
-    assert.ok(exists(p(dir, "dot-plan", "SKILL.md")), `${dir}/dot-plan`);
-    assert.ok(exists(p(dir, "dot-debug", "scripts", "hitl-loop.template.sh")), `${dir}/dot-debug script`);
-    assert.ok(!exists(p(dir, "dot-grill-me", "UPSTREAM.json")), "UPSTREAM.json isn't installed");
-  }
+  assert.ok(exists(p(".agents", "skills", "dot-plan", "SKILL.md")));
+  assert.ok(exists(p(".agents", "skills", "dot-debug", "scripts", "hitl-loop.template.sh")));
+  assert.ok(!exists(p(".agents", "skills", "dot-grill-me", "UPSTREAM.json")), "UPSTREAM.json isn't installed");
+  assert.ok(!exists(p(".claude", "skills")), "Claude Code gets skills from the plugin");
   const claudeRules = read(p(".claude", "rules", "dotagents.md"));
   assert.match(claudeRules, /## Working agreements[\s\S]*## Code comments[\s\S]*## Ponytail/);
   assert.match(read(p(".codex", "AGENTS.md")), /<!-- dotagents:start -->[\s\S]*Working agreements[\s\S]*<!-- dotagents:end -->/);
@@ -39,7 +39,7 @@ test("install is idempotent", () => {
 
 test("--agents limits the install", () => {
   box.run(["install", "--agents", "claude"]);
-  assert.ok(exists(p(".claude", "skills", "dot-plan", "SKILL.md")));
+  assert.deepEqual(tree(box.home), [".claude/rules/dotagents.md", ".config/dotagents/manifest.json"]);
   assert.ok(!exists(p(".agents")));
   assert.ok(!exists(p(".codex")));
   assert.ok(!exists(p(".copilot")));
@@ -78,7 +78,7 @@ test("an existing file that dotagents didn't write is a conflict", () => {
 
 test("update skips locally modified files unless forced", () => {
   box.run(["install"]);
-  const file = p(".claude", "skills", "dot-plan", "SKILL.md");
+  const file = p(".agents", "skills", "dot-plan", "SKILL.md");
   write(file, "my edits");
 
   const result = box.run(["update"]);
@@ -104,6 +104,31 @@ test("update removes skills that left the catalog", () => {
   assert.ok(!exists(path.dirname(stale)), "the skill directory is pruned");
 });
 
+test("update removes the Claude Code skills that an earlier version installed, and keeps the rules", () => {
+  box.run(["install"]);
+  const manifestFile = p(".config", "dotagents", "manifest.json");
+  const manifest = JSON.parse(read(manifestFile));
+  const legacy = p(".claude", "skills", "dot-plan", "SKILL.md");
+  write(legacy, "legacy skill");
+  manifest.entries.push({ path: legacy, kind: "file", hash: hash("legacy skill") });
+  write(manifestFile, JSON.stringify(manifest));
+
+  const result = box.run(["update"]);
+  assert.equal(result.status, 0, result.output);
+  assert.ok(!exists(p(".claude", "skills", "dot-plan")));
+  assert.ok(exists(p(".claude", "rules", "dotagents.md")));
+});
+
+test("doctor warns when Claude Code has dotagents skills and the plugin", () => {
+  box.run(["install"]);
+  write(p(".claude", "skills", "dot-plan", "SKILL.md"), "leftover");
+  installPlugin();
+
+  const result = box.run(["doctor"]);
+  assert.equal(result.status, 1);
+  assert.match(result.output, /dot-plan: Claude Code also loads this skill from the dotagents plugin/);
+});
+
 test("--dry-run writes nothing", () => {
   const result = box.run(["install", "--dry-run"]);
   assert.equal(result.status, 0, result.output);
@@ -111,8 +136,21 @@ test("--dry-run writes nothing", () => {
   assert.deepEqual(tree(box.home), []);
 });
 
+test("install, update, and doctor tell Claude Code users to install the plugin until it's installed", () => {
+  assert.match(box.run(["install"]).output, /\/plugin install dotagents@dotagents/);
+  assert.match(box.run(["update"]).output, /\/plugin install dotagents@dotagents/);
+  const doctor = box.run(["doctor"]);
+  assert.equal(doctor.status, 1);
+  assert.match(doctor.output, /\/plugin install dotagents@dotagents/);
+
+  installPlugin();
+  assert.doesNotMatch(box.run(["update"]).output, /\/plugin install/);
+  assert.equal(box.run(["doctor"]).status, 0);
+});
+
 test("doctor reports modified and missing files", () => {
   box.run(["install"]);
+  installPlugin();
   assert.equal(box.run(["doctor"]).status, 0);
   write(p(".claude", "rules", "dotagents.md"), "edited");
   const result = box.run(["doctor"]);
