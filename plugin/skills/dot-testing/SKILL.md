@@ -43,5 +43,6 @@ Read each reference that applies to the tests:
 
 - [`references/typescript.md`](references/typescript.md): read when the tests use TypeScript with Vitest, Jest, or `node:test`.
 - [`references/http.md`](references/http.md): read when you write controller, integration, or end-to-end tests.
+- [`references/modes.md`](references/modes.md): read when you work a roadmap task, before `dot-implement` (stub mode) or after it (fill mode).
 
 Done when every test you wrote or changed passes with the repository's test command, and you've shown the output.
