@@ -1,0 +1,10 @@
+{
+  "name": "dotagents",
+  "description": "Skills, agents, and hooks for a planned, test-first, reviewed coding workflow.",
+  "author": {
+    "name": "igorlau"
+  },
+  "homepage": "https://github.com/igorlau/dotagents#readme",
+  "repository": "https://github.com/igorlau/dotagents",
+  "license": "MIT"
+}

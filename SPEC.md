@@ -44,6 +44,7 @@ The following table lists each decision and the reason for it:
 | 14 | Add an always-on rule for code comments. | Agents tend to write comments that restate code or narrate changes. |
 | 15 | Prefix every skill name with `dot-`, such as `dot-plan`. | Claude Code runs a personal skill over a project skill with the same name, so an unprefixed dotagents skill would hide a repository's own skill. The prefix also tells the skills apart in the `/` menu. Rules need no prefix: they live in dotagents-named files and blocks. |
 | 16 | Add a `scaffold` command that creates starter project instructions once, and leaves them out of the manifest. | A new repository needs instructions written for the project, and those belong to the repository: `update` must never rewrite them. Write-once files also keep the command safe in a repository that already has instructions. |
+| 17 | Keep the catalog in `plugin/`, which is also a Claude Code plugin, and list it in a marketplace at the repository root. | One source serves the CLI and the plugin. Adding the repository as a marketplace needs no registry and costs nothing. |
 
 ## Install modes
 
@@ -208,6 +209,18 @@ agents and Git working in the dotagents repository don't load them as its own
   Code isn't selected.
 
 ## Distribution
+
+### Plugin
+
+`plugin/.claude-plugin/plugin.json` makes `plugin/` a Claude Code plugin, and
+`.claude-plugin/marketplace.json` lists it. The CLI reads only `rules/`,
+`skills/`, and `scaffold/` from `plugin/`. `plugin.json` has no `version`:
+with a fixed version, Claude Code skips updates, and without one it versions
+the plugin by commit. `npm run lint:content` fails when a version is added.
+The npm package doesn't include the marketplace file: Claude Code installs the
+plugin from Git.
+
+### npm
 
 dotagents is published to npm as `@igorlau/dotagents`:
 

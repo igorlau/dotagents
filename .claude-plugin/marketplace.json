@@ -1,0 +1,14 @@
+{
+  "name": "dotagents",
+  "description": "Skills, agents, and hooks from dotagents.",
+  "owner": {
+    "name": "igorlau"
+  },
+  "plugins": [
+    {
+      "name": "dotagents",
+      "source": "./plugin",
+      "description": "Skills, agents, and hooks for a planned, test-first, reviewed coding workflow."
+    }
+  ]
+}

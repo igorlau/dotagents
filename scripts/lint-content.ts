@@ -1,9 +1,9 @@
 // Checks the structure of plugin/: skill frontmatter, relative links, the
-// rules size budget, upstream metadata, and scaffold templates. Exits 1 on
-// any problem.
+// rules size budget, upstream metadata, scaffold templates, and the plugin
+// and marketplace manifests. Exits 1 on any problem.
 import fs from "node:fs";
 import path from "node:path";
-import { pluginRoot } from "../src/paths.ts";
+import { packageRoot, pluginRoot } from "../src/paths.ts";
 import { parseFrontmatter } from "../src/frontmatter.ts";
 
 // Rules load into every conversation, so they cost tokens on every turn.
@@ -81,6 +81,32 @@ for (const file of allFiles(scaffoldDir)) {
     } catch (error) {
       fail(file, `invalid JSON: ${(error as Error).message}`);
     }
+  }
+}
+
+checkManifests();
+
+/** Checks that the marketplace lists this plugin by name, and that the plugin has no fixed version. */
+function checkManifests(): void {
+  const pluginFile = path.join(pluginRoot, ".claude-plugin", "plugin.json");
+  const marketplaceFile = path.join(packageRoot, ".claude-plugin", "marketplace.json");
+  const plugin = readJson(pluginFile);
+  const marketplace = readJson(marketplaceFile);
+  if (!plugin || !marketplace) return;
+
+  const entry = marketplace.plugins?.find((candidate: { source?: string }) => path.resolve(packageRoot, candidate.source ?? "") === path.resolve(pluginRoot));
+  if (!entry) fail(marketplaceFile, "no plugin entry whose source is plugin/");
+  else if (entry.name !== plugin.name) fail(marketplaceFile, `plugin name "${entry.name}" must match plugin.json name "${plugin.name}"`);
+  // Claude Code skips updates while the version stays the same; without one, it versions by commit.
+  if ("version" in plugin) fail(pluginFile, "remove \"version\", so Claude Code updates the plugin on every commit");
+}
+
+function readJson(file: string) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (error) {
+    fail(file, (error as Error).message);
+    return undefined;
   }
 }
 
