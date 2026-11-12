@@ -15,7 +15,7 @@ Before you start, read what the repository defines: agent instructions (`AGENTS.
 
 Identify the source of the work:
 
-- **Roadmap task**: a task file from `dot-roadmap`, or a roadmap directory. With only a directory, pick the lowest-id task whose blockers are all ticked in its `README.md`. If a named task has an unticked blocker, stop and name it. Read the task file and the roadmap's decisions in full. The task's "Out of scope" is a hard boundary.
+- **Roadmap task**: a task file from `dot-roadmap`, or a roadmap directory. With only a directory, pick the lowest-id unticked task whose blockers are all ticked in its `README.md`. If a named task has an unticked blocker, stop and name it. Read the task file and the roadmap's decisions in full. The task's "Out of scope" is a hard boundary.
 - **Approved plan**: the plan in this conversation, from `dot-plan` or the user.
 - **Request**: anything else.
 
