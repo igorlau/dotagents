@@ -45,6 +45,7 @@ The following table lists each decision and the reason for it:
 | 15 | Prefix every skill name with `dot-`, such as `dot-plan`. | Claude Code runs a personal skill over a project skill with the same name, so an unprefixed dotagents skill would hide a repository's own skill. The prefix also tells the skills apart in the `/` menu. Rules need no prefix: they live in dotagents-named files and blocks. |
 | 16 | Add a `scaffold` command that creates starter project instructions once, and leaves them out of the manifest. | A new repository needs instructions written for the project, and those belong to the repository: `update` must never rewrite them. Write-once files also keep the command safe in a repository that already has instructions. |
 | 17 | Keep the catalog in `plugin/`, which is also a Claude Code plugin, and list it in a marketplace at the repository root. | One source serves the CLI and the plugin. Adding the repository as a marketplace needs no registry and costs nothing. |
+| 18 | Ship one end-of-turn hook in the plugin that runs the repository's `check` script (type check and lint, not tests) and makes the agent continue when it fails. | Claude Code, Copilot, and Codex all load the plugin's `hooks/hooks.json`, and Claude Code, Copilot CLI, and Codex document a `block` decision, so one script covers the three agents. Tests stay out because `dot-implement` can leave expected test failures for `dot-testing`. The hook allows the second stop, so it can't loop. It runs the check only when the turn changed the working tree, compared with a snapshot taken when the prompt arrived, so a turn that changes nothing never makes the agent fix existing problems or runs repository code. |
 
 ## Install modes
 
@@ -102,6 +103,11 @@ Notes on these choices:
   override the default directories.
 
 ### Known limitations
+
+- The `check` hook was tested with its unit tests and installed in Claude
+  Code and Codex on 2026-11-12. Codex 0.160 installs the Claude-format
+  plugin unchanged and copies `hooks/`. A live run in each agent, and
+  Copilot in VS Code, where hooks are in preview, are not verified yet.
 
 - Copilot in VS Code reads skills from both `~/.claude/skills/` and
   `~/.agents/skills/` (and `.claude/skills/` and `.agents/skills/` in project
