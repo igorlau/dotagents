@@ -49,6 +49,7 @@ The following table lists each decision and the reason for it:
 | 17 | Keep the catalog in `plugin/`, which is also a Claude Code plugin, and list it in a marketplace at the repository root. | One source serves the CLI and the plugin. Adding the repository as a marketplace needs no registry and costs nothing. |
 | 18 | Ship one end-of-turn hook in the plugin that runs the repository's `check` script (type check and lint, not tests) and makes the agent continue when it fails. | Claude Code, Copilot, and Codex all load the plugin's `hooks/hooks.json`, and Claude Code, Copilot CLI, and Codex document a `block` decision, so one script covers the three agents. Tests stay out because `dot-implement` can leave expected test failures for `dot-testing`. The hook allows the second stop, so it can't loop. It runs the check only when the turn changed the working tree, compared with a snapshot taken when the prompt arrived, so a turn that changes nothing never makes the agent fix existing problems or runs repository code. It acts only in repositories listed in `checkRepos` in the user's `config.json`, which `dotagents check enable` sets: the `check` script is the repository's own code, and an opt-in inside the repository would let an untrusted one enable itself. |
 | 19 | The global CLI install writes rules for all three agents and skills only for Codex and Copilot. Claude Code gets the skills, agents, and hooks from the plugin. | Plugins can't ship always-on rules, and the CLI can't install agents and hooks safely. `update` removes the Claude Code skills that earlier versions installed, and `doctor` warns about leftover copies. Project installs still write `.claude/skills/`, so collaborators don't need the plugin. |
+| 20 | Add an always-on writing rule, based on ASD-STE100, for all text that agents write: chat, CLI output, plans and reports, commits, pull requests, and docs. It takes precedence over the Google style in `dot-docs-writing`. | Short sentences with a controlled vocabulary are easier to read for a reader in a second language and for translation tools. One rule for all text replaces the prose rules that `dot-docs-writing` kept only for docs. The rules are in our own words, because the ASD-STE100 dictionary is copyrighted. |
 
 ## Install modes
 
@@ -170,6 +171,7 @@ Rules load into every conversation. dotagents joins every file in
 | `core.md` | Working agreements: verification, scope, destructive actions | Original |
 | `ponytail.md` | Smallest complete change, reuse before writing, concise replies | Vendored from the `AGENTS.md` file in `DietrichGebert/ponytail` (MIT), adapted |
 | `comments.md` | Delete code comments by default, and keep only the named exceptions | Original, based on the `pstack` comment policy from `cursor/plugins` (MIT) |
+| `writing.md` | Plain, short sentences and no AI tells in all text that agents write | Original, based on ASD-STE100, with patterns condensed from `pstack/skills/unslop` in `cursor/plugins` (MIT) |
 
 Each rule says one thing in one place. For example, `comments.md` owns
 comment guidance, so the comment bullet was removed from `ponytail.md`.

@@ -8,7 +8,7 @@ import { parseFrontmatter } from "../src/frontmatter.ts";
 
 // Rules load into every conversation, so they cost tokens on every turn.
 // Raise this only with a reason. About 4 characters make one token.
-const RULES_CHAR_BUDGET = 6000;
+const RULES_CHAR_BUDGET = 7500;
 // Personal skills win name clashes in Claude Code, so the prefix keeps
 // dotagents skills from hiding a repository's own skills.
 const SKILL_PREFIX = "dot-";

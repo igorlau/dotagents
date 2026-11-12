@@ -66,11 +66,12 @@ SOFTWARE.
 
 ## cursor/plugins pstack
 
-The `dot-comments` skill and the comment policy in `plugin/rules/comments.md`
-come from the `pstack` plugin in
-[cursor/plugins](https://github.com/cursor/plugins). The skill's
-`UPSTREAM.json` file and `plugin/rules/comments.upstream.json` record the
-source commits and local changes. The project
+The `dot-comments` skill, the comment policy in `plugin/rules/comments.md`,
+and the word and format rules in `plugin/rules/writing.md` come from the
+`pstack` plugin in [cursor/plugins](https://github.com/cursor/plugins). The
+skill's `UPSTREAM.json` file, `plugin/rules/comments.upstream.json`, and
+`plugin/rules/writing.upstream.json` record the source commits and local
+changes. The project
 is licensed under the MIT License:
 
 ```text

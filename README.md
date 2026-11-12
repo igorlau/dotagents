@@ -94,7 +94,8 @@ To overwrite them, pass `--force`.
 
 The always-on rules in [`plugin/rules/`](plugin/rules/) cover working
 agreements, the smallest complete change from
-[ponytail](https://github.com/DietrichGebert/ponytail), and code comments.
+[ponytail](https://github.com/DietrichGebert/ponytail), code comments, and
+writing.
 
 The following skills load when a task needs them:
 

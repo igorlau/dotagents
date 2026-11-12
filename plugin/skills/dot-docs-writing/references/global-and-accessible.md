@@ -11,8 +11,7 @@ Rules for the [`dot-docs-writing`](../SKILL.md) skill that help readers who use 
 - Keep helper words that make structure explicit: "that", "then", "of". Write "Update the rules that you defined", not "Update the rules you defined".
 - Write "if X, then Y" in technical conditions.
 - Place "only" directly before the word it modifies.
-- Use no more than two nouns to modify another noun.
-- Replace "using" with "by using" or "that uses" when the meaning is unclear.
+- Replace "using" with "with", "through", or "that uses".
 - Avoid idioms, metaphors, humor, slang, pop culture, sports references, and holidays.
 - Use a diverse set of names in examples, and use example domains such as `example.com`.
 - Address the reader as "you". Use "users" only for the people who use the software that the reader builds.
@@ -21,7 +20,7 @@ Rules for the [`dot-docs-writing`](../SKILL.md) skill that help readers who use 
 ## Accessibility
 
 - Break text into short paragraphs, headings, and lists. Put the key information in the first sentence of each paragraph.
-- Keep sentences under 26 words. Avoid double negatives and exceptions to exceptions.
+- Avoid double negatives and exceptions to exceptions.
 - Define acronyms at first use, and again if they appear rarely.
 - Write link text that makes sense out of context, because screen reader users often navigate by links alone.
 - Give every image alt text that conveys its purpose. Use empty alt text for decorative images.

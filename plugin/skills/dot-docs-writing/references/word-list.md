@@ -16,9 +16,8 @@ These words add nothing, or judge difficulty for the reader:
 | latest, new, soon, eventually, in the future | A version number or date. |
 | performant | A precise measure, such as "responds in under 100 ms". |
 | functionality | features, capabilities |
-| leverage, utilize | use |
 | desire, wish | want, need |
-| via | through, by using, with |
+| via | through, with |
 | learnings | lessons, things you learned |
 | allows you to | lets you |
 
@@ -29,7 +28,7 @@ These words have more than one meaning:
 | Avoid | Write instead |
 |-------|---------------|
 | should | must (required), can (optional), or a recommendation: "We recommend…" |
-| may | can (permission or ability), might (possibility) |
+| may, might | can |
 | could, would | can |
 | will | Present tense, unless the event happens later. |
 | once (meaning "after") | after |
@@ -49,7 +48,7 @@ These words have more than one meaning:
 | Avoid | Write instead |
 |-------|---------------|
 | abort, kill, terminate (generic) | stop, exit, cancel, end |
-| hang, hung | stops responding, isn't responding |
+| hang, hung | stops responding, is not responding |
 | hit (a key or button) | press, click |
 | hover over | hold the pointer over, point to |
 | click on | click |

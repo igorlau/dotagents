@@ -5,7 +5,7 @@ description: Write and edit developer documentation in the Google developer docu
 
 # Docs writing
 
-Write documentation that a developer in a hurry, reading in their second language, can follow on the first pass. The rules come from the Google developer documentation style guide.
+Write documentation that a developer in a hurry, reading in their second language, can follow on the first pass. This skill covers the frame, structure, and formatting of a document, based on the Google developer documentation style guide. The always-on writing rule governs the prose, and it wins any conflict with this skill.
 
 ## Repository conventions first
 
@@ -19,29 +19,22 @@ Before drafting, answer these questions:
 - **Goal**: what can the reader do after reading?
 - **Type**: a task (how to do something), a concept (how something works), or reference (facts to look up). Use a task title with a bare verb, such as "Deploy the service", and a concept title with a noun phrase, such as "Deployment model".
 
-## 2. Draft with the core rules
+## 2. Draft
 
-**Voice and tone**
-
-- Write like a knowledgeable colleague: conversational and direct, without slang, jokes, or hype.
-- Address the reader as "you". Use the imperative for instructions. Use "we" only for a named organization.
-- Use active voice and name the actor: "The server sends a response", not "A response is sent".
-- Use present tense. Use "will" only for events that happen later.
-- Use common contractions, such as "don't" and "isn't".
-- Write "click **Save**", not "please click" or "simply click". Words such as "simply", "easy", "just", and "quickly" judge difficulty for the reader, so leave them out.
+Write the prose by the writing rule. Then apply these rules for documents:
 
 **Sentences**
 
-- Keep sentences under 26 words, with the subject and verb near the start.
+- Address the reader as "you". Use "we" only for a named organization.
 - Put the condition before the instruction: "If the build fails, run `make clean`."
 - Put the goal before the action: "To create a folder, click **New**."
-- Use the same term for the same concept throughout. Spell out an abbreviation at its first use.
-- Replace ambiguous pronouns ("it", "this") with the noun.
-- Use "can" for ability, "might" for possibility, and "must" for requirements. Avoid "should" and "may".
+- Spell out an abbreviation at its first use.
+- Replace an unclear pronoun, such as "it" or "this", with the noun.
+- Write "click **Save**", not "please click" or "simply click". Words such as "simply", "easy", and "quickly" judge difficulty for the reader.
 
 **Structure**
 
-- Use sentence case for titles and headings. Don't skip heading levels, and use one level-1 heading per page.
+- Keep heading levels in order, and use one level-1 heading per page.
 - Introduce every list, table, code sample, and procedure with a complete sentence that ends in a colon.
 - Use numbered lists for sequences and bulleted lists for everything else. Keep list items parallel.
 - Write each procedure step as one imperative action. State where the action happens before the action.
@@ -50,7 +43,7 @@ Before drafting, answer these questions:
 **Formatting**
 
 - Put code-related text in code font: commands, filenames, paths, variables, values, and field input.
-- Put UI element names in bold, matching the label's capitalization: click **Create project**.
+- Put UI element names in bold, with the label's capitalization: click **Create project**.
 - Write placeholders in uppercase with underscores, such as `PROJECT_ID`, and explain each one after the sample.
 - Use descriptive link text, such as the page title. Never use "click here" or a bare URL.
 - Write dates as "January 19, 2026", or as ISO 8601 (`2026-01-19`) when space is tight.
@@ -61,8 +54,7 @@ Before drafting, answer these questions:
 Read the draft once per checklist item, and fix every instance:
 
 - [ ] Each heading matches its section type (task, concept, or reference).
-- [ ] No passive voice hides who acts.
-- [ ] No sentence exceeds 26 words.
+- [ ] Every sentence follows the writing rule: its word limit, the active voice, and no contractions.
 - [ ] Every list, table, and code block has an introductory sentence.
 - [ ] Every placeholder is explained.
 - [ ] Every command and code sample runs as written, apart from its placeholders.
@@ -71,7 +63,7 @@ Read the draft once per checklist item, and fix every instance:
 
 ## References
 
-Load the reference that matches what you're writing:
+Load the reference that matches the document:
 
 - [`references/formatting.md`](references/formatting.md): headings, lists, tables, procedures, code samples, commands, placeholders, notices, links, UI elements, and dates in detail.
 - [`references/word-list.md`](references/word-list.md): words and phrases to avoid, with replacements. Read it during the revision pass.
