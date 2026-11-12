@@ -134,6 +134,8 @@ sequenceDiagram
 `dot-flow` never commits. In Codex and Copilot, `dot-flow` runs the four steps
 in the main session, with the same approvals.
 
+To learn the workflow step by step, read the [guide](docs/guide/README.md).
+
 ## Commands
 
 The following table gives a summary of the commands. For the options, run
