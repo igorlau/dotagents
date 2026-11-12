@@ -10,7 +10,7 @@ TypeScript details for the [`dot-testing`](../SKILL.md) skill. Use the runner th
 | Release it | `afterAll` | `after` |
 | Restore the doubles | `afterEach(() => vi.restoreAllMocks())` or `jest.restoreAllMocks()` | `afterEach(() => mock.restoreAll())` |
 
-Write the doubles as plain objects with happy-path methods, not `jest.fn(impl)` or `vi.fn(impl)`: in Jest 29 and earlier, restoring or resetting mocks erases `impl`, which the next tests still need. Override a method per test with `vi.spyOn`, `jest.spyOn`, or `mock.method`, and restoring puts back the happy path.
+Write the doubles as plain objects with happy-path methods, not `jest.fn(impl)` or `vi.fn(impl)`: in Jest 29 and earlier, a restore or a reset of the mocks erases `impl`, which the next tests still need. Override a method per test with `vi.spyOn`, `jest.spyOn`, or `mock.method`, and a restore puts back the happy path.
 
 ## Example
 
@@ -50,7 +50,7 @@ describe("UserService", () => {
     expect(name).toBe("Ada");
   });
 
-  it("returns null when the user is missing", async () => {
+  it("returns null when the user does not exist", async () => {
     const { sut, repositoryStub } = suite;
     vi.spyOn(repositoryStub, "findById").mockResolvedValueOnce(null);
 

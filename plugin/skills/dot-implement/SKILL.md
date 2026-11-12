@@ -5,11 +5,11 @@ description: Implement a feature, fix, refactor, or roadmap task to the reposito
 
 # Implement
 
-Turn a request, an approved plan, or a roadmap task into a production code change that ends **green**: the type checker and the linter pass, no existing test fails by accident, and you have shown the output. Write no tests: a separate test step writes them.
+Turn a request, an approved plan, or a roadmap task into a production code change that ends **green**: the type checker and the linter pass, no current test fails by accident, and you have shown the output. Write no tests: a separate test step writes them.
 
 ## Repository conventions first
 
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the surrounding code. They take precedence over this skill: where they differ, follow the repository, and point out the difference instead of changing the repository's standard. Write code that fits those conventions.
+Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. Write code that fits those conventions.
 
 ## 1. Pin the work
 
@@ -37,12 +37,12 @@ Done when every requirement of the task, plan, or request has code that meets it
 
 ## 4. Verify
 
-Run the type checker and the linter. They are hard checks: fix each error that they report. Then run the existing tests, the task's "Verify" section, or the plan's final check, and show the output. Classify each failed test:
+Run the type checker and the linter. They are hard checks: fix each error that they report. Then run the current tests, the task's "Verify" section, or the plan's final check, and show the output. Classify each failed test:
 
 - **Expected**: the test asserts behavior that the task changes on purpose. Keep it for the handoff, and continue.
 - **Unexpected**: a regression. Fix the production code.
 
-Check every acceptance criterion one by one. When only an expected failure or a missing test blocks a criterion, leave the criterion open for the test step, and list it in the handoff.
+Check every acceptance criterion one by one. When only an expected failure or a test that does not exist yet blocks a criterion, leave the criterion open for the test step, and list it in the handoff.
 
 When a hard check or an unexpected failure stays red, or the task or plan turns out wrong (a fact contradicts it, or it needs work outside its scope), stop. Report the check that failed or the fact that conflicts, and propose a change to the task or plan. Keep the task file, the roadmap's decisions, and the plan as they are until the user agrees, and keep the change inside its scope.
 

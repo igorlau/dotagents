@@ -84,7 +84,7 @@ These words have more than one meaning:
 | whitelist, blacklist | allowlist, denylist or blocklist |
 | master, slave | primary, main, leader, controller; replica, secondary, worker |
 | sanity check | quick check, confidence check |
-| crazy, insane, sane | unexpected, baffling, valid, sensible |
+| crazy, insane, sane | unexpected, strange, valid, sensible |
 | cripple | slow down, break |
 | blind to, turn a blind eye | unaware of, ignore |
 | dumb down | simplify |

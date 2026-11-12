@@ -5,16 +5,16 @@ argument-hint: "What will the next session be used for?"
 disable-model-invocation: true
 ---
 
-Write a handoff document summarising the current conversation so a fresh agent can continue the work. Save to the temporary directory of the user's OS (`$TMPDIR`, else `/tmp`; `%TEMP%` on Windows) - not the current workspace.
+Write a handoff document that summarizes the current conversation, so a fresh agent can continue the work. Save it to the temporary directory of the user's OS (`$TMPDIR`, else `/tmp`, or `%TEMP%` on Windows), not to the current workspace.
 
-Include a "suggested skills" section in the document, naming which skills the next agent should call the Skill tool for.
+Include a "Suggested skills" section in the document, with the skills that the next agent must call the Skill tool for.
 
-Do not duplicate content already captured in other artifacts (specs, plans, ADRs, issues, commits, diffs). Reference them by path or URL instead.
+Do not repeat content that other artifacts already hold, such as specs, plans, ADRs, issues, commits, and diffs. Name them by path or URL instead.
 
-Redact any sensitive information, such as API keys, passwords, or personally identifiable information.
+Redact all sensitive information, such as API keys, passwords, and personally identifiable information.
 
-If the user passed arguments, treat them as a description of what the next session will focus on and tailor the doc accordingly.
+If the user passed arguments, they describe the focus of the next session. Write the document for that focus.
 
 ## Repository conventions first
 
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the surrounding code. They take precedence over this skill: where they differ, follow the repository, and point out the difference instead of changing the repository's standard. List the repository conventions that the next agent must follow, by path.
+Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. List the repository conventions that the next agent must follow, by path.

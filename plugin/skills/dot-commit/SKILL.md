@@ -1,6 +1,6 @@
 ---
 name: dot-commit
-description: Commit changes as small, logical commits, with the user reviewing each one. Use when the user asks to commit, write a commit message, or split work into commits.
+description: Commit changes as small, logical commits, with a review by the user of each one. Use when the user asks to commit, write a commit message, or split work into commits.
 ---
 
 # Commit
@@ -9,19 +9,19 @@ Each commit is **atomic**: one purpose, complete enough to build and pass tests,
 
 ## Repository conventions first
 
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the surrounding code. They take precedence over this skill: where they differ, follow the repository, and point out the difference instead of changing the repository's standard. Follow the repository's commit convention when it defines one, in `CONTRIBUTING.md`, a commitlint or similar configuration, or a consistent history.
+Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. Follow the repository's commit convention when it defines one, in `CONTRIBUTING.md`, a commitlint or similar configuration, or a consistent history.
 
 ## Review mode
 
-Review is the default: the user approves the plan, and then each commit before you create it. When the user asks you to commit without review, for example "commit without asking", skip both approval stops for that request, and still show the summary in step 4.
+Review is the default: the user approves the plan, and then each commit before you create it. When the user asks you to commit without review, for example "commit, do not ask", skip both approval stops for that request, and still show the summary in step 4.
 
 ## 1. Inspect
 
-Run `git status` and `git diff HEAD` to see every change, including untracked files. Note any changes that the user already staged, and ask whether they belong together. Run `git log -n 15 --oneline` to learn the convention and scopes that the repository uses.
+Run `git status` and `git diff HEAD` to see every change. Include the untracked files. Note any changes that the user already staged, and ask whether they belong together. Run `git log -n 15 --oneline` to learn the convention and scopes that the repository uses.
 
 ## 2. Propose the plan
 
-Group the changes into commits by purpose: a refactor, a behavior change, a dependency update, and a formatting pass are separate commits. Keep a test in the same commit as the behavior it covers. Order the commits so that each one builds on the previous ones.
+Group the changes into commits by purpose: a refactor, a behavior change, a dependency update, and a format pass are separate commits. Keep a test in the same commit as the behavior it covers. Order the commits so that each one builds on the previous ones.
 
 Check each file for secrets, credentials, local configuration, build output, and large binaries. Leave those out of the plan and tell the user.
 

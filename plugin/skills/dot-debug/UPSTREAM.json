@@ -4,5 +4,5 @@
   "commit": "49dd158d1076134a641b33efb035946536778336",
   "license": "MIT",
   "modified": true,
-  "notes": "Renamed from diagnosing-bugs to debug (frontmatter name and display_name). Added a 'Repository conventions first' section. Renamed with the dot- prefix. Added the root cause and premise rules to Phase 5, condensed from pstack/skills/principle-fix-root-causes and pstack/skills/principle-attack-the-premise in https://github.com/cursor/plugins at commit a5539b15a3d56e04992565aafee2b37051329ce3 (MIT)."
+  "notes": "Renamed from diagnosing-bugs to debug (frontmatter name and display_name). Added a 'Repository conventions first' section. Renamed with the dot- prefix. Added the root cause and premise rules to Phase 5, condensed from pstack/skills/principle-fix-root-causes and pstack/skills/principle-attack-the-premise in https://github.com/cursor/plugins at commit a5539b15a3d56e04992565aafee2b37051329ce3 (MIT). Rewrote the text under plugin/rules/writing.md. Moved the ways to build a loop, the bugs that are not deterministic, and the case with no loop to references/loops.md."
 }

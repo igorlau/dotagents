@@ -1,0 +1,3 @@
+# Shared state
+
+When the `sut` itself keeps mutable state between calls (an in-memory cache, a counter, a queue), a reset of the doubles leaves that state behind. Give that `describe` its own `makeSut` call before each test and `cleanup` after each test, and name that `describe` after the state, such as `describe("with a warm cache")`. Tests that run concurrently share the doubles the same way. So in a concurrent suite, each test calls `makeSut` itself and calls `cleanup` when it ends, and the suite has no shared restore hook: a global restore undoes the spies of tests that still run, and the doubles of each test end with that test.

@@ -8,7 +8,7 @@ Order the tests of each endpoint by the status code that they expect, from low t
 
 ## Names
 
-When the repository has no naming convention, name each test `should return {statusCode} when {conditions}`, such as `should return 404 when the user does not exist`.
+When the repository has no convention for test names, name each test `should return {statusCode} when {conditions}`, such as `should return 404 when the user does not exist`.
 
 ## Dependencies
 

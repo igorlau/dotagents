@@ -9,7 +9,7 @@ Delete every comment in scope that the code comments rule does not protect, and 
 
 ## Scope
 
-Use the files or the diff that the user names. Otherwise, use the current diff against the base branch (default `main`), including uncommitted changes. Judge the comments that the diff adds or changes, and the lint and type-checker suppressions that it adds.
+Use the files or the diff that the user names. Otherwise, use the current diff against the base branch (default `main`), with the uncommitted changes. Judge the comments that the diff adds or changes, and the lint and type-checker suppressions that it adds.
 
 ## 1. Flag
 

@@ -192,10 +192,10 @@ budget in `scripts/lint-content.ts`. A vendored rule has a
 | `dot-docs-writing` | Original, based on the Google developer documentation style guide (CC BY 4.0) |
 | `dot-roadmap` | Original, based on `to-tickets` from `mattpocock/skills` (MIT), with a principle from `pstack` in `cursor/plugins` (MIT) |
 | `dot-grill-me` | Vendored from `mattpocock/skills` (MIT), adapted |
-| `dot-grilling` | Vendored from `mattpocock/skills` (MIT) |
-| `dot-writing-for-agents` | Vendored from `mattpocock/skills` (MIT) |
-| `dot-debug` | Vendored from `mattpocock/skills` as `diagnosing-bugs` (MIT), renamed, with principles from `pstack` in `cursor/plugins` (MIT) |
-| `dot-handoff` | Vendored from `mattpocock/skills` (MIT) |
+| `dot-grilling` | Vendored from `mattpocock/skills` (MIT), adapted |
+| `dot-writing-for-agents` | Vendored from `mattpocock/skills` (MIT), adapted |
+| `dot-debug` | Vendored from `mattpocock/skills` as `diagnosing-bugs` (MIT), renamed and adapted, with principles from `pstack` in `cursor/plugins` (MIT) |
+| `dot-handoff` | Vendored from `mattpocock/skills` (MIT), adapted |
 | `dot-comments` | Vendored from `pstack/skills/no-comments` in `cursor/plugins` (MIT), adapted |
 | `dot-correct` | Vendored from `pstack/skills/correct` in `cursor/plugins` (MIT), adapted, with a principle from `pstack` |
 
