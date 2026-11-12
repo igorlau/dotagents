@@ -28,6 +28,7 @@ Read the code, tests, and configuration the plan touches. Note the modules each 
 Group the work into phases, ordered so that:
 
 - The first phase is a **tracer bullet**: the thinnest path through the whole system that proves the approach, so the riskiest unknown fails first.
+- Removals (dead code, redundant checks, stubs) come before the work that builds on them.
 - Prefactors come before the behavior that needs them.
 - Each later phase builds on a milestone that already works.
 
@@ -40,6 +41,7 @@ Split each phase into tasks. Each task:
 - Is a **vertical slice**: a narrow but complete path through every layer it needs, verifiable on its own.
 - Keeps a refactor separate from a behavior change.
 - Fits one fresh agent session and one reviewable diff, roughly a few hundred changed lines.
+- Lists its **test cases**: the test names, each with the test file where it belongs, in the order and with the names that the `dot-testing` skill gives. For controller, integration, and end-to-end tests, use the HTTP reference of `dot-testing`. `dot-testing` writes them as pending tests before the code. Write "none" when the task changes no tested behavior.
 - Declares its **blockers**: the tasks that must be done first, by id (`2.3` is phase 2, task 3). A task without blockers can start now.
 
 A **wide refactor**, one mechanical change that breaks many call sites at once, can't land as one green slice. Sequence it as **expand–contract**: add the new form beside the old, migrate callers in batches (one task each, blocked by the expand), then delete the old form in a task blocked by every batch.
@@ -70,7 +72,7 @@ Write to `.tmp/roadmaps/<roadmap-slug>/` at the repository root. First run `git 
     └── 01-<task-slug>.md
 ```
 
-`README.md` is the index and the single source of truth for decisions; task files link to it instead of restating them:
+`README.md` is the index and the single source of truth for decisions; task files link to it instead of restating them. Put the entity schemas that the user approved in `dot-plan` in the decisions:
 
 ```markdown
 # <Roadmap title>
@@ -80,6 +82,7 @@ Write to `.tmp/roadmaps/<roadmap-slug>/` at the repository root. First run `git 
 ## Decisions
 
 - <decision from the plan, one line each, with the reason when it isn't obvious>
+- <approved entity schema, as a JSON Schema block, when the plan has one>
 
 ## Out of scope
 
@@ -116,6 +119,10 @@ Each task file:
 ## Acceptance criteria
 
 - [ ] <checkable condition>
+
+## Test cases
+
+- `<test file>`: <test name>, or none
 
 ## Verify
 
