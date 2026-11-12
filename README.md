@@ -106,6 +106,7 @@ The following skills load when a task needs them:
 | `dot-testing` | Write tests around a shared makeSut factory. |
 | `dot-code-review` | Review a diff for correctness bugs and maintainability problems. |
 | `dot-commit` | Commit changes as small, logical commits. |
+| `dot-flow` | Run a roadmap task through test stubs, code, test fill, and review, with an approval after each step. |
 | `dot-docs-writing` | Write docs in the Google developer documentation style. |
 | `dot-debug` | Diagnose hard bugs with a feedback loop. |
 | `dot-grill-me` | Start an interview that sharpens a plan. |

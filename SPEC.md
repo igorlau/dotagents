@@ -190,6 +190,7 @@ budget in `scripts/lint-content.ts`. A vendored rule has a
 | `dot-testing` | Original, with a principle from `pstack` in `cursor/plugins` (MIT) |
 | `dot-code-review` | Original, with a maintainability pass adapted from `cursor-team-kit/skills/thermo-nuclear-code-quality-review` and principles from `pstack` in `cursor/plugins` (MIT) |
 | `dot-commit` | Original |
+| `dot-flow` | Original |
 | `dot-docs-writing` | Original, based on the Google developer documentation style guide (CC BY 4.0) |
 | `dot-roadmap` | Original, based on `to-tickets` from `mattpocock/skills` (MIT), with a principle from `pstack` in `cursor/plugins` (MIT) |
 | `dot-grill-me` | Vendored from `mattpocock/skills` (MIT), adapted |
