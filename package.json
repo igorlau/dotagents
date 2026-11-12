@@ -27,6 +27,7 @@
     "build": "tsc -p tsconfig.build.json && node scripts/build-info.mjs",
     "prepare": "npm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check": "npm run --silent typecheck && npm run --silent lint:content",
     "test": "node --test 'test/**/*.test.ts'",
     "lint:content": "node scripts/lint-content.ts",
     "check-upstream": "node scripts/check-upstream.ts"
