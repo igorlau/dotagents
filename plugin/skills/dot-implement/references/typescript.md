@@ -1,15 +1,19 @@
 # TypeScript reference
 
-TypeScript rules for the [`dot-implement`](../SKILL.md) skill, based on the Google TypeScript style guide. They cover correctness, type safety, and API shape; leave formatting to the repository's formatter.
+TypeScript rules for the [`dot-implement`](../SKILL.md) skill, based on the Google TypeScript style guide and on pstack's `typescript-best-practices`. They cover correctness, type safety, and API shape; leave formatting to the repository's formatter.
 
 The repository's conventions and its compiler and linter configuration come first, then the always-on rules, then this reference. In a file that already breaks a rule, match the file for small changes instead of rewriting it, and keep style fixes out of a behavior change.
 
 ## Types
 
 - Use `unknown` for values of unknown type, and narrow it with `typeof`, `instanceof`, `in`, or a type guard before use. Reach for `any` only where no type can express the value, such as a test mock, and keep it inside a typed test factory so `any` stays out of the tests.
-- Validate data that crosses a trust boundary at the boundary: `JSON.parse` output, request bodies, environment variables, and file contents. Parse it into a typed value once, instead of casting.
-- Prefer a runtime check to a type assertion (`as`) or a non-null assertion (`!`): both silence the compiler without checking anything. When an assertion is safe for a reason the code doesn't show, move it into a type guard or a helper whose name states that reason.
-- Write assertions with `as`, never `<T>value`. When a double assertion is unavoidable, go through `unknown`.
+- Validate data that crosses a trust boundary at the boundary: `JSON.parse` output, request bodies, environment variables, and file contents. Parse it into a typed value once, and trust the type inside the system without a second check.
+- Use the schema library of the repository for that parse, and infer the type from the schema, such as `z.infer`. When the repository has no schema library, write a parse function. Do not add a schema library.
+- In production code, use a type assertion (`as`) only after a validation that proves the type. Prefer a runtime check to a non-null assertion (`!`). When an assertion is safe for a reason that the code does not show, move it into a type guard that checks the claim, or a helper whose name states that reason.
+- Write assertions with `as`, never `<T>value`.
+- Brand the primitives that mean different things, such as IDs and domain values: `type UserId = string & { readonly __brand: "UserId" }`. Create a branded value only in a parse function or a type guard that checks it.
+- Model variants as a union with a `kind` field, not as one object with optional fields and booleans, so that the type cannot hold an illegal state.
+- Type a list that must have an item as a non-empty tuple, `[T, ...T[]]`, when a plain `T[]` would force a `!` or a check at each use.
 - Annotate object literals with their type (`const foo: Foo = {...}`) or check them with `satisfies`, instead of asserting them with `as Foo`. An annotation catches misspelled and stale fields where the literal is declared.
 - Fix compiler errors at their cause. Leave out `@ts-ignore`, `@ts-expect-error`, and `@ts-nocheck`; in a test that must pass an unchecked value, cast it once inside a typed test factory whose name states the invalid value, such as `makeUserWithoutEmail`.
 - Leave out annotations the compiler infers trivially, such as `const x = 5`. Annotate when inference would produce `unknown` or a wider type than intended, or when a complex return type is hard to read.
@@ -21,7 +25,7 @@ The repository's conventions and its compiler and linter configuration come firs
 - Use the lowercase primitive types: `string`, `number`, `boolean`, `object`. Use `unknown`, `object`, or `Record<string, T>` instead of `{}`.
 - Write `T[]` and `readonly T[]` for simple element types, and `Array<T>` for complex ones.
 - Use `Map` and `Set` for dictionaries with keys known only at runtime, and `Record<K, V>` for a fixed set of keys.
-- Choose the simplest type that expresses the code. A few repeated properties or an interface that extends another beat a mapped or conditional type that readers must evaluate in their heads.
+- Derive a type with `Pick`, `Omit`, or `ReturnType` when it mirrors a source of truth, such as a schema type or the return value of a function. Do not write custom mapped or conditional types.
 - Avoid generics that appear only in the return type. When an existing API has one, specify the type argument explicitly.
 - Treat an indexed read from an array or a record as possibly `undefined`, and check it before use, even when `noUncheckedIndexedAccess` is off.
 
@@ -41,7 +45,8 @@ The repository's conventions and its compiler and linter configuration come firs
 - Spread only matching values: iterables into arrays, plain objects into objects. Never spread `null`, `undefined`, or primitives.
 - Iterate arrays with `for...of`. Iterate objects with `Object.keys`, `Object.values`, or `Object.entries`; a `for...in` loop also visits inherited properties.
 - Keep parameter destructuring to one level of shorthand properties, with defaults on the left side.
-- Sort the properties of an options object parameter alphabetically, in its type and its destructuring. Order positional parameters by relevance.
+- Pass one options object when a function has 3 or more parameters, or 2 parameters of the same type. Otherwise use positional parameters, in order of relevance.
+- Sort the properties of an options object parameter alphabetically, in its type and its destructuring.
 - Parse numbers with `Number()` and check the result for `NaN`. Use `parseInt` only for a radix other than 10, after checking the digits. Never coerce with unary `+`.
 - Coerce with `String()`, `Boolean()`, or a template literal, never with the wrapper constructors (`new String()`).
 - Compare enum values explicitly, never by truthiness: the first member is `0`, which is falsy.
@@ -64,7 +69,7 @@ The repository's conventions and its compiler and linter configuration come firs
 ## Control flow and errors
 
 - Wrap every `if`, `for`, and `while` body in braces; only an `if` that fits on one line may skip them. Keep assignments out of conditions.
-- When early returns cover every member of a union or an enum, end the function by assigning the value to a `never` variable, so adding a member fails the type check.
+- When early returns cover every member of a union or an enum, end the function with `const unhandled: never = value;` and `return unhandled;`, so a new member fails the type check.
 - In a `switch` you keep, give it a final `default` group, and end every non-empty `case` with `break`, `return`, or `throw`.
 - Throw only `Error` objects or subclasses, created with `new`, and reject promises only with `Error`s. Prefer throwing to returning error objects.
 - Treat a caught value as an `Error`, and skip defensive handling of non-`Error` throws unless a dependency actually throws them.
@@ -75,6 +80,7 @@ The repository's conventions and its compiler and linter configuration come firs
 ## Language features to avoid
 
 - `const enum` (use a plain `enum` or a union of literals), `with`, `eval`, the `Function(string)` constructor, and `debugger` in committed code.
+- `console.log` for diagnostics in shipped code. Use the structured logger of the repository.
 - Semicolon-free code that relies on automatic semicolon insertion.
 - Non-standard and proposal-stage JavaScript features, unless the project targets a runtime that ships them.
 - New decorators. Use the decorators a framework defines, placed directly before the symbol they decorate.

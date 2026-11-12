@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/cursor/plugins",
+  "path": "pstack/skills/typescript-best-practices",
+  "commit": "a5539b15a3d56e04992565aafee2b37051329ce3",
+  "license": "MIT",
+  "modified": true,
+  "notes": "Merged selected rules into references/typescript.md: as only after validation, the schema library of the repository, branded primitives, kind unions, non-empty tuples, Pick/Omit/ReturnType instead of custom mapped types, object arguments for 3 or more parameters or 2 of the same type, a never variable named unhandled, and no console.log. Left out the Real tests rule, because unit tests stub collaborators (see dot-testing). Also condensed pstack/skills/principle-boundary-discipline and pstack/skills/principle-type-system-discipline at the same commit. The rest of the reference is based on the Google TypeScript style guide."
+}
