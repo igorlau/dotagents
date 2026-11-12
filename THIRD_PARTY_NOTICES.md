@@ -75,7 +75,8 @@ skills' `UPSTREAM.json` files, `plugin/rules/comments.upstream.json`, and
 changes. The behavior test principle in the `dot-testing` skill, the rule to put
 removals first in the `dot-plan` and `dot-roadmap` skills, the domain model rules
 in `dot-plan`, the reader load, domain model, and scope rules in the
-maintainability pass of `dot-code-review`, and parts of the TypeScript
+maintainability pass of `dot-code-review`, the root cause and premise rules
+in `dot-debug`, and parts of the TypeScript
 reference in `dot-implement` come from pstack's principle skills and its
 `typescript-best-practices` skill.
 The `UPSTREAM.json` file of each of these skills records its sources. The project

@@ -117,6 +117,10 @@ Tool preference:
 
 ## Phase 5: Fix + regression test
 
+Fix the root cause, not the symptom. Ask "why" until the answer is the first wrong decision in the code, not a result of an earlier one. Fix every place that has the same pattern. Add a guard only for a state that is legitimate: a guard for a state that must never exist hides the bug.
+
+When two fixes fail the same check, write down the premise that both fixes assumed. Test the premise before you write a third fix.
+
 Write the regression test **before the fix**, but only if there is a **correct seam** for it.
 
 A correct seam is one where the test exercises the **real bug pattern** as it occurs at the call site. If the only available seam is too shallow (single-caller test when the bug needs multiple callers, unit test that can't replicate the chain that triggered the bug), a regression test there gives false confidence.
