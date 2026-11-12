@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/cursor/plugins",
+  "path": "pstack/skills/principle-test-behavior-not-implementation/SKILL.md",
+  "commit": "a5539b15a3d56e04992565aafee2b37051329ce3",
+  "license": "MIT",
+  "modified": true,
+  "notes": "Condensed the principle into one clause of the assertion bullet in Test principles. The rest of the skill is original and is not from pstack."
+}

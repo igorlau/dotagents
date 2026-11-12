@@ -32,13 +32,16 @@ When the `sut` itself keeps mutable state between calls (an in-memory cache, a c
 
 - Arrange, act, assert: one block each, in that order.
 - Test one behavior per test, and name the test after that behavior ("returns null when the user is missing").
-- Assert on outputs and on calls that cross the `sut`'s boundary, not on its private steps.
+- Assert on outputs and on calls that cross the `sut`'s boundary, so the test fails when the behavior breaks and passes when only the internals change.
+- Put a test in the test file of the module whose behavior it asserts: the tests for `concepts.ts` go in `concepts.test.ts`. Create that file if it does not exist. Do not add the test to another module's test file because that file already runs the code.
+- In a unit test, stub the collaborators from other units through the doubles that `makeSut` returns. Do not spy on the `sut`, and assert only the behavior of the `sut`. Test a helper method of the same class through the outputs of the public method that calls it, and do not repeat the cases of the helper there.
 - Prefer stubs and fakes that return data to mocks that assert the call sequence.
 
-## Language references
+## References
 
-Read the reference for each language the tests use, if one exists:
+Read each reference that applies to the tests:
 
-- [`references/typescript.md`](references/typescript.md): TypeScript with Vitest, Jest, or `node:test`.
+- [`references/typescript.md`](references/typescript.md): read when the tests use TypeScript with Vitest, Jest, or `node:test`.
+- [`references/http.md`](references/http.md): read when you write controller, integration, or end-to-end tests.
 
 Done when every test you wrote or changed passes with the repository's test command, and you've shown the output.
