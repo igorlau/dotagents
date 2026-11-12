@@ -184,13 +184,13 @@ budget in `scripts/lint-content.ts`. A vendored rule has a
 
 | Skill | Origin |
 | ------- | -------- |
-| `dot-plan` | Original |
-| `dot-implement` | Original, based on the Google TypeScript style guide (CC BY 3.0) |
-| `dot-testing` | Original |
+| `dot-plan` | Original, with principles from `pstack` in `cursor/plugins` (MIT) |
+| `dot-implement` | Original, based on the Google TypeScript style guide (CC BY 3.0) and `pstack/skills/typescript-best-practices` in `cursor/plugins` (MIT) |
+| `dot-testing` | Original, with a principle from `pstack` in `cursor/plugins` (MIT) |
 | `dot-code-review` | Original |
 | `dot-commit` | Original |
 | `dot-docs-writing` | Original, based on the Google developer documentation style guide (CC BY 4.0) |
-| `dot-roadmap` | Original, based on `to-tickets` from `mattpocock/skills` (MIT) |
+| `dot-roadmap` | Original, based on `to-tickets` from `mattpocock/skills` (MIT), with a principle from `pstack` in `cursor/plugins` (MIT) |
 | `dot-grill-me` | Vendored from `mattpocock/skills` (MIT), adapted |
 | `dot-grilling` | Vendored from `mattpocock/skills` (MIT) |
 | `dot-writing-for-agents` | Vendored from `mattpocock/skills` (MIT) |

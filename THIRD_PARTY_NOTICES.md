@@ -71,7 +71,11 @@ and the word and format rules in `plugin/rules/writing.md` come from the
 `pstack` plugin in [cursor/plugins](https://github.com/cursor/plugins). The
 skill's `UPSTREAM.json` file, `plugin/rules/comments.upstream.json`, and
 `plugin/rules/writing.upstream.json` record the source commits and local
-changes. The project
+changes. The behavior test principle in the `dot-testing` skill, the rule to put
+removals first in the `dot-plan` and `dot-roadmap` skills, the domain model rules
+in `dot-plan`, and parts of the TypeScript reference in `dot-implement` come
+from pstack's principle skills and its `typescript-best-practices` skill.
+The `UPSTREAM.json` file of each of these skills records its sources. The project
 is licensed under the MIT License:
 
 ```text
