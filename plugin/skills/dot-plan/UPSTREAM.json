@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/cursor/plugins",
+  "path": "pstack/skills/principle-subtract-before-you-add/SKILL.md",
+  "commit": "a5539b15a3d56e04992565aafee2b37051329ce3",
+  "license": "MIT",
+  "modified": true,
+  "notes": "Condensed the principle into the removal-first sentence in Slice the work. The Model the domain section of references/entity-schemas.md condenses pstack/skills/principle-model-the-domain/SKILL.md at the same commit. The rest of the skill is original and is not from pstack."
+}

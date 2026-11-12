@@ -29,24 +29,31 @@ List the choices that the facts don't settle: behavior in edge cases, trade-offs
 
 If the list is long or the decisions depend on each other, use the `dot-grilling` skill to resolve them with the user. Done when every decision has an answer or is marked as an open question in the plan.
 
-## 4. Slice the work
+## 4. Show entity schemas
+
+When the change adds or changes a domain entity, read [`references/entity-schemas.md`](references/entity-schemas.md). Show a full JSON Schema for each new entity, and a before and after diff for each changed entity. Wait for the user to approve the schemas before you slice the work.
+
+Done when the user approves each schema, or the change touches no domain entity.
+
+## 5. Slice the work
 
 Write the steps. For each step, include:
 
 - **Change**: what you modify, by file or module.
 - **Check**: the command or observation that proves the step works.
 
-Order the steps so that the riskiest unknown comes first, as a **tracer bullet**: the thinnest path through the whole system that proves the approach. Keep refactors in their own steps, separate from behavior changes.
+Put the removal steps first: delete the dead code, redundant checks, and stubs that the change makes unnecessary, so the later steps build on less code. Then order the steps so that the riskiest unknown comes first, as a **tracer bullet**: the thinnest path through the whole system that proves the approach. Keep refactors in their own steps, separate from behavior changes.
 
 Done when every step has a check that can fail, and the last check matches the done criterion.
 
-## 5. Present and wait
+## 6. Present and wait
 
 Show the plan in this shape:
 
 ```markdown
 **Goal:** <one sentence>
 **Done when:** <done criterion>
+**Schemas:** <the approved entity schemas, or none>
 
 1. <change> → check: <command or observation>
 2. ...
