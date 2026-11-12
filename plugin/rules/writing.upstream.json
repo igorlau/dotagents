@@ -4,5 +4,5 @@
   "commit": "a5539b15a3d56e04992565aafee2b37051329ce3",
   "license": "MIT",
   "modified": true,
-  "notes": "Condensed the unslop patterns into the Words and Format sections and rewrote them as rules. The Sentences section is original, based on ASD-STE100, and is not from unslop."
+  "notes": "Condensed the unslop patterns into the Words and Format sections and rewrote them as rules. Stated the word patterns as the plain words to use, and left the list of words to avoid to scripts/lint-content.ts. The Sentences section is original, based on ASD-STE100, and is not from unslop."
 }

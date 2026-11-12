@@ -1,13 +1,13 @@
 # Writing
 
-Apply these rules to all text that you write for a person to read: chat replies, CLI output, plans, roadmaps, handoffs, review reports, commit messages, pull requests, and docs. The rules are based on ASD-STE100 (Simplified Technical English), and they take precedence over other style guides.
+Apply these rules to all text that you write for a person to read: chat replies, CLI output, plans, roadmaps, handoffs, review reports, commit messages, pull requests, and docs. The rules are based on ASD-STE100 (Simplified Technical English), and they take precedence over other style guides. In a language other than English, apply each rule that has an equivalent in that language.
 
 ## Sentences
 
 - Write procedure sentences of 20 words or fewer, and descriptive sentences of 25 words or fewer.
 - Write one instruction in each sentence. Use the imperative for steps.
 - Use the active voice, and name the actor.
-- Use the simple present, past, and future tenses. Do not use verbs in the -ing form.
+- Use the simple present, past, and future tenses.
 - Keep noun clusters to 3 words or fewer. Keep the articles "a", "an", and "the".
 - Use one word for one meaning, and use the same word each time.
 - Use "must" for a requirement, and "can" for an ability or a possibility.
@@ -17,8 +17,7 @@ Apply these rules to all text that you write for a person to read: chat replies,
 
 ## Words
 
-- Use plain words. Write "use", not "leverage" or "utilize". Do not write "delve", "pivotal", "crucial", "underscore", or "showcase".
-- Write "is" or "has", not "serves as", "stands as", or "boasts".
+- Use the plain word where a showy one comes to mind: "use", "show", "important", "examine", "is", and "has".
 - State the point directly, not as "not just X, but Y".
 - Use the real number of items, not a forced group of three.
 - Name the mechanism or the number, such as "a column rename fails the build", not the feeling.
