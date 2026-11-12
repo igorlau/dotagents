@@ -197,6 +197,7 @@ budget in `scripts/lint-content.ts`. A vendored rule has a
 | `dot-debug` | Vendored from `mattpocock/skills` as `diagnosing-bugs` (MIT), renamed |
 | `dot-handoff` | Vendored from `mattpocock/skills` (MIT) |
 | `dot-comments` | Vendored from `pstack/skills/no-comments` in `cursor/plugins` (MIT), adapted |
+| `dot-correct` | Vendored from `pstack/skills/correct` in `cursor/plugins` (MIT), adapted, with a principle from `pstack` |
 
 Each vendored skill has an `UPSTREAM.json` file with the source repository,
 path, commit, license, and a summary of local changes. dotagents doesn't

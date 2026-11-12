@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/cursor/plugins",
+  "path": "pstack/skills/correct/SKILL.md",
+  "commit": "a5539b15a3d56e04992565aafee2b37051329ce3",
+  "license": "MIT",
+  "modified": true,
+  "notes": "Rewrote the text under plugin/rules/writing.md and renamed it with the dot- prefix. Split the levels into architecture, types, a lint rule or check, a test, and docs, and added the approval before a new dependency or a lint configuration change. Left out the rule table in the agent instruction file and the expiry date on exceptions. Merged pstack/skills/principle-encode-lessons-in-structure at the same commit: use only the structural fix when one works, and add an example of the mistake to a docs rule. The commit goes through dot-commit."
+}

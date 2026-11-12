@@ -113,6 +113,7 @@ The following skills load when a task needs them:
 | `dot-roadmap` | Split a grilled plan into phases and self-contained tasks. |
 | `dot-handoff` | Summarize a conversation for another agent. |
 | `dot-comments` | Delete the comments in a diff that no exception protects. |
+| `dot-correct` | Turn a mistake that agents repeat into a check that prevents it. |
 | `dot-writing-for-agents` | Write skills, `AGENTS.md`, and `CLAUDE.md` files. |
 
 ## More information
