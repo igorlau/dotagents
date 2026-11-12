@@ -7,9 +7,7 @@ description: Review a diff for correctness bugs and maintainability problems. Us
 
 Review the change in two passes, and give one report. The correctness pass finds the defects that make the change behave wrongly in production. The maintainability pass finds the structure that makes the next change harder.
 
-## Repository conventions first
-
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. Review against those standards. Code that follows a repository convention is not a finding, even when general practice differs. Code that breaks one is a finding.
+Review against the repository's standards. Code that follows a repository convention is not a finding, even when general practice differs. Code that breaks one is a finding.
 
 ## 1. Pick the target
 

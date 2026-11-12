@@ -1,7 +1,8 @@
 // Checks the structure of plugin/: skill and agent frontmatter, relative links and
 // anchors, the rules and skill size budgets, upstream metadata, scaffold templates, and
 // the plugin and marketplace manifests. Also checks that the top-level docs and docs/
-// name only real skills and agents, with the right counts. Exits 1 on any problem.
+// name only real skills and agents, with the right counts, and that the prose follows
+// the mechanical part of plugin/rules/writing.md. Exits 1 on any problem.
 import fs from "node:fs";
 import path from "node:path";
 import { packageRoot, pluginRoot } from "../src/paths.ts";
@@ -23,6 +24,17 @@ const DESCRIPTION_MAX = 1024;
 const UPSTREAM_FIELDS = ["repository", "path", "commit", "license", "modified"];
 const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"];
 
+// The part of plugin/rules/writing.md that a pattern can check. The rule names the words
+// to use; the words to avoid are here, so that no agent reads them on every turn.
+const PROSE_PATTERNS: [RegExp, string][] = [
+  [/—/g, "em dash"],
+  [/→|->|=>/g, "arrow"],
+  [/\b\w+(?:n['’]t|['’](?:re|ve|ll))\b|\b(?:it|that|there|what|let)['’]s\b/gi, "contraction"],
+  [/\b(?:leverag\w*|utiliz\w*|delv\w*|pivotal|crucial|showcas\w*|serves? as|stands? as|boasts?)\b/gi, "word that writing.md replaces with a plain word"],
+];
+// The word list of dot-docs-writing names the words to avoid.
+const PROSE_EXEMPT = new Set(["word-list.md"]);
+
 const problems: string[] = [];
 const fail = (file: string, message: string, line?: number) => problems.push(`${path.relative(packageRoot, file)}${line ? `:${line}` : ""}: ${message}`);
 
@@ -33,6 +45,7 @@ for (const name of fs.readdirSync(rulesDir)) {
   if (name.endsWith(".md")) {
     ruleChars += fs.readFileSync(file, "utf8").length;
     checkLinks(file);
+    checkProse(file);
   } else if (name.endsWith(".upstream.json")) {
     checkUpstream(file);
     if (!fs.existsSync(file.replace(/\.upstream\.json$/, ".md"))) fail(file, "no matching rules file");
@@ -66,9 +79,17 @@ for (const name of fs.readdirSync(skillsDir)) {
   if (!name.startsWith(SKILL_PREFIX)) fail(skillFile, `name must start with "${SKILL_PREFIX}"`);
   if (!data.description) fail(skillFile, "missing description");
   else if (data.description.length > DESCRIPTION_MAX) fail(skillFile, `description exceeds ${DESCRIPTION_MAX} characters`);
-  if (data["disable-model-invocation"] !== "true") preloadableSkills.add(name);
+  const userInvoked = data["disable-model-invocation"] === "true";
+  if (!userInvoked) preloadableSkills.add(name);
+  // Codex reads the invocation policy from agents/openai.yaml, not from the frontmatter.
+  const codexFile = path.join(dir, "agents", "openai.yaml");
+  const codexExplicitOnly = fs.existsSync(codexFile) && /^\s*allow_implicit_invocation:\s*false\s*$/m.test(fs.readFileSync(codexFile, "utf8"));
+  if (userInvoked !== codexExplicitOnly) fail(skillFile, "disable-model-invocation must agree with allow_implicit_invocation in agents/openai.yaml");
 
-  for (const file of markdownFiles(dir)) checkLinks(file);
+  for (const file of markdownFiles(dir)) {
+    checkLinks(file);
+    checkProse(file);
+  }
 
   const upstreamFile = path.join(dir, "UPSTREAM.json");
   if (fs.existsSync(upstreamFile)) checkUpstream(upstreamFile);
@@ -104,6 +125,7 @@ for (const file of docFiles) checkDoc(file);
  */
 function checkDoc(file: string): void {
   checkLinks(file);
+  checkProse(file);
   const text = withoutFences(fs.readFileSync(file, "utf8"));
   const catalog = new Set([...skillNames, ...agentNames]);
   const named = new Set<string>();
@@ -150,6 +172,7 @@ function checkAgents(pluginName: string): void {
       else if (!preloadableSkills.has(entry.slice(prefix.length))) fail(file, `skill "${entry}" isn't a plugin skill that Claude can invoke`);
     }
     checkLinks(file);
+    checkProse(file);
   }
 }
 
@@ -213,6 +236,19 @@ function markdownFiles(dir: string): string[] {
     if (entry.isDirectory()) return markdownFiles(abs);
     return entry.name.endsWith(".md") ? [abs] : [];
   });
+}
+
+/**
+ * Checks the prose of a markdown file, without its code and its quoted examples, against PROSE_PATTERNS.
+ * shortcut: a line with an odd number of double quotes pairs them wrong, parse the quotes when that hides a real finding.
+ */
+function checkProse(file: string): void {
+  if (PROSE_EXEMPT.has(path.basename(file))) return;
+  const blank = (match: string) => match.replace(/[^\n]/g, " ");
+  const text = withoutFences(fs.readFileSync(file, "utf8")).replace(/`[^`\n]*`/g, blank).replace(/"[^"\n]*"|“[^”\n]*”/g, blank);
+  for (const [pattern, label] of PROSE_PATTERNS) {
+    for (const match of text.matchAll(pattern)) fail(file, `${label} "${match[0]}"; see plugin/rules/writing.md`, lineOf(text, match.index));
+  }
 }
 
 /** Checks that relative links resolve, and that each #anchor matches a heading in the target markdown file. */

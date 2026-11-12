@@ -24,11 +24,11 @@ Commands and versions live in their source of truth, such as `package.json` scri
 
 ## Code and tests
 
-- Keep a `check` script, such as in `package.json`, that runs the type checker and the linter but not the tests. After `dotagents check enable`, agent hooks run it at the end of each turn that changes files.
+- Keep a `check` script in `package.json`, or a `check` target in a `Makefile`, that runs the type checker and the linter but not the tests. After `dotagents check enable`, agent hooks run it when an agent stops after it changed files.
 - Prefer the standard library and the dependencies the project already has. Ask before you add a dependency, and commit the lockfile with it.
 - Validate input at trust boundaries: requests, command-line arguments, files, and environment variables.
 - Change generated files through their generator, then regenerate them.
-- Keep tests deterministic: no network, real clock, random seed, or shared state. Treat a test that fails intermittently as a bug.
+- Keep tests deterministic: no network, real clock, or random seed, and no state that one test leaves for the next. Treat a test that fails intermittently as a bug.
 - When a check fails, fix the code. Changing a test's expectation, disabling a lint rule, or suppressing a type error needs the maintainer's approval.
 
 ## Security

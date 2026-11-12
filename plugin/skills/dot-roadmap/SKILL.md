@@ -9,15 +9,11 @@ disable-model-invocation: true
 
 A roadmap splits a plan into **phases**, and each phase into **tasks**. A phase ends on a **milestone**: an observable state where the system works and could ship. A task is **self-contained**: a fresh agent session can build it from its file alone, and a reviewer can judge its diff in one session.
 
-## Repository conventions first
-
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. Write tasks whose changes fit those conventions.
-
 ## 1. Load the plan
 
-Work from the plan in this conversation, usually the shared understanding a `dot-grill-me` session reached. If the user passed a path or URL, read it in full.
+Work from the plan in this conversation, usually the shared understanding a `dot-grilling` session reached. If the user passed a path or URL, read it in full.
 
-Synthesize the plan. Do not interview the user. If the plan still has unsettled decisions, list them and suggest `dot-grill-me` before you go on. Done when you can state the **destination** (what is true when the whole roadmap is done) and every decision the plan made.
+Synthesize the plan. Do not interview the user. If the plan still has unsettled decisions, list them and suggest `dot-grilling` before you go on. Done when you can state the **destination** (what is true when the whole roadmap is done) and every decision the plan made.
 
 ## 2. Gather facts
 
@@ -41,7 +37,7 @@ Split each phase into tasks. Each task:
 - Is a **vertical slice**: a narrow but complete path through every layer it needs, verifiable on its own.
 - Keeps a refactor separate from a behavior change.
 - Fits one fresh agent session and one reviewable diff, roughly a few hundred changed lines.
-- Lists its **test cases**: the test names, each with the test file where it belongs, in the order and with the names that the `dot-testing` skill gives. For controller, integration, and end-to-end tests, use the HTTP reference of `dot-testing`. `dot-testing` writes them as pending tests before the code. Write "none" when the task changes no tested behavior.
+- Lists its **test cases**: the test names, each with the test file where it belongs, in the order and with the names that the `dot-testing` skill gives. For controller, integration, and end-to-end tests, use `references/http.md` of `dot-testing`. `dot-testing` writes them after `dot-implement`. Write "none" when the task changes no tested behavior.
 - Declares its **blockers**: the tasks that must be done first, by id (`2.3` is phase 2, task 3). A task without blockers can start now.
 
 When one mechanical change breaks many call sites at once, read [`references/wide-refactor.md`](references/wide-refactor.md).
@@ -82,7 +78,7 @@ Write to `.tmp/roadmaps/<roadmap-slug>/` at the repository root. First run `git 
 ## Decisions
 
 - <decision from the plan, one line each, with the reason when it is not obvious>
-- <approved entity schema, as a JSON Schema block, when the plan has one>
+- <approved entity schema, as a code block, when the plan has one>
 
 ## Out of scope
 

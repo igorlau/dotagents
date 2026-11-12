@@ -7,9 +7,7 @@ description: Write and change tests with a makeSut factory per suite. Use when y
 
 Write tests that build the **system under test** (`sut`) in one factory, share it across the suite, and stay isolated: reset the test doubles between tests.
 
-## Repository conventions first
-
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. When the repository already sets up tests another way, such as pytest fixtures or its own setup helper, use that and leave out `makeSut`.
+When the repository already sets up tests another way, such as pytest fixtures or its own setup helper, use that and leave out `makeSut`.
 
 ## The makeSut factory
 
@@ -25,7 +23,6 @@ Use `makeSut` when the subject needs setup: construction, configuration, depende
 1. Call `makeSut` once per top-level `describe`, in the hook that runs before all tests, and call `cleanup` in the hook that runs after all of them.
 2. In a test, change a dependency's behavior with a spy or a stub on the double that `makeSut` returned, for that test only.
 3. Restore every spy and stub in the hook that runs after each test, so the next test sees the happy-path doubles again.
-
 
 ## Test principles
 
@@ -43,6 +40,6 @@ Read each reference that applies to the tests:
 - [`references/typescript.md`](references/typescript.md): read when the tests use TypeScript with Vitest, Jest, or `node:test`.
 - [`references/http.md`](references/http.md): read when you write controller, integration, or end-to-end tests.
 - [`references/shared-state.md`](references/shared-state.md): read when the `sut` keeps mutable state between calls, or when the tests run concurrently.
-- [`references/modes.md`](references/modes.md): read when you work a roadmap task, before `dot-implement` (stub mode) or after it (fill mode).
+- [`references/after-implement.md`](references/after-implement.md): read when you write the tests of a change that `dot-implement` made, such as a roadmap task.
 
 Done when every test you wrote or changed passes with the repository's test command, and you have shown the output.

@@ -7,10 +7,6 @@ description: Implement a feature, fix, refactor, or roadmap task to the reposito
 
 Turn a request, an approved plan, or a roadmap task into a production code change that ends **green**: the type checker and the linter pass, no current test fails by accident, and you have shown the output. Write no tests: a separate test step writes them.
 
-## Repository conventions first
-
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. Write code that fits those conventions.
-
 ## 1. Pin the work
 
 Identify the source of the work:
@@ -23,7 +19,7 @@ Done when you can state the goal, the scope boundary, and the check that proves 
 
 ## 2. Plan when needed
 
-A roadmap task or an approved plan is already the plan. For a request that touches more than one file, use the `dot-plan` skill and wait for the user's approval before you change any file. A single-file change goes straight to step 3.
+A roadmap task or an approved plan is already the plan. For a request that spans several modules, or that has more than one reasonable design, use the `dot-plan` skill and wait for the user's approval before you change any file. Any other request goes straight to step 3.
 
 ## 3. Build
 
@@ -52,9 +48,14 @@ Done when the hard checks pass and no unexpected failure remains.
 
 ## 5. Hand off
 
-End with the verification output, anything that you skipped or could not check, and these fields for the fill mode of the `dot-testing` skill:
+End with this handoff. The `dot-testing` skill reads its last two fields:
 
 ```markdown
+**Summary:** <what you did, in 3 sentences or fewer>
+**Checks:** <the type checker, linter, and test commands, each with its result line>
+**Files:** <the production files that you changed>
+**Blockers:** <what stops the test step, and what you skipped or could not check, or "none">
+
 **Expected failures:**
 - `<test file>`: <test name>: <the new behavior that the test must assert>
 
@@ -62,4 +63,6 @@ End with the verification output, anything that you skipped or could not check, 
 - `<module>`: <a behavior that the change adds or changes, and that no test case covers>
 ```
 
-Write "none" under a field that has no items. Suggest `dot-testing` in fill mode, then the `dot-code-review` skill, then the `dot-commit` skill. Leave the commit to the user.
+Write "none" under a field that has no items.
+
+When `dot-flow` or an agent prompt gave you only the implementation step, stop after the handoff. Otherwise, use the `dot-testing` skill with this handoff now, then suggest the `dot-code-review` skill and the `dot-commit` skill. Leave the commit to the user.

@@ -3,13 +3,13 @@
 Plan before the code. A question costs one message now, and a wrong guess
 costs a rewrite later.
 
-## Make the idea clear with dot-grill-me
+## Make the idea clear with dot-grilling
 
-Start [`dot-grill-me`](../../plugin/skills/dot-grill-me/SKILL.md) with the
+Start [`dot-grilling`](../../plugin/skills/dot-grilling/SKILL.md) with the
 idea, in your own words. Give the goal and how you will know that it works:
 
 ```text
-/dotagents:dot-grill-me Export the invoices as CSV. A retry must not write a row twice.
+/dotagents:dot-grilling Export the invoices as CSV. A retry must not write a row twice.
 ```
 
 The agent asks its questions in rounds. Each round has every question that
@@ -27,8 +27,9 @@ conversation:
 ```
 
 When the change adds or changes a domain entity, the agent first shows a
-JSON Schema for it: the full schema for a new entity, and a diff for a
-changed one. Approve the schemas before the steps. The schemas stay in the
+schema for it: the full schema for a new entity, and a diff for a
+changed one. The schema has the form that the repository uses, such as a
+TypeScript type or SQL DDL, or JSON Schema when the repository has none. Approve the schemas before the steps. The schemas stay in the
 plan and the roadmap, not in committed files.
 
 The plan puts removal steps first, such as dead code or checks that the
@@ -49,6 +50,7 @@ its test cases, and the command that verifies it. The roadmap `README.md`
 records the decisions and has a checkbox for each task.
 
 Approve the roadmap. The test cases decide the behavior of each task before
-the code exists, so read them with care.
+the code exists, and `dot-testing` writes them as given, so read them with
+care.
 
 Next: [Build a task](04-build.md).

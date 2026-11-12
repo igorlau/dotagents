@@ -1,15 +1,11 @@
 ---
 name: dot-plan
-description: Plan a change as small, verifiable steps before writing code. Use when the user asks for a plan, or before a feature, refactor, or migration that touches more than one file.
+description: Plan a change as small, verifiable steps before writing code. Use when the user asks for a plan, or before a change that spans several modules or has more than one reasonable design.
 ---
 
 # Plan
 
 A plan turns a request into a sequence of **vertical slices**: each slice is a small change that leaves the system in a state that works and ends on a check you can run.
-
-## Repository conventions first
-
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. Plan changes that fit those conventions.
 
 ## 1. Pin the goal
 
@@ -31,7 +27,7 @@ If the list is long or the decisions depend on each other, use the `dot-grilling
 
 ## 4. Show entity schemas
 
-When the change adds or changes a domain entity, read [`references/entity-schemas.md`](references/entity-schemas.md). Show a full JSON Schema for each new entity, and a before and after diff for each changed entity. Wait for the user to approve the schemas before you slice the work.
+When the change adds or changes a domain entity, read [`references/entity-schemas.md`](references/entity-schemas.md). Show the full schema of each new entity, and a before and after diff of each changed entity. Wait for the user to approve the schemas before you slice the work.
 
 Done when the user approves each schema, or the change touches no domain entity.
 
@@ -55,7 +51,7 @@ Show the plan in this shape:
 **Done when:** <done criterion>
 **Schemas:** <the approved entity schemas, or none>
 
-1. <change> → check: <command or observation>
+1. <change>. Check: <command or observation>
 2. ...
 
 **Open questions:** <none, or the list>

@@ -49,16 +49,18 @@ The following table gives each decision and its reason:
 | 15 | Prefix every skill name with `dot-`, such as `dot-plan`. | Codex, Copilot, and project installs for Claude Code load skills without a namespace, so a skill without the prefix can clash with a skill of the repository or of another source. The prefix also groups the skills in the `/` menu. Rules need no prefix: they live in files and blocks with the dotagents name. |
 | 16 | Add a `scaffold` command that creates starter project instructions once, and keeps them out of the manifest. | A new repository needs instructions for its project, and those belong to the repository: `update` must never rewrite them. Files that dotagents writes only once also keep the command safe in a repository that has instructions. |
 | 17 | Keep the catalog in `plugin/`, which is also a Claude Code plugin, and list it in a marketplace at the repository root. Publish only this marketplace. | One source serves the CLI and the plugin. A marketplace in the repository needs no registry and costs nothing. |
-| 18 | Ship one end-of-turn hook in the plugin that runs the `check` script of the repository (type check and lint, not tests) and makes the agent continue when it fails. | Claude Code, Copilot, and Codex all load `hooks/hooks.json` from the plugin, and Claude Code, Copilot CLI, and Codex document a `block` decision, so one script covers the three coding agents. Tests stay out because `dot-implement` can leave expected test failures for `dot-testing`. The hook allows the second stop, so it cannot loop. It runs the check only when the turn changed the working tree, compared with a snapshot from the start of the prompt. A turn that changes nothing never makes the agent fix old problems or runs repository code. It acts only in repositories listed in `checkRepos` in the `config.json` of the user, which `dotagents check enable` sets: the `check` script is code of the repository, and an opt-in inside the repository would let an untrusted repository enable itself. |
+| 18 | Ship one hook script in the plugin that runs the `check` script of the repository (type check and lint, not tests) when an agent or a subagent stops, and makes that agent continue when it fails. | Claude Code, Copilot, and Codex all load `hooks/hooks.json` from the plugin, and Claude Code, Copilot CLI, and Codex document a `block` decision, so one script covers the three coding agents. Tests stay out because `dot-implement` can leave expected test failures for `dot-testing`. The hook allows the second stop, so it cannot loop, and it shows the user a warning when the check still fails there. It runs the check only when the working tree changed, compared with a snapshot from the start of the prompt. In Claude Code, the hook also takes a snapshot on `SubagentStart` and runs on `SubagentStop`, so each agent answers only for the changes that it made, and the subagent that broke the check fixes it. When the check still fails at the stop of the main agent, `dot-flow` stops and does not edit the code. The check is an npm script, or a `Makefile` target for a repository without `package.json`. A turn that changes nothing never makes the agent fix old problems or runs repository code. It acts only in repositories listed in `checkRepos` in the `config.json` of the user, which `dotagents check enable` sets: the `check` script is code of the repository, and an opt-in inside the repository would let an untrusted repository enable itself. |
 | 19 | The global CLI install writes rules for all three coding agents, and skills only for Codex and Copilot. Claude Code gets the skills, agents, and hooks from the plugin. | Plugins cannot ship always-on rules, and the CLI cannot install agents and hooks safely. `update` removes the Claude Code skills that earlier versions installed, and `doctor` warns about copies that stay. Project installs still write `.claude/skills/`, so collaborators do not need the plugin. |
 | 20 | Add an always-on writing rule, based on ASD-STE100, for all text that agents write: chat, CLI output, plans and reports, commits, pull requests, and docs. It takes precedence over the Google style in `dot-docs-writing`. | Short sentences with a controlled vocabulary are easier to read for a reader in a second language and for translation tools. One rule for all text replaces the prose rules that `dot-docs-writing` kept only for docs. The rules are in our own words, because the ASD-STE100 dictionary is copyrighted. |
-| 21 | Ship three agents in the plugin only: `dot-tester`, `dot-implementer`, and `dot-reviewer`. Each one preloads one skill as `dotagents:<skill>`, and none of them can start another agent. | Each step of a roadmap task runs in a new context with only its skill. With a bare name, Claude Code preloads a skill with the same name from `~/.claude/skills/` first, such as an old copy from an earlier CLI install. A live run on 2026-11-12 showed that agents receive `~/.claude/rules/dotagents.md`, so the agents do not load the rules themselves. |
+| 21 | Ship three agents in the plugin only: `dot-implementer`, `dot-tester`, and `dot-reviewer`. Each one preloads one skill as `dotagents:<skill>`, and none of them can start another agent. | Each step of a roadmap task runs in a new context with only its skill. With a bare name, Claude Code preloads a skill with the same name from `~/.claude/skills/` first, such as an old copy from an earlier CLI install. A live run on 2026-11-12 showed that agents receive `~/.claude/rules/dotagents.md`, so the agents do not load the rules themselves. |
 | 22 | Keep each `SKILL.md` within 8,000 characters, with only the workflow and the rules that apply on every run. Move conditional content, such as a language, a mode, or a rare case, to `references/TOPIC.md`, behind a line that says when to read it. | A `SKILL.md` loads in full each time its skill runs, so content for one language or mode costs tokens in every other run. `npm run lint:content` enforces the budget. |
-| 23 | Run each roadmap task in four steps: test stubs, production code, test fill, and review. `dot-implement` writes no tests. It runs the type checker, the linter, and the existing tests, and gives `dot-testing` the list of expected failures. `dot-flow` runs each step in a new agent, waits for the approval of the user after each step, and stops on a blocker or a `high` finding. It never commits: `dot-commit` ticks the roadmap. In Codex and Copilot, `dot-flow` runs the steps in the main session. | The test names in the roadmap task fix the behavior before the code exists. A new context for each step keeps the step to its own skill. An approval after each step lets the user stop a wrong step before the next step builds on it. |
-| 24 | `dot-plan` shows a JSON Schema (draft 2020-12) for each domain entity that it adds or changes, and the user approves the schemas before the steps. The schemas stay in the plan and the roadmap, not in committed files. `dot-plan` and `dot-roadmap` put removal steps first. | A wrong data model costs the most when you find it late. Removal steps first make the later steps smaller. |
+| 23 | Run each roadmap task in three steps: production code, tests, and review. `dot-implement` writes no tests. It runs the type checker, the linter, and the existing tests, and gives `dot-testing` the list of expected failures. `dot-testing` then writes the test cases of the task. Outside `dot-flow`, `dot-implement` starts `dot-testing` itself. `dot-flow` runs each step in a new agent, runs the commands of each reply again, and continues without a stop when the results agree. It stops on a blocker, on a result that differs from the reply, and after the review, where the user fixes findings or accepts. It never commits: `dot-commit` ticks the roadmap. In Codex and Copilot, `dot-flow` runs the steps in the main session. | The test names in the roadmap task fix the behavior before the code exists. An earlier step that wrote the names as pending tests cost an agent and an approval, and added nothing to the task file. A new context for each step keeps the step to its own skill. A reply is a claim of the agent that did the work, so a command that runs again is a better gate than an approval of a summary. The user decides where a decision exists: after the review. |
+| 24 | `dot-plan` shows a schema for each domain entity that it adds or changes, in the form that the repository uses for its entities, or in JSON Schema (draft 2020-12) when it has none. The user approves the schemas before the steps. The schemas stay in the plan and the roadmap, not in committed files. `dot-plan` and `dot-roadmap` put removal steps first. | A wrong data model costs the most when you find it late. A schema in the form of the repository is the code that lands, with no translation. Removal steps first make the later steps smaller. |
 | 25 | `dot-code-review` has two passes: correctness, and maintainability. Each finding gives `file:line` and the smallest fix, and the report ends with a check that would prevent each class of finding. `dot-correct` changes a repeated mistake into architecture, a type, a lint rule, a test, or docs, in that order. | A check that prevents a class of mistakes does more than a fix of one instance. The maintainability pass is vendored, and keeps its direct tone. |
-| 26 | Test with `npm test` and `npm run lint:content` only, with no paid model evaluations, now or later. `lint:content` also checks the docs: links and anchors, skill and agent names, the README lists, and the counts. | Model evaluations cost money on every run, and their results change from run to run. The structural checks find the most frequent drift: a renamed skill, a broken link, or a wrong count. |
+| 26 | Test with `npm test` and `npm run lint:content` only, with no paid model evaluations, now or later. `lint:content` also checks the docs: links and anchors, skill and agent names, the README lists, the counts, and the mechanical part of the writing rule. | Model evaluations cost money on every run, and their results change from run to run. The structural checks find the most frequent drift: a renamed skill, a broken link, or a wrong count. |
 | 27 | Keep the README short, with a sequence diagram of the flow. Teach the workflow in ordered pages in `docs/guide/`. This document records decisions, and `CONTRIBUTING.md` tells contributors how to change the repository. | Each page has one reader and one goal. |
+| 28 | State each always-on rule as the behavior to follow, and keep the lists of words and patterns to avoid in `lint:content`. State the "repository conventions first" agreement one time, in `core.md`, not in each skill. | A word to avoid that loads on every turn makes the word more available to the model, and a rule that the model cannot follow weakens the other rules. An earlier rule against all `-ing` verb forms was such a rule. A paragraph that 14 skills repeated cost tokens on each run and said what the rules already say. |
+| 29 | Warn at the start of a Claude Code session when `~/.claude/rules/dotagents.md` differs from the rules in the plugin. | The plugin updates on every commit, and the rules update only with `dotagents update`, so the skills can name a rule that the installed rules do not have. |
 
 ## Install modes
 
@@ -126,10 +128,17 @@ The reasons for these locations are the following:
 
 - On 2026-11-12, a live run in Claude Code 2.1.322 showed that the `check`
   hook blocks the end of a turn that changed files, and allows the retry.
+  The `SubagentStop` run, the warning on the retry, and the rules warning at
+  the start of a session have tests, but a live run is not verified.
+  The hook runs only an npm script or a `Makefile` target. It is not verified
+  that Copilot and Codex load a `hooks.json` that names `SessionStart`,
+  `SubagentStart`, and `SubagentStop`.
   Codex 0.160 installs the plugin in the Claude format with no change and
   copies `hooks/`, but a live run in Codex is not verified. A live run in
   Copilot in VS Code, where hooks are in preview, is also not verified.
-- On 2026-11-12, `dot-flow` ran live in Claude Code. The inline mode in Codex
+- On 2026-11-12, `dot-flow` ran live in Claude Code with four steps and an
+  approval after each one. A live run of the three steps with verification
+  is not verified. The inline mode in Codex
   and Copilot is not verified. It is also not verified that Copilot reads the
   `skills` field of an agent.
 - In project mode, Copilot in VS Code reads skills from both `.claude/skills/`
@@ -216,7 +225,6 @@ The following table gives the origin of each skill:
 | `dot-flow` | Original |
 | `dot-docs-writing` | Original, based on the Google developer documentation style guide (CC BY 4.0) |
 | `dot-roadmap` | Original, based on `to-tickets` from `mattpocock/skills` (MIT), with a principle from `pstack` in `cursor/plugins` (MIT) |
-| `dot-grill-me` | Vendored from `mattpocock/skills` (MIT), adapted |
 | `dot-grilling` | Vendored from `mattpocock/skills` (MIT), adapted |
 | `dot-writing-for-agents` | Vendored from `mattpocock/skills` (MIT), adapted |
 | `dot-debug` | Vendored from `mattpocock/skills` as `diagnosing-bugs` (MIT), renamed and adapted, with principles from `pstack` in `cursor/plugins` (MIT) |
@@ -236,7 +244,7 @@ agent preloads one skill, as the following table shows. See decision 21.
 
 | Agent | Skill | Step of `dot-flow` |
 | ----- | ----- | ------------------ |
-| `dot-tester` | `dot-testing` | Test stubs and test fill |
+| `dot-tester` | `dot-testing` | Tests |
 | `dot-implementer` | `dot-implement` | Production code |
 | `dot-reviewer` | `dot-code-review` | Review |
 
@@ -311,9 +319,10 @@ builds report versions such as `1.0.0-dev+30d0533`.
 - `npm test` runs the CLI against temporary home directories and Git
   repositories. The tests cover block merges, global installs that do not
   change repositories, conflicts, local changes, removal of old skills,
-  uninstall, dry runs, and the `check` hook.
+  uninstall, dry runs, and the `check` and rules hooks.
 - `npm run lint:content` checks the following:
-  - Skill and agent frontmatter, and the skills that each agent preloads.
+  - Skill and agent frontmatter, the skills that each agent preloads, and
+    that `agents/openai.yaml` agrees with `disable-model-invocation`.
   - The rules and `SKILL.md` character budgets, and upstream metadata files.
   - The plugin and marketplace manifests.
   - Relative links and their anchors in `plugin/` and in the docs.
@@ -321,6 +330,8 @@ builds report versions such as `1.0.0-dev+30d0533`.
     name is a skill or an agent, and each count of skills or agents is
     correct.
   - The README lists every skill and agent.
+  - In the rules, the skills, the agents, and the docs: no em dash, arrow,
+    contraction, or word that the writing rule replaces.
 
 ## Future work
 

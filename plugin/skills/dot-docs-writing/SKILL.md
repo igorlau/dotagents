@@ -7,9 +7,7 @@ description: Write and edit developer documentation in the Google developer docu
 
 Write documentation that a developer in a hurry, who reads in their second language, can follow on the first pass. This skill covers the frame, structure, and format of a document, based on the Google developer documentation style guide. The always-on writing rule governs the prose, and it wins any conflict with this skill.
 
-## Repository conventions first
-
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. This includes the project's documentation style guide, prose linter configuration such as Vale, and the structure and terms of its current docs.
+Follow the project's documentation style guide, its prose linter configuration such as Vale, and the structure and terms of its current docs. They win a conflict with this skill.
 
 ## 1. Frame the document
 

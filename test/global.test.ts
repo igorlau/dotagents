@@ -18,7 +18,7 @@ test("install writes rules for every agent, and skills for every agent but Claud
 
   assert.ok(exists(p(".agents", "skills", "dot-plan", "SKILL.md")));
   assert.ok(exists(p(".agents", "skills", "dot-debug", "scripts", "hitl-loop.template.sh")));
-  assert.ok(!exists(p(".agents", "skills", "dot-grill-me", "UPSTREAM.json")), "UPSTREAM.json isn't installed");
+  assert.ok(!exists(p(".agents", "skills", "dot-grilling", "UPSTREAM.json")), "UPSTREAM.json isn't installed");
   assert.ok(!exists(p(".claude", "skills")), "Claude Code gets skills from the plugin");
   const claudeRules = read(p(".claude", "rules", "dotagents.md"));
   assert.match(claudeRules, /## Working agreements[\s\S]*## Code comments[\s\S]*## Ponytail/);
@@ -67,14 +67,14 @@ test("uninstall removes exactly what install wrote", () => {
 });
 
 test("an existing file that dotagents didn't write is a conflict", () => {
-  write(p(".agents", "skills", "dot-grill-me", "SKILL.md"), "someone else's dot-grill-me");
+  write(p(".agents", "skills", "dot-grilling", "SKILL.md"), "someone else's dot-grilling");
   const result = box.run(["install"]);
   assert.equal(result.status, 1);
-  assert.match(result.output, /dot-grill-me\/SKILL\.md: exists and wasn't written by dotagents/);
-  assert.equal(read(p(".agents", "skills", "dot-grill-me", "SKILL.md")), "someone else's dot-grill-me");
+  assert.match(result.output, /dot-grilling\/SKILL\.md: exists and wasn't written by dotagents/);
+  assert.equal(read(p(".agents", "skills", "dot-grilling", "SKILL.md")), "someone else's dot-grilling");
 
   assert.equal(box.run(["install", "--force"]).status, 0);
-  assert.match(read(p(".agents", "skills", "dot-grill-me", "SKILL.md")), /name: dot-grill-me/);
+  assert.match(read(p(".agents", "skills", "dot-grilling", "SKILL.md")), /name: dot-grilling/);
 });
 
 test("update skips locally modified files unless forced", () => {

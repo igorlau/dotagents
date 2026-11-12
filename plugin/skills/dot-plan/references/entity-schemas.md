@@ -4,7 +4,7 @@ Schema details for the [`dot-plan`](../SKILL.md) skill. A domain entity is a thi
 
 ## Format
 
-Write each schema in JSON Schema draft 2020-12, in a `json` block. Give it `$schema`, `$id`, `title`, `type`, `required`, and `properties`.
+Write each schema in the form that the repository already uses for its entities, such as a TypeScript type, a Zod schema, or SQL DDL, so the approved schema is the code that lands. When the repository has no such form, use JSON Schema draft 2020-12 in a `json` block, with `$schema`, `$id`, `title`, `type`, `required`, and `properties`.
 
 - For a new entity, show the full schema.
 - For a changed entity, show a `diff` block of the schema before and after the change.
@@ -13,13 +13,13 @@ Put the schemas in the plan. Do not commit schema files to the target repository
 
 ## Model the domain
 
-Make the illegal states impossible to write in the schema:
+Make the illegal states impossible to write in the schema. In JSON Schema:
 
 - Model a lifecycle as one `status` field with an `enum`, not as booleans that must agree, such as `isPaid` and `isShipped`.
 - Model variants with a `kind` field and `oneOf`, not as one object with optional fields for each variant.
 - Use `minItems: 1` for a list that must have an item.
 
-## Example: a new entity
+## Example: a new entity in JSON Schema
 
 ```json
 {

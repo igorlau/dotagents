@@ -15,6 +15,4 @@ Redact all sensitive information, such as API keys, passwords, and personally id
 
 If the user passed arguments, they describe the focus of the next session. Write the document for that focus.
 
-## Repository conventions first
-
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. List the repository conventions that the next agent must follow, by path.
+List the repository conventions that the next agent must follow, by path.

@@ -4,7 +4,7 @@ dotagents includes content from the following projects.
 
 ## mattpocock/skills
 
-The `dot-debug`, `dot-grill-me`, `dot-grilling`, `dot-handoff`, and `dot-writing-for-agents`
+The `dot-debug`, `dot-grilling`, `dot-handoff`, and `dot-writing-for-agents`
 skills come from [mattpocock/skills](https://github.com/mattpocock/skills).
 Each skill's `UPSTREAM.json` file records the source commit and any local
 changes. The project is licensed under the MIT License:

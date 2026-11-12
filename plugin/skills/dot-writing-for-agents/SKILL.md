@@ -11,9 +11,7 @@ Read each reference that applies:
 - [`references/steps.md`](references/steps.md): read when the document has steps, for the completion criterion of each step.
 - [`references/skill-mechanics.md`](references/skill-mechanics.md): read when the document is a skill, for the frontmatter, the invocation choice, and router skills.
 
-## Repository conventions first
-
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. When you edit the `AGENTS.md`, `CLAUDE.md`, or skills of a repository, keep their structure, format, and conventions.
+When you edit the `AGENTS.md`, `CLAUDE.md`, or skills of a repository, keep their structure, format, and conventions.
 
 ## Information hierarchy
 

@@ -4,5 +4,5 @@
   "commit": "49dd158d1076134a641b33efb035946536778336",
   "license": "MIT",
   "modified": true,
-  "notes": "Added a 'Repository conventions first' section. Renamed with the dot- prefix. Rewrote the text under plugin/rules/writing.md. Moved SKILL-MECHANICS.md to references/skill-mechanics.md, and moved the context pointers, the two loads, and the splits to references/pointers.md, and the completion criteria to references/steps.md."
+  "notes": "Added a sentence about the conventions of the repository. Renamed with the dot- prefix. Rewrote the text under plugin/rules/writing.md. Moved SKILL-MECHANICS.md to references/skill-mechanics.md, and moved the context pointers, the two loads, and the splits to references/pointers.md, and the completion criteria to references/steps.md."
 }

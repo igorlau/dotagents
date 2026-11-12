@@ -16,12 +16,12 @@ Workflows on pull requests from forks run only after approval.
 
 You need Node.js 22.18 or later, which runs the TypeScript sources directly.
 
-To install the dependencies and run the checks, run the following commands:
+To install the dependencies and run the checks, run the following commands.
+`npm run check` runs the type checker and the content lint:
 
 ```bash
 npm install
-npm run typecheck
-npm run lint:content
+npm run check
 npm test
 ```
 
@@ -68,6 +68,11 @@ To add a skill, do these steps:
 1. Keep `SKILL.md` within 8,000 characters. Keep only what applies on every
    run. Move conditional content, such as a language, a mode, or a rare
    case, to `references/TOPIC.md`, behind a line that says when to read it.
+1. For a skill that sets `disable-model-invocation`, add
+   `agents/openai.yaml` with `allow_implicit_invocation: false`, so Codex
+   follows the same choice.
+1. State a convention of the repository only when the skill needs more than
+   the first working agreement in `plugin/rules/core.md`.
 1. Add the skill to the skills table in the `README.md`, and to the skills
    table in the [design specification](SPEC.md#skills).
 1. Run `npm run lint:content`.
@@ -106,7 +111,9 @@ Codex load this file. To add a hook, do these steps:
    runs in every repository of the user, and code of the repository is
    untrusted.
 1. Make sure that the hook cannot loop. For example, `check.mjs` allows the
-   second stop.
+   second stop, and shows the user a warning instead.
+1. For an event of Claude Code only, such as `SubagentStop`, make sure that
+   the script does no harm when another coding agent ignores the event.
 1. Add a test in `test/` that runs the script with the JSON input of the
    hook. See `test/check-hook.test.ts`.
 
@@ -120,14 +127,17 @@ fixed version, Claude Code skips updates until the version changes.
 ## Change the rules
 
 Rules load into every conversation, so every word costs tokens on every
-turn. Each file in `plugin/rules/` covers one topic, and each piece of
+turn. State a rule as the behavior to follow. A list of words or patterns to
+avoid belongs in `PROSE_PATTERNS` in `scripts/lint-content.ts`, where no
+agent reads it. Each file in `plugin/rules/` covers one topic, and each piece of
 guidance lives in one file. `npm run lint:content` fails when the rules are
 more than the character budget.
 
 ## Change the docs
 
 Write all docs by the `writing.md` rule. `npm run lint:content` checks the
-links and anchors in the docs, the names and counts of skills and agents,
+mechanical part of that rule: em dashes, arrows, contractions, and the words
+that the rule replaces. It also checks the links and anchors in the docs, the names and counts of skills and agents,
 and that the `README.md` lists every skill and agent. When you add a page to
 `docs/guide/`, add it to the index in `docs/guide/README.md`.
 

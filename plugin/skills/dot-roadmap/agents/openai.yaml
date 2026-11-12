@@ -1,0 +1,5 @@
+interface:
+  display_name: "Roadmap"
+  short_description: "Split a plan into phases and self-contained tasks"
+policy:
+  allow_implicit_invocation: false

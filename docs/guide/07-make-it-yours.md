@@ -16,13 +16,14 @@ The agent names the class of mistake, then picks the highest level that can
 prevent it, in this order: architecture, a type, a lint rule, a test, then
 docs. It makes the change and shows that the check catches the mistake.
 
-## Run your checks at the end of each turn
+## Run your checks when the agent stops
 
 The `check` hook makes the agent fix type and lint errors before it stops.
 To use the hook in a repository, do these steps:
 
 1. Add a `check` script that runs the type checker and the linter, but not
-   the tests. For example, in `package.json`:
+   the tests. A `check` target in a `Makefile` also works. For example, in
+   `package.json`:
 
     ```json
     {
@@ -34,15 +35,16 @@ To use the hook in a repository, do these steps:
 
 1. In the repository, run `npx --yes @igorlau/dotagents check enable`.
 
-The hook runs the script only after a turn that changed files. It makes the
-agent continue one time at most, so it cannot loop. `dotagents scaffold`
+The hook runs the script only after an agent or a subagent changed files. It
+makes the agent continue one time at most, so it cannot loop. When the
+script still fails after that, the hook shows you a warning. `dotagents scaffold`
 writes an `AGENTS.md` that tells the agent about the script.
 
 ## Write your own skills
 
 Put the skills for one repository in the repository, such as in
 `.claude/skills/` or `.agents/skills/`. The conventions of the repository
-come first in every dotagents skill, so your skills and your `AGENTS.md`
+come first in the always-on rules, so your skills and your `AGENTS.md`
 change how the dotagents skills work there.
 
 To write a skill or an `AGENTS.md`, start

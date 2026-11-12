@@ -8,7 +8,7 @@
     {
       "name": "dotagents",
       "source": "./plugin",
-      "description": "Skills, agents, and hooks for a planned, test-first, reviewed coding workflow."
+      "description": "Skills, agents, and hooks for a planned, tested, and reviewed coding workflow."
     }
   ]
 }

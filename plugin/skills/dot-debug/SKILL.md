@@ -1,17 +1,15 @@
 ---
 name: dot-debug
-description: Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose" or "debug this", or reports that something is broken, throws, fails, or is slow.
+description: Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose" or "debug this", or when the error does not show the cause of a failure or a slowdown.
 ---
 
 # Diagnose bugs
 
-Use this method for hard bugs. Skip a phase only when you can state the reason.
+Use this method for hard bugs. When the error message already shows the cause, fix the bug directly. Skip a phase only when you can state the reason.
 
 To learn the modules in the area, read `GLOSSARY.md` if it exists, and read the ADRs for the area that you change.
 
-## Repository conventions first
-
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. Build the feedback loop with the test framework, scripts, and tools of the repository.
+Build the feedback loop with the test framework, scripts, and tools of the repository.
 
 ## Redact
 
@@ -104,7 +102,7 @@ Write the regression test **before the fix**, but only if a **correct seam** exi
 
 A correct seam is one where the test runs the **real bug pattern** as it occurs at the call site. Sometimes the only seam is too shallow: a test with one caller when the bug needs several callers, or a unit test that cannot repeat the chain that triggered the bug. A regression test there gives false confidence.
 
-**If no correct seam exists, that is the finding.** Note it. The architecture of the codebase prevents a test that locks the bug down. Flag it for the next phase.
+**If no correct seam exists, that is the finding.** Note it. The architecture of the codebase prevents a test that locks the bug down. Report it to the user at the end.
 
 If a correct seam exists:
 

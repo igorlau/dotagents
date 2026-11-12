@@ -8,9 +8,7 @@ disable-model-invocation: true
 
 Change the repository so that the next agent cannot make the same mistake again. Assume every contributor is an agent that sees only the files it opened, copies the nearest example, and takes the shortest path that compiles. A change that looks right from one file must be right for the whole repository.
 
-## Repository conventions first
-
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. Use the type checker, linter, and test framework that the repository already has.
+Use the type checker, linter, and test framework that the repository already has.
 
 ## 1. Name the mistake class
 

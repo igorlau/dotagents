@@ -1,12 +1,12 @@
 # dotagents
 
 dotagents gives Claude Code, OpenAI Codex, and GitHub Copilot one AI workflow
-for every project. The workflow plans a change, writes tests and code in small
-steps, reviews the result, and asks for your approval between the steps.
+for every project. The workflow plans a change, writes code and tests in small
+steps, verifies each step, reviews the result, and asks for your decision.
 
 dotagents has two parts:
 
-- A plugin with skills, agents, and an end-of-turn hook. Claude Code, the
+- A plugin with skills, agents, and hooks. Claude Code, the
   Copilot CLI, and VS Code load the plugin.
 - A CLI that installs the always-on rules for all three coding agents, and the
   skills for Codex and Copilot.
@@ -86,14 +86,14 @@ Run `scaffold` before `init`. `init` adds a block to `AGENTS.md`, and
 ## The flow
 
 The following diagram shows the full flow, from an idea to the commits of one
-task. The agent stops for your approval at each "approve" or "go":
+task. The agent stops for your decision at each "approve", "fix", or "accept":
 
 ```mermaid
 sequenceDiagram
     actor User
     participant Main as Main session
     participant Agents as Step agents
-    User->>Main: dot-grill-me with an idea
+    User->>Main: dot-grilling with an idea
     Main-->>User: Questions in rounds, with recommended answers
     User->>Main: Answers until the plan is clear
     User->>Main: dot-plan
@@ -106,24 +106,23 @@ sequenceDiagram
     User->>Main: Approve the roadmap
     loop Each task
         User->>Main: dot-flow with the task file
-        Main->>Agents: 1. Test stubs (dot-tester)
+        Main->>Agents: 1. Production code (dot-implementer)
         Agents-->>Main: Reply
-        Main-->>User: Summary
-        User->>Main: go
-        Main->>Agents: 2. Production code (dot-implementer)
+        Main->>Main: Run the checks of the reply
+        Main->>Agents: 2. Tests (dot-tester)
         Agents-->>Main: Reply
-        Main-->>User: Summary
-        User->>Main: go
-        Main->>Agents: 3. Test fill (dot-tester)
-        Agents-->>Main: Reply
-        Main-->>User: Summary
-        User->>Main: go
-        Main->>Agents: 4. Review (dot-reviewer)
+        Main->>Main: Run the tests of the reply
+        Main->>Agents: 3. Review (dot-reviewer)
         Agents-->>Main: Findings
         Main-->>User: Findings
-        break A blocker or a high finding
+        break A blocker, or a check that differs from the reply
             Main-->>User: Stop. The files stay as they are.
         end
+        opt Fix
+            User->>Main: Fix these findings
+            Main->>Agents: Steps 1 to 3 again
+        end
+        User->>Main: Accept
         User->>Main: dot-commit
         Main-->>User: Each commit for approval
         User->>Main: Approve
@@ -131,8 +130,8 @@ sequenceDiagram
     end
 ```
 
-`dot-flow` never commits. In Codex and Copilot, `dot-flow` runs the four steps
-in the main session, with the same approvals.
+`dot-flow` never commits. In Codex and Copilot, `dot-flow` runs the three steps
+in the main session, with the same verification and stops.
 
 To learn the workflow step by step, read the [guide](docs/guide/README.md).
 
@@ -163,17 +162,16 @@ agreements, the smallest complete change from
 [ponytail](https://github.com/DietrichGebert/ponytail), code comments, code
 style, and writing.
 
-The 15 skills in [`plugin/skills/`](plugin/skills/) load when a task needs
+The 14 skills in [`plugin/skills/`](plugin/skills/) load when a task needs
 them:
 
 | Skill | Purpose |
 | ----- | ------- |
-| `dot-grill-me` | Start an interview that makes a plan clear. |
-| `dot-grilling` | Run the interview method of `dot-grill-me`. |
+| `dot-grilling` | Run an interview, in rounds of questions, that makes a plan clear. |
 | `dot-plan` | Plan a change as small, verifiable steps, with entity schemas. |
 | `dot-roadmap` | Split a plan into phases and tasks that each stand alone. |
-| `dot-flow` | Take a roadmap task through test stubs, code, test fill, and review, with an approval after each step. |
-| `dot-testing` | Write tests with a makeSut factory, as stubs before the code or in full after it. |
+| `dot-flow` | Take a roadmap task through code, tests, and review, verify each step, and stop for your decision after the review. |
+| `dot-testing` | Write tests with a makeSut factory, alone or after `dot-implement`. |
 | `dot-implement` | Write the code of a change or roadmap task to the standards of the repository and the language. |
 | `dot-code-review` | Review a diff for correctness bugs and maintainability problems. |
 | `dot-comments` | Delete the comments in a diff that no exception protects. |
@@ -190,7 +188,7 @@ context:
 
 | Agent | Purpose |
 | ----- | ------- |
-| `dot-tester` | Write the test stubs, or fill them after the code exists. |
+| `dot-tester` | Write the tests of a task after the code exists. |
 | `dot-implementer` | Write the production code of a task. |
 | `dot-reviewer` | Review the changes of a task. |
 

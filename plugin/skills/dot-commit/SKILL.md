@@ -7,10 +7,6 @@ description: Commit changes as small, logical commits, with a review by the user
 
 Each commit is **atomic**: one purpose, complete enough to build and pass tests, and small enough to review and revert on its own.
 
-## Repository conventions first
-
-Before you start, read what the repository defines: agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/`, `.cursor/rules/`), project skills, `CONTRIBUTING.md`, style guides, linter and formatter configuration, and the patterns in the nearby code. They take precedence over this skill: where they differ, follow the repository, and point out the difference. Do not change the repository's standard. Follow the repository's commit convention when it defines one, in `CONTRIBUTING.md`, a commitlint or similar configuration, or a consistent history.
-
 ## Review mode
 
 Review is the default: the user approves the plan, and then each commit before you create it. When the user asks you to commit without review, for example "commit, do not ask", skip both approval stops for that request, and still show the summary in step 4.
@@ -62,7 +58,7 @@ Done when every group in the plan is committed or skipped, and the user has seen
 
 ## Message format
 
-Use the repository's commit convention. When it defines none, use the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format, and reuse the scopes you found in the log:
+Use the repository's commit convention, from `CONTRIBUTING.md`, a commitlint or similar configuration, or a consistent history. When it defines none, use the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format, and reuse the scopes you found in the log:
 
 ```text
 <type>(<optional scope>): <summary in the imperative mood>

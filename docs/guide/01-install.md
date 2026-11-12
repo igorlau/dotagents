@@ -44,9 +44,10 @@ To install for all three coding agents at the same time, leave out
 
 ## Enable the check hook
 
-The `check` hook runs the `check` script of a repository at the end of each
-turn that changes files. When the script fails, the hook gives the output to
-the agent, and the agent continues. The hook runs only in a repository that
+The `check` hook runs the `check` script of a repository when an agent or a
+subagent stops after it changed files. When the script fails, the hook gives
+the output to that agent, and the agent continues. When the script fails a
+second time, the hook shows you a warning and lets the agent stop. The hook runs only in a repository that
 you enable, because the script is code of the repository.
 
 To enable the hook, run the following command in the repository:
@@ -55,7 +56,8 @@ To enable the hook, run the following command in the repository:
 npx --yes @igorlau/dotagents check enable
 ```
 
-The repository must have a `check` script, such as in `package.json`, that
+The repository must have a `check` script in `package.json`, or a `check`
+target in a `Makefile`, that
 runs the type checker and the linter but not the tests. To stop the hook,
 run `npx --yes @igorlau/dotagents check disable`.
 
