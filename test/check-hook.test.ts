@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, test } from "node:test";
@@ -15,7 +16,9 @@ afterEach(() => box.cleanup());
 
 function runHook(cwd: string, input: Record<string, unknown>, mode?: "snapshot") {
   const args = mode ? [HOOK, mode] : [HOOK];
-  const result = spawnSync(process.execPath, args, { input: JSON.stringify({ cwd, ...input }), encoding: "utf8" });
+  // The hook keeps snapshots in the temp directory; the sandbox keeps them out of the real one.
+  const env = { ...process.env, TMPDIR: box.home, TEMP: box.home, TMP: box.home };
+  const result = spawnSync(process.execPath, args, { input: JSON.stringify({ cwd, ...input }), encoding: "utf8", env });
   assert.equal(result.status, 0, result.stderr);
   return JSON.parse(result.stdout);
 }
@@ -49,6 +52,17 @@ test("the check hook blocks the stop with the output when the turn changed files
   const result = turn(repo, editFile(repo));
   assert.equal(result.decision, "block");
   assert.match(result.reason, /type error in a\.ts/);
+});
+
+test("the check hook says when the failing check printed nothing", () => {
+  const repo = repoWithCheck("node -e \"process.exit(3)\"");
+  assert.match(turn(repo, editFile(repo)).reason, /exit code 3[\s\S]*It printed nothing\./);
+});
+
+test("the check hook deletes the snapshot at the end of the turn", () => {
+  const repo = repoWithCheck("node -e 0");
+  turn(repo, editFile(repo));
+  assert.deepEqual(fs.readdirSync(path.join(box.home, "dotagents-check")), []);
 });
 
 test("the check hook allows the stop when the turn changed nothing, even if the check fails", () => {

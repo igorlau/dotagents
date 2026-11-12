@@ -107,10 +107,11 @@ Notes on these choices:
 
 ### Known limitations
 
-- The `check` hook was tested with its unit tests and installed in Claude
-  Code and Codex on 2026-11-12. Codex 0.160 installs the Claude-format
-  plugin unchanged and copies `hooks/`. A live run in each agent, and
-  Copilot in VS Code, where hooks are in preview, are not verified yet.
+- On 2026-11-12, a live run in Claude Code 2.1.322 confirmed that the `check`
+  hook blocks the end of a turn that changed files, and allows the retry.
+  Codex 0.160 installs the Claude-format plugin unchanged and copies
+  `hooks/`, but a live run in Codex isn't verified. Neither is Copilot in
+  VS Code, where hooks are in preview.
 - In project mode, Copilot in VS Code reads skills from both `.claude/skills/`
   and `.agents/skills/`, so it can list each skill twice. Claude Code reads
   only the first location and Codex only the second, so dotagents writes

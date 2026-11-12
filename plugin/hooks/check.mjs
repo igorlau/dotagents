@@ -17,7 +17,10 @@ const snapshotFile = path.join(os.tmpdir(), "dotagents-check", `${hash(input.ses
 // Codex needs JSON on stdout when the hook exits 0.
 let decision = {};
 if (process.argv[2] === "snapshot") saveSnapshot();
-else if (!input.stop_hook_active && turnChangedTree() && hasCheckScript()) decision = runCheck();
+else {
+  if (!input.stop_hook_active && turnChangedTree() && hasCheckScript()) decision = runCheck();
+  fs.rmSync(snapshotFile, { force: true });
+}
 console.log(JSON.stringify(decision));
 
 function saveSnapshot() {
@@ -63,8 +66,8 @@ function hasCheckScript() {
 function runCheck() {
   const result = spawnSync("npm", ["run", "--silent", "check"], { cwd, encoding: "utf8", shell: process.platform === "win32" });
   if (result.status === 0) return {};
-  const output = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim().slice(-MAX_OUTPUT);
-  return { decision: "block", reason: `The check script failed. Fix the problems, then finish:\n${output}` };
+  const output = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim().slice(-MAX_OUTPUT) || "It printed nothing.";
+  return { decision: "block", reason: `\`npm run check\` failed with exit code ${result.status}. Fix the problems your changes caused, then finish:\n${output}` };
 }
 
 function hash(text) {
