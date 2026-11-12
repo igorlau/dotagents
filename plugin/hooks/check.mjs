@@ -1,7 +1,9 @@
 // Hook for Claude Code, Copilot, and Codex. With `snapshot`, it runs when a
-// prompt arrives and records the working tree. Without it, it runs at the end
-// of a turn: when the turn changed the tree, it runs the repository's `check`
-// script and, when that fails, asks the agent to continue with the output.
+// prompt arrives or a subagent starts, and records the working tree. Without
+// it, it runs when the agent or the subagent stops: when that agent changed
+// the tree, it runs the repository's `check` script and, when that fails,
+// asks the agent to continue with the output. A check that still fails on
+// the retry becomes a warning for the user, so the hook can't loop.
 // It acts only in repositories that `dotagents check enable` added to the
 // user's config, because the `check` script is the repository's own code.
 import { spawnSync } from "node:child_process";
@@ -14,15 +16,18 @@ const MAX_OUTPUT = 4000;
 
 const input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
 const cwd = input.cwd ?? process.cwd();
-const snapshotFile = path.join(os.tmpdir(), "dotagents-check", `${hash(input.session_id ?? cwd)}.txt`);
+// A subagent has its own snapshot, so each agent answers only for the changes that it made.
+const snapshotFile = path.join(os.tmpdir(), "dotagents-check", `${hash(input.agent_id ?? input.session_id ?? cwd)}.txt`);
 
 // Codex needs JSON on stdout when the hook exits 0.
 let decision = {};
 if (checkEnabled()) {
   if (process.argv[2] === "snapshot") saveSnapshot();
   else {
-    if (!input.stop_hook_active && turnChangedTree() && hasCheckScript()) decision = runCheck();
-    fs.rmSync(snapshotFile, { force: true });
+    const command = turnChangedTree() && checkCommand();
+    if (command) decision = runCheck(command);
+    // A blocked agent stops again, and that retry needs the snapshot.
+    if (decision.decision !== "block") fs.rmSync(snapshotFile, { force: true });
   }
 }
 console.log(JSON.stringify(decision));
@@ -72,7 +77,14 @@ function treeHash() {
   }
 }
 
-function hasCheckScript() {
+/** Returns the command and arguments that run the repository's `check`: an npm script, else a Makefile target. */
+function checkCommand() {
+  if (hasNpmCheck()) return ["npm", "run", "--silent", "check"];
+  if (hasMakeCheck()) return ["make", "--silent", "check"];
+  return undefined;
+}
+
+function hasNpmCheck() {
   try {
     return Boolean(JSON.parse(fs.readFileSync(path.join(cwd, "package.json"), "utf8")).scripts?.check);
   } catch {
@@ -80,11 +92,25 @@ function hasCheckScript() {
   }
 }
 
-function runCheck() {
-  const result = spawnSync("npm", ["run", "--silent", "check"], { cwd, encoding: "utf8", shell: process.platform === "win32" });
-  if (result.status === 0) return {};
+function hasMakeCheck() {
+  try {
+    return /^check:/m.test(fs.readFileSync(path.join(cwd, "Makefile"), "utf8"));
+  } catch {
+    return false;
+  }
+}
+
+function runCheck([command, ...args]) {
+  const result = spawnSync(command, args, { cwd, encoding: "utf8", shell: process.platform === "win32" });
+  // A runner that isn't installed can't prove a failure.
+  if (result.status === 0 || result.error) return {};
   const output = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim().slice(-MAX_OUTPUT) || "It printed nothing.";
-  return { decision: "block", reason: `\`npm run check\` failed with exit code ${result.status}. Fix the problems your changes caused, then finish:\n${output}` };
+  const failure = `\`${[command, ...args.filter((arg) => arg !== "--silent")].join(" ")}\` failed with exit code ${result.status}.`;
+  if (input.stop_hook_active) return { systemMessage: `${failure} The agent already tried to fix it, so the check still fails:\n${output}` };
+  return {
+    decision: "block",
+    reason: `${failure} Fix the problems that your changes caused, then finish. If a problem was there before your changes, leave it and tell the user:\n${output}`,
+  };
 }
 
 function hash(text) {

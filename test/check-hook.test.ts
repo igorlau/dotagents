@@ -8,14 +8,15 @@ import { afterEach, beforeEach, test } from "node:test";
 import { git, sandbox, write, type Sandbox } from "./helpers.ts";
 
 const HOOK = fileURLToPath(new URL("../plugin/hooks/check.mjs", import.meta.url));
+const RULES_HOOK = fileURLToPath(new URL("../plugin/hooks/rules.mjs", import.meta.url));
 const FAILING_CHECK = "node -e \"console.error('type error in a.ts'); process.exit(1)\"";
 
 let box: Sandbox;
 beforeEach(() => (box = sandbox()));
 afterEach(() => box.cleanup());
 
-function runHook(cwd: string, input: Record<string, unknown>, mode?: "snapshot") {
-  const args = mode ? [HOOK, mode] : [HOOK];
+function runHook(cwd: string, input: Record<string, unknown>, mode?: "snapshot", hook = HOOK) {
+  const args = mode ? [hook, mode] : [hook];
   // The sandbox home holds the opt-in config and, as the temp directory, the snapshots.
   const env = { PATH: process.env.PATH, HOME: box.home, TMPDIR: box.home, TEMP: box.home, TMP: box.home };
   const result = spawnSync(process.execPath, args, { input: JSON.stringify({ cwd, ...input }), encoding: "utf8", env });
@@ -102,13 +103,56 @@ test("the check hook allows the stop without a snapshot", () => {
   assert.deepEqual(runHook(repo, { session_id: randomUUID() }), {});
 });
 
-test("the check hook allows the stop on the retry, so it can't loop", () => {
+test("the check hook warns the user and allows the stop on the retry, so it can't loop", () => {
   const repo = repoWithCheck(FAILING_CHECK);
-  assert.deepEqual(turn(repo, editFile(repo), { stop_hook_active: true }), {});
+  const session = { session_id: randomUUID() };
+  runHook(repo, session, "snapshot");
+  editFile(repo)();
+  assert.equal(runHook(repo, session).decision, "block");
+  const retry = runHook(repo, { ...session, stop_hook_active: true });
+  assert.equal(retry.decision, undefined);
+  assert.match(retry.systemMessage, /still fails[\s\S]*type error in a\.ts/);
+});
+
+test("the check hook blocks each agent only for the changes that it made", () => {
+  const repo = repoWithCheck("node -e \"process.exit(require('fs').existsSync('bad.ts') ? 1 : 0)\"");
+  const session = { session_id: randomUUID() };
+  const reader = { ...session, agent_id: "reader" };
+  const writer = { ...session, agent_id: "writer" };
+  runHook(repo, session, "snapshot");
+  write(path.join(repo, "bad.ts"), "export const bad = 1;\n");
+
+  runHook(repo, reader, "snapshot");
+  assert.deepEqual(runHook(repo, reader), {});
+
+  runHook(repo, writer, "snapshot");
+  write(path.join(repo, "worse.ts"), "export const worse = 1;\n");
+  assert.equal(runHook(repo, writer).decision, "block");
+  assert.match(runHook(repo, { ...writer, stop_hook_active: true }).systemMessage, /still fails/);
+
+  assert.equal(runHook(repo, session).decision, "block");
+});
+
+test("the check hook runs the check target of a Makefile", { skip: spawnSync("make", ["--version"]).error ? "make isn't installed" : false }, () => {
+  const repo = enabledRepo({ Makefile: "check:\n\t@echo lint error in a.py; exit 1\n" });
+  const result = turn(repo, editFile(repo));
+  assert.match(result.reason, /`make check` failed[\s\S]*lint error in a\.py/);
 });
 
 test("the check hook leaves the repository's index unchanged", () => {
   const repo = repoWithCheck("node -e 0");
   turn(repo, editFile(repo));
   assert.equal(git(repo, ["status", "--porcelain"]), "?? a.ts");
+});
+
+test("the rules hook warns only when the installed rules differ from the plugin's rules", () => {
+  const session = { session_id: randomUUID() };
+  assert.deepEqual(runHook(box.home, session, undefined, RULES_HOOK), {});
+  fs.mkdirSync(path.join(box.home, ".claude"));
+  assert.match(runHook(box.home, session, undefined, RULES_HOOK).systemMessage, /dotagents install/);
+  assert.equal(box.run(["install"]).status, 0);
+  assert.deepEqual(runHook(box.home, session, undefined, RULES_HOOK), {});
+  const rules = path.join(box.home, ".claude", "rules", "dotagents.md");
+  write(rules, fs.readFileSync(rules, "utf8").replace("Working agreements", "Old agreements"));
+  assert.match(runHook(box.home, session, undefined, RULES_HOOK).systemMessage, /differ from the rules/);
 });
