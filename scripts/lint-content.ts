@@ -1,4 +1,4 @@
-// Checks the structure of plugin/: skill frontmatter, relative links, the
+// Checks the structure of plugin/: skill and agent frontmatter, relative links, the
 // rules and skill size budgets, upstream metadata, scaffold templates, and the plugin
 // and marketplace manifests. Exits 1 on any problem.
 import fs from "node:fs";
@@ -40,6 +40,8 @@ for (const name of fs.readdirSync(rulesDir)) {
 if (ruleChars > RULES_CHAR_BUDGET) fail(rulesDir, `${ruleChars} characters exceeds the budget of ${RULES_CHAR_BUDGET}`);
 
 const skillsDir = path.join(pluginRoot, "skills");
+// Claude Code can't preload a skill that sets disable-model-invocation into an agent.
+const preloadableSkills = new Set<string>();
 for (const name of fs.readdirSync(skillsDir)) {
   const dir = path.join(skillsDir, name);
   if (!fs.statSync(dir).isDirectory()) continue;
@@ -52,23 +54,14 @@ for (const name of fs.readdirSync(skillsDir)) {
   const skillText = fs.readFileSync(skillFile, "utf8");
   if (skillText.length > SKILL_CHAR_BUDGET) fail(skillFile, `${skillText.length} characters exceeds the budget of ${SKILL_CHAR_BUDGET}; move conditional content to references/`);
 
-  let frontmatter;
-  try {
-    frontmatter = parseFrontmatter(skillText);
-  } catch (error) {
-    fail(skillFile, (error as Error).message);
-    continue;
-  }
-  if (!frontmatter) {
-    fail(skillFile, "missing frontmatter");
-    continue;
-  }
-  const { data } = frontmatter;
+  const data = readFrontmatter(skillFile, skillText);
+  if (!data) continue;
   if (data.name !== name) fail(skillFile, `name "${data.name}" must match the directory name "${name}"`);
   if (!NAME_PATTERN.test(name) || name.length > NAME_MAX) fail(skillFile, `name must be lowercase words joined by hyphens, at most ${NAME_MAX} characters`);
   if (!name.startsWith(SKILL_PREFIX)) fail(skillFile, `name must start with "${SKILL_PREFIX}"`);
   if (!data.description) fail(skillFile, "missing description");
   else if (data.description.length > DESCRIPTION_MAX) fail(skillFile, `description exceeds ${DESCRIPTION_MAX} characters`);
+  if (data["disable-model-invocation"] !== "true") preloadableSkills.add(name);
 
   for (const file of markdownFiles(dir)) checkLinks(file);
 
@@ -89,21 +82,63 @@ for (const file of allFiles(scaffoldDir)) {
   }
 }
 
-checkManifests();
+const pluginName = checkManifests();
+if (pluginName) checkAgents(pluginName);
 
-/** Checks that the marketplace lists this plugin by name, and that the plugin has no fixed version. */
-function checkManifests(): void {
+/**
+ * Checks agent frontmatter. Each preloaded skill must carry the plugin's namespace: a bare
+ * name loads a same-named skill from ~/.claude/skills/ first, such as a stale copy.
+ */
+function checkAgents(pluginName: string): void {
+  const agentsDir = path.join(pluginRoot, "agents");
+  for (const name of fs.readdirSync(agentsDir)) {
+    const file = path.join(agentsDir, name);
+    if (!name.endsWith(".md")) {
+      fail(file, "unexpected file; agents are .md files");
+      continue;
+    }
+    const data = readFrontmatter(file, fs.readFileSync(file, "utf8"));
+    if (!data) continue;
+    if (data.name !== path.basename(name, ".md")) fail(file, `name "${data.name}" must match the file name`);
+    if (!data.description) fail(file, "missing description");
+    for (const entry of (data.skills ?? "").split(",").map((skill) => skill.trim()).filter(Boolean)) {
+      const prefix = `${pluginName}:`;
+      if (!entry.startsWith(prefix)) fail(file, `skill "${entry}" must start with "${prefix}"`);
+      else if (!preloadableSkills.has(entry.slice(prefix.length))) fail(file, `skill "${entry}" isn't a plugin skill that Claude can invoke`);
+    }
+    checkLinks(file);
+  }
+}
+
+/**
+ * Checks that the marketplace lists this plugin by name, and that the plugin has no fixed version.
+ * Returns the plugin name, or undefined when plugin.json can't be read.
+ */
+function checkManifests(): string | undefined {
   const pluginFile = path.join(pluginRoot, ".claude-plugin", "plugin.json");
   const marketplaceFile = path.join(packageRoot, ".claude-plugin", "marketplace.json");
   const plugin = readJson(pluginFile);
   const marketplace = readJson(marketplaceFile);
-  if (!plugin || !marketplace) return;
+  if (!plugin || !marketplace) return plugin?.name;
 
   const entry = marketplace.plugins?.find((candidate: { source?: string }) => path.resolve(packageRoot, candidate.source ?? "") === path.resolve(pluginRoot));
   if (!entry) fail(marketplaceFile, "no plugin entry whose source is plugin/");
   else if (entry.name !== plugin.name) fail(marketplaceFile, `plugin name "${entry.name}" must match plugin.json name "${plugin.name}"`);
   // Claude Code skips updates while the version stays the same; without one, it versions by commit.
   if ("version" in plugin) fail(pluginFile, "remove \"version\", so Claude Code updates the plugin on every commit");
+  return plugin.name;
+}
+
+/** Returns the frontmatter fields of a file, or reports why it has none and returns undefined. */
+function readFrontmatter(file: string, text: string): Record<string, string> | undefined {
+  try {
+    const frontmatter = parseFrontmatter(text);
+    if (!frontmatter) fail(file, "missing frontmatter");
+    return frontmatter?.data;
+  } catch (error) {
+    fail(file, (error as Error).message);
+    return undefined;
+  }
 }
 
 function readJson(file: string) {

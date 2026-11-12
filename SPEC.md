@@ -50,6 +50,7 @@ The following table lists each decision and the reason for it:
 | 18 | Ship one end-of-turn hook in the plugin that runs the repository's `check` script (type check and lint, not tests) and makes the agent continue when it fails. | Claude Code, Copilot, and Codex all load the plugin's `hooks/hooks.json`, and Claude Code, Copilot CLI, and Codex document a `block` decision, so one script covers the three agents. Tests stay out because `dot-implement` can leave expected test failures for `dot-testing`. The hook allows the second stop, so it can't loop. It runs the check only when the turn changed the working tree, compared with a snapshot taken when the prompt arrived, so a turn that changes nothing never makes the agent fix existing problems or runs repository code. It acts only in repositories listed in `checkRepos` in the user's `config.json`, which `dotagents check enable` sets: the `check` script is the repository's own code, and an opt-in inside the repository would let an untrusted one enable itself. |
 | 19 | The global CLI install writes rules for all three agents and skills only for Codex and Copilot. Claude Code gets the skills, agents, and hooks from the plugin. | Plugins can't ship always-on rules, and the CLI can't install agents and hooks safely. `update` removes the Claude Code skills that earlier versions installed, and `doctor` warns about leftover copies. Project installs still write `.claude/skills/`, so collaborators don't need the plugin. |
 | 20 | Add an always-on writing rule, based on ASD-STE100, for all text that agents write: chat, CLI output, plans and reports, commits, pull requests, and docs. It takes precedence over the Google style in `dot-docs-writing`. | Short sentences with a controlled vocabulary are easier to read for a reader in a second language and for translation tools. One rule for all text replaces the prose rules that `dot-docs-writing` kept only for docs. The rules are in our own words, because the ASD-STE100 dictionary is copyrighted. |
+| 21 | Ship three agents in the plugin only: `dot-tester`, `dot-implementer`, and `dot-reviewer`. Each one preloads one skill as `dotagents:<skill>`, and none of them can start another agent. | Each step of a roadmap task runs in a fresh context with only its skill. With a bare name, Claude Code preloads a same-named skill from `~/.claude/skills/` first, such as a stale copy from an earlier CLI install. A live run on 2026-11-12 showed that agents receive `~/.claude/rules/dotagents.md`, so the agents don't load the rules themselves. |
 
 ## Install modes
 
@@ -228,7 +229,8 @@ agents and Git working in the dotagents repository don't load them as its own
 
 `plugin/.claude-plugin/plugin.json` makes `plugin/` a Claude Code plugin, and
 `.claude-plugin/marketplace.json` lists it. The CLI reads only `rules/`,
-`skills/`, and `scaffold/` from `plugin/`. `plugin.json` has no `version`:
+`skills/`, and `scaffold/` from `plugin/`, so the agents in `agents/` reach
+users only through the plugin. `plugin.json` has no `version`:
 with a fixed version, Claude Code skips updates, and without one it versions
 the plugin by commit. `npm run lint:content` fails when a version is added.
 The npm package doesn't include the marketplace file: Claude Code installs the
@@ -265,8 +267,9 @@ report versions such as `1.0.0-dev+30d0533`.
   repositories. The tests cover block merging, global installs that leave
   repositories untouched, conflicts, local modifications, stale skill
   removal, uninstall, and dry runs.
-- `npm run lint:content` checks skill frontmatter, relative links, the rules
-  character budget, and upstream metadata files.
+- `npm run lint:content` checks skill and agent frontmatter, the skills that
+  each agent preloads, relative links, the rules and skill character budgets,
+  and upstream metadata files.
 - Evaluations that run skills against a model are out of scope for v1.
 
 ## Future work
