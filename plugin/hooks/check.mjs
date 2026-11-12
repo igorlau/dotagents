@@ -2,6 +2,8 @@
 // prompt arrives and records the working tree. Without it, it runs at the end
 // of a turn: when the turn changed the tree, it runs the repository's `check`
 // script and, when that fails, asks the agent to continue with the output.
+// It acts only in repositories that `dotagents check enable` added to the
+// user's config, because the `check` script is the repository's own code.
 import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -16,12 +18,27 @@ const snapshotFile = path.join(os.tmpdir(), "dotagents-check", `${hash(input.ses
 
 // Codex needs JSON on stdout when the hook exits 0.
 let decision = {};
-if (process.argv[2] === "snapshot") saveSnapshot();
-else {
-  if (!input.stop_hook_active && turnChangedTree() && hasCheckScript()) decision = runCheck();
-  fs.rmSync(snapshotFile, { force: true });
+if (checkEnabled()) {
+  if (process.argv[2] === "snapshot") saveSnapshot();
+  else {
+    if (!input.stop_hook_active && turnChangedTree() && hasCheckScript()) decision = runCheck();
+    fs.rmSync(snapshotFile, { force: true });
+  }
 }
 console.log(JSON.stringify(decision));
+
+function checkEnabled() {
+  const top = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd, encoding: "utf8" });
+  if (top.status !== 0) return false;
+  // Same path as configDir() in the CLI's src/paths.ts.
+  const configDir = process.env.XDG_CONFIG_HOME ? path.join(process.env.XDG_CONFIG_HOME, "dotagents") : path.join(os.homedir(), ".config", "dotagents");
+  try {
+    const { checkRepos = [] } = JSON.parse(fs.readFileSync(path.join(configDir, "config.json"), "utf8"));
+    return Array.isArray(checkRepos) && checkRepos.includes(fs.realpathSync(top.stdout.trim()));
+  } catch {
+    return false;
+  }
+}
 
 function saveSnapshot() {
   const tree = treeHash();

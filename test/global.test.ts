@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, test } from "node:test";
 import { hash } from "../src/manifest.ts";
@@ -156,4 +157,39 @@ test("doctor reports modified and missing files", () => {
   const result = box.run(["doctor"]);
   assert.equal(result.status, 1);
   assert.match(result.output, /dotagents\.md: modified/);
+});
+
+test("check enable and disable change only the repository list in the config", () => {
+  box.run(["install", "--source", "github:me/dotagents"]);
+  const repo = box.repo();
+  const configFile = p(".config", "dotagents", "config.json");
+
+  assert.equal(box.run(["check", "enable"], repo).status, 0);
+  assert.deepEqual(JSON.parse(read(configFile)), { checkRepos: [fs.realpathSync(repo)], source: "github:me/dotagents" });
+  assert.match(box.run(["doctor"]).output, /The check hook runs in: /);
+
+  assert.equal(box.run(["check", "disable"], repo).status, 0);
+  assert.deepEqual(JSON.parse(read(configFile)), { checkRepos: [], source: "github:me/dotagents" });
+});
+
+test("check enable --dry-run leaves the config unchanged", () => {
+  const repo = box.repo();
+  const result = box.run(["check", "enable", "--dry-run"], repo);
+  assert.equal(result.status, 0, result.output);
+  assert.match(result.output, /would be enabled/);
+  assert.ok(!exists(p(".config", "dotagents", "config.json")));
+});
+
+test("a broken config makes doctor name the file", () => {
+  box.run(["install"]);
+  write(p(".config", "dotagents", "config.json"), "{broken");
+  const result = box.run(["doctor"]);
+  assert.equal(result.status, 1);
+  assert.match(result.output, /config\.json isn't valid JSON: .*Fix or delete it\./);
+});
+
+test("check enable fails outside a repository", () => {
+  const result = box.run(["check", "enable"]);
+  assert.equal(result.status, 1);
+  assert.match(result.output, /Not inside a Git repository/);
 });

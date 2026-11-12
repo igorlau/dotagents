@@ -24,7 +24,7 @@ Commands and versions live in their source of truth, such as `package.json` scri
 
 ## Code and tests
 
-- Keep a `check` script, such as in `package.json`, that runs the type checker and the linter but not the tests. Agent hooks run it at the end of each turn.
+- Keep a `check` script, such as in `package.json`, that runs the type checker and the linter but not the tests. After `dotagents check enable`, agent hooks run it at the end of each turn that changes files.
 - Prefer the standard library and the dependencies the project already has. Ask before you add a dependency, and commit the lockfile with it.
 - Validate input at trust boundaries: requests, command-line arguments, files, and environment variables.
 - Change generated files through their generator, then regenerate them.

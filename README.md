@@ -21,6 +21,10 @@ install the plugin, run the following commands in Claude Code:
 /plugin install dotagents@dotagents
 ```
 
+The plugin's hook runs a repository's `check` script at the end of each turn
+that changes files. It runs only in repositories you enable with
+`dotagents check enable`.
+
 `npx` runs dotagents without installing it. To run `dotagents` as a command
 in any terminal, install it globally:
 
@@ -81,6 +85,7 @@ The following table summarizes the commands. For options, run
 | `doctor` | Check installs for missing or modified files. |
 | `list` | List the skills. |
 | `self-update` | Run `update` with the latest release. |
+| `check enable`, `check disable` | Let the plugin's `check` hook run in the current repository, or stop it. |
 
 dotagents doesn't overwrite files that you changed or that it didn't write.
 To overwrite them, pass `--force`.

@@ -28,6 +28,9 @@ To run the CLI from source, run `node src/cli.ts COMMAND`. The tests use
 temporary home directories, but the CLI writes to your real home directory.
 To preview the changes first, add `--dry-run`.
 
+The plugin's `check` hook runs only in repositories that you enable. To try
+it in a repository, run `node src/cli.ts check enable` there.
+
 ## Add a skill
 
 To add a skill, follow these steps:

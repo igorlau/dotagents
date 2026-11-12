@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
-import { doctor, init, install, list, saveSource, scaffold, selfUpdate, uninstall, update, version } from "./commands.ts";
+import { doctor, init, install, list, saveSource, scaffold, selfUpdate, setCheckHook, uninstall, update, version } from "./commands.ts";
 import { parseAgents } from "./targets.ts";
 
 const HELP = `dotagents: install curated agent skills and rules
@@ -14,6 +14,7 @@ Usage:
   dotagents doctor                  Check installs for problems
   dotagents list                    List the skills in the catalog
   dotagents self-update             Run \`update\` with the latest release
+  dotagents check enable|disable    Let the plugin's check hook run in the current repository, or stop it
 
 Options:
   --agents <list>   Comma-separated: claude,codex,copilot (default: all)
@@ -44,7 +45,7 @@ function main(argv: string[]): number {
     console.log(version());
     return 0;
   }
-  const [command] = positionals;
+  const [command, subcommand] = positionals;
   if (values.help || !command) {
     console.log(HELP);
     return command || values.help ? 0 : 1;
@@ -70,6 +71,10 @@ function main(argv: string[]): number {
       return doctor(cwd) ? 0 : 1;
     case "list":
       list();
+      return 0;
+    case "check":
+      if (subcommand !== "enable" && subcommand !== "disable") throw new Error("Usage: dotagents check enable|disable");
+      setCheckHook(cwd, subcommand === "enable", options.dryRun);
       return 0;
     case "self-update":
       return selfUpdate(argv.slice(1)) ? 0 : 1;

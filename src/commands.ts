@@ -195,6 +195,8 @@ export function doctor(cwd: string): boolean {
     if (version() !== manifest.version) log(`  Installed version ${manifest.version} differs from this CLI (${version()}). Run \`dotagents update\`.`);
   }
 
+  const checkRepos = readConfig().checkRepos ?? [];
+  log(checkRepos.length > 0 ? `  The check hook runs in: ${checkRepos.join(", ")}` : "  The check hook runs in no repository. Run `dotagents check enable` in one.");
   for (const issue of issues) log(`  ! ${issue}`);
   if (issues.length === 0) log("  No problems found.");
   return issues.length === 0;
@@ -223,18 +225,52 @@ export function list(): void {
   for (const skill of loadCatalog().skills) log(`${skill.name}\n  ${skill.description}`);
 }
 
+/** The user's settings. The plugin's `hooks/check.mjs` reads `checkRepos` from the same file. */
+interface Config {
+  checkRepos?: string[];
+  source?: string;
+}
+
 function configFile(): string {
   return path.join(configDir(), "config.json");
 }
 
-export function readSource(): string {
+function readConfig(): Config {
   const file = configFile();
-  return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf8")).source ?? DEFAULT_SOURCE) : DEFAULT_SOURCE;
+  if (!fs.existsSync(file)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (error) {
+    throw new Error(`${file} isn't valid JSON: ${(error as Error).message}. Fix or delete it.`);
+  }
+}
+
+function writeConfig(changes: Config): void {
+  fs.mkdirSync(configDir(), { recursive: true });
+  fs.writeFileSync(configFile(), JSON.stringify({ ...readConfig(), ...changes }, null, 2) + "\n");
+}
+
+export function readSource(): string {
+  return readConfig().source ?? DEFAULT_SOURCE;
 }
 
 export function saveSource(source: string): void {
-  fs.mkdirSync(configDir(), { recursive: true });
-  fs.writeFileSync(configFile(), JSON.stringify({ source }, null, 2) + "\n");
+  writeConfig({ source });
+}
+
+/** Enables or disables the plugin's `check` hook for the repository that contains `cwd`. Throws outside a repository. */
+export function setCheckHook(cwd: string, enabled: boolean, dryRun: boolean): void {
+  const root = repoRoot(cwd);
+  if (!root) throw new Error("Not inside a Git repository. Run this command from the repository to change.");
+  const repo = fs.realpathSync(root);
+  const others = (readConfig().checkRepos ?? []).filter((candidate) => candidate !== repo);
+  const state = enabled ? "enabled" : "disabled";
+  if (dryRun) {
+    log(`The check hook would be ${state} in ${repo}.`);
+    return;
+  }
+  writeConfig({ checkRepos: enabled ? [...others, repo].sort() : others });
+  log(`The check hook is ${state} in ${repo}.`);
 }
 
 export function selfUpdate(args: string[]): boolean {
