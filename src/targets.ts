@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import type { Catalog, ScaffoldFile } from "./catalog.ts";
 import { agentsHome, claudeHome, codexHome, copilotHome } from "./paths.ts";
@@ -19,6 +20,7 @@ const RULES_FILE = "dotagents.md";
 interface Layout {
   skillDirs: Record<Agent, string>;
   claudeRules: string;
+  claudeRulesInAgentsMd: boolean;
   codexRules: string;
   copilotRules: string;
 }
@@ -32,6 +34,7 @@ function layout(mode: Mode, root: string): Layout {
         copilot: path.join(agentsHome(), "skills"),
       },
       claudeRules: path.join(claudeHome(), "rules", RULES_FILE),
+      claudeRulesInAgentsMd: false,
       codexRules: path.join(codexHome(), "AGENTS.md"),
       // Copilot loads this file in every session; files in ~/.copilot/instructions/
       // load only when their applyTo pattern matches a file being edited.
@@ -40,13 +43,15 @@ function layout(mode: Mode, root: string): Layout {
   }
   // Copilot reads AGENTS.md too, so both agents share one block.
   const agentsMd = path.join(root, "AGENTS.md");
+  const claudeRulesInAgentsMd = importsAgentsMd(path.join(root, "CLAUDE.md"));
   return {
     skillDirs: {
       claude: path.join(root, ".claude", "skills"),
       codex: path.join(root, ".agents", "skills"),
       copilot: path.join(root, ".agents", "skills"),
     },
-    claudeRules: path.join(root, ".claude", "rules", RULES_FILE),
+    claudeRules: claudeRulesInAgentsMd ? agentsMd : path.join(root, ".claude", "rules", RULES_FILE),
+    claudeRulesInAgentsMd,
     codexRules: agentsMd,
     copilotRules: agentsMd,
   };
@@ -74,12 +79,20 @@ export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root 
 
   const rules = catalog.rules.trim();
   if (agents.includes("claude")) {
-    add({ kind: "file", path: target.claudeRules, content: `${HEADER}\n\n${rules}\n` });
+    add(
+      target.claudeRulesInAgentsMd
+        ? { kind: "block", path: target.claudeRules, content: rules }
+        : { kind: "file", path: target.claudeRules, content: `${HEADER}\n\n${rules}\n` },
+    );
   }
   if (agents.includes("codex")) add({ kind: "block", path: target.codexRules, content: rules });
   if (agents.includes("copilot")) add({ kind: "block", path: target.copilotRules, content: rules });
 
   return [...ops.values()];
+}
+
+function importsAgentsMd(claudeMd: string): boolean {
+  return fs.existsSync(claudeMd) && /^@(\.\/)?AGENTS\.md\s*$/m.test(fs.readFileSync(claudeMd, "utf8"));
 }
 
 // AGENTS.md serves every agent; CLAUDE.md and .claude/ serve only Claude Code.

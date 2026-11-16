@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import { afterEach, beforeEach, test } from "node:test";
-import { exists, git, read, sandbox, type Sandbox } from "./helpers.ts";
+import { exists, git, read, sandbox, write, type Sandbox } from "./helpers.ts";
 
 let box: Sandbox;
 beforeEach(() => (box = sandbox()));
@@ -56,4 +56,53 @@ test("a global install run inside a team repository leaves it untouched", () => 
   assert.equal(result.status, 0, result.output);
   assert.equal(status(repo), "");
   assert.ok(!exists(path.join(repo, ".dotagents.json")));
+});
+
+const IMPORTING_TEAM_FILES = { ...TEAM_FILES, "CLAUDE.md": "# Team instructions for Claude\n\n@AGENTS.md\n" };
+const blockCount = (repo: string) => read(path.join(repo, "AGENTS.md")).split("<!-- dotagents:start -->").length - 1;
+const claudeRulesFile = (repo: string) => path.join(repo, ".claude", "rules", "dotagents.md");
+
+test("init writes the rules only in the AGENTS.md block when CLAUDE.md imports AGENTS.md", () => {
+  const repo = box.repo(IMPORTING_TEAM_FILES);
+
+  const result = box.run(["init"], repo);
+
+  assert.equal(result.status, 0, result.output);
+  assert.equal(blockCount(repo), 1);
+  assert.ok(!exists(claudeRulesFile(repo)));
+});
+
+test("init for Claude Code alone writes the AGENTS.md block when CLAUDE.md imports AGENTS.md", () => {
+  const repo = box.repo(IMPORTING_TEAM_FILES);
+
+  const result = box.run(["init", "--agents", "claude"], repo);
+
+  assert.equal(result.status, 0, result.output);
+  assert.equal(blockCount(repo), 1);
+  assert.ok(!exists(claudeRulesFile(repo)));
+});
+
+test("update removes .claude/rules/dotagents.md after CLAUDE.md starts to import AGENTS.md", () => {
+  const repo = box.repo(TEAM_FILES);
+  box.run(["init"], repo);
+  write(path.join(repo, "CLAUDE.md"), IMPORTING_TEAM_FILES["CLAUDE.md"]);
+
+  const update = box.run(["update", "--project"], repo);
+  const doctor = box.run(["doctor"], repo);
+
+  assert.equal(update.status, 0, update.output);
+  assert.ok(!exists(claudeRulesFile(repo)));
+  assert.equal(blockCount(repo), 1);
+  assert.equal(doctor.status, 0, doctor.output);
+  assert.match(doctor.output, /No problems found/);
+});
+
+test("init keeps .claude/rules/dotagents.md when CLAUDE.md does not import AGENTS.md", () => {
+  const repo = box.repo(TEAM_FILES);
+
+  const result = box.run(["init", "--agents", "claude"], repo);
+
+  assert.equal(result.status, 0, result.output);
+  assert.ok(exists(claudeRulesFile(repo)));
+  assert.equal(blockCount(repo), 0);
 });
