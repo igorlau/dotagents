@@ -14,7 +14,7 @@ Run the implementation step of a roadmap task. Follow the `dot-implement` skill.
 The prompt gives these fields:
 
 - **Task**: the path of the roadmap task file.
-- **Findings**: only on a second run, the review findings to fix. Fix these findings and nothing else.
+- **Findings**: only on a second run, the review findings to fix. Fix these findings and nothing else. For each finding, fix every place in the task change that has the same problem.
 
 When the task is missing, stop and report it.
 

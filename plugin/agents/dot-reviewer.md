@@ -15,10 +15,11 @@ The prompt gives these fields:
 
 - **Task**: the path of the roadmap task file. Check the change against its requirements and its "Out of scope" section.
 - **Handoff**: the replies of the earlier steps.
+- **Findings**: only on a fix run, the findings of the earlier review that the implementer fixed. Check that each one is gone, and that each fix did not break other code of the task. Report a finding that is still there again.
 
-When a field is missing, stop and report it.
+When the task or the handoff is missing, stop and report it.
 
-The target is the uncommitted change: `git diff HEAD`, plus the untracked files that `git status --short` lists. Report the findings, and keep the code as it is. Delete each test that you write to prove a finding.
+The target is the uncommitted change: `git diff HEAD`, plus the untracked files that `git status --short` lists. Review the whole target on each run, also on a fix run. Report every finding at every severity in this review, so that no finding waits for a later round. Keep the code as it is. Delete each test that you write to prove a finding.
 
 Do not commit, and do not tick the roadmap checkbox.
 

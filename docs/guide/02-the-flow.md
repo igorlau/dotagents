@@ -45,7 +45,8 @@ a claim, so `dot-flow` runs the type checker, the linter, and the tests
 again itself, and continues only when the results agree with the reply.
 
 To fix findings, name them. `dot-flow` runs the three steps again with those
-findings.
+findings. The new review reads the full change of the task again, and checks
+that each named finding is gone.
 
 ## Where the flow stops
 
