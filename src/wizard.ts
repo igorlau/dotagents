@@ -1,9 +1,10 @@
 import path from "node:path";
 import * as clack from "@clack/prompts";
 import type { ApplyResult, ChangeAction } from "./apply.ts";
-import { install, previewInstall, UP_TO_DATE } from "./commands.ts";
+import { init, install, previewInit, previewInstall, UP_TO_DATE } from "./commands.ts";
+import { repoRoot } from "./git.ts";
 import { homeDir } from "./paths.ts";
-import { AGENTS, type Agent } from "./targets.ts";
+import { AGENTS, type Agent, type Mode } from "./targets.ts";
 
 export const CANCEL = Symbol("cancel");
 export type Cancel = typeof CANCEL;
@@ -51,8 +52,8 @@ export function opensWizard({ command, interactive, values }: { command?: string
 
 const AGENT_LABELS: Record<Agent, string> = { claude: "Claude Code", codex: "Codex", copilot: "GitHub Copilot" };
 
-/** Asks for the agents, shows the changes, and installs globally after the user confirms. */
-export async function installWizard(prompts: Prompts, options: { agents?: Agent[] }): Promise<boolean> {
+/** Asks for the agents and the scope, shows the changes, and installs after the user confirms. */
+export async function installWizard(prompts: Prompts, options: { agents?: Agent[]; cwd: string }): Promise<boolean> {
   const agents =
     options.agents ??
     (await prompts.multiselect({
@@ -63,11 +64,26 @@ export async function installWizard(prompts: Prompts, options: { agents?: Agent[
     }));
   if (agents === CANCEL) return cancelled();
 
-  prompts.note(summaryLines(previewInstall(agents)).join("\n"), "Installation summary");
+  const scope =
+    repoRoot(options.cwd) === undefined
+      ? "global"
+      : await prompts.select<Mode>({
+          initialValue: "global",
+          message: "Where do you want to install dotagents?",
+          options: [
+            { label: "Global (Recommended)", value: "global" },
+            { label: "This repository, for collaborators", value: "project" },
+          ],
+        });
+  if (scope === CANCEL) return cancelled();
+
+  const preview = scope === "global" ? previewInstall(agents) : previewInit(options.cwd, agents);
+  prompts.note(summaryLines(preview).join("\n"), "Installation summary");
   const proceed = await prompts.confirm({ message: "Proceed with installation?" });
   if (proceed !== true) return cancelled();
 
-  return install({ agents, dryRun: false, force: false });
+  const installOptions = { agents, dryRun: false, force: false };
+  return scope === "global" ? install(installOptions) : init(options.cwd, installOptions);
 }
 
 function cancelled(): false {
