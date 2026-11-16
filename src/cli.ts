@@ -2,7 +2,7 @@
 import { parseArgs } from "node:util";
 import { doctor, init, install, list, saveSource, scaffold, selfUpdate, setCheckHook, uninstall, update, version } from "./commands.ts";
 import { parseAgents } from "./targets.ts";
-import { claudePlugin, clackPrompts, installWizard, opensWizard, scaffoldWizard } from "./wizard.ts";
+import { claudePlugin, clackPrompts, installWizard, opensWizard, scaffoldWizard, uninstallWizard } from "./wizard.ts";
 
 const HELP = `dotagents: install curated agent skills and rules
 
@@ -80,6 +80,7 @@ async function main(argv: string[]): Promise<number> {
     case "update":
       return update(cwd, which, options) ? 0 : 1;
     case "uninstall":
+      if (interactive && !options.dryRun && !options.force) return (await uninstallWizard(clackPrompts, { cwd, which })) ? 0 : 1;
       return uninstall(cwd, which, options) ? 0 : 1;
     case "doctor":
       return doctor(cwd) ? 0 : 1;

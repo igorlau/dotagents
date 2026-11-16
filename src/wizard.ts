@@ -9,13 +9,16 @@ import {
   init,
   install,
   listScaffoldFiles,
+  NOTHING_TO_UNINSTALL,
   PLUGIN_HINT,
   previewInit,
   previewInstall,
   previewScaffold,
+  previewUninstall,
   projectRoot,
   scaffold,
   setCheckHook,
+  uninstall,
   UP_TO_DATE,
 } from "./commands.ts";
 import { repoRoot } from "./git.ts";
@@ -216,6 +219,43 @@ export async function scaffoldWizard(prompts: Prompts, options: { agents?: Agent
   const ok = scaffold(options.cwd, { agents, dryRun: false, force: false }, { files });
   for (const line of hintLines) console.log(line);
   return ok;
+}
+
+/** Asks which install to remove when both exist, shows the files to remove, and uninstalls after the user confirms. */
+export async function uninstallWizard(prompts: Prompts, options: { cwd: string; which?: Mode }): Promise<boolean> {
+  const installs = previewUninstall(options.cwd, options.which);
+  const [first] = installs;
+  if (first === undefined) {
+    console.log(NOTHING_TO_UNINSTALL);
+    return true;
+  }
+
+  const choice =
+    installs.length === 1
+      ? first.mode
+      : await prompts.select<Mode | "both">({
+          message: "Which install do you want to remove?",
+          options: [...installs.map((install) => ({ label: installLabel(install), value: install.mode })), { label: "Both", value: "both" as const }],
+        });
+  if (choice === CANCEL) return cancelled();
+
+  const chosen = installs.filter((install) => choice === "both" || install.mode === choice);
+  prompts.note(chosen.flatMap((install) => removalLines(install)).join("\n"), "Uninstall summary");
+  const proceed = await prompts.confirm({ message: "Remove these files?" });
+  if (proceed !== true) return cancelled();
+
+  return uninstall(options.cwd, choice === "both" ? undefined : choice, { dryRun: false, force: false });
+}
+
+type InstallPreview = ReturnType<typeof previewUninstall>[number];
+
+function installLabel(install: InstallPreview): string {
+  return install.mode === "global" ? "The global install" : `The project install in ${install.root}`;
+}
+
+function removalLines(install: InstallPreview): string[] {
+  if (install.result.changes.length > 0 || install.result.problems.length > 0) return summaryLines(install.result);
+  return [`${installLabel(install)}: no files to remove. Only the manifest is deleted.`];
 }
 
 const IMPORT_HINT = "CLAUDE.md does not import AGENTS.md. Add the line `@AGENTS.md` to CLAUDE.md so Claude Code reads it, then run `dotagents update`.";

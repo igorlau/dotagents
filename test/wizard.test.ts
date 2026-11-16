@@ -3,8 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, mock, test } from "node:test";
 import type { ApplyResult, Change } from "../src/apply.ts";
-import { PLUGIN_HINT } from "../src/commands.ts";
-import { CANCEL, installWizard, opensWizard, scaffoldWizard, summaryLines, type Cancel, type PluginInstall, type PluginInstaller, type Prompts } from "../src/wizard.ts";
+import { init, install, PLUGIN_HINT } from "../src/commands.ts";
+import { CANCEL, installWizard, opensWizard, scaffoldWizard, summaryLines, uninstallWizard, type Cancel, type PluginInstall, type PluginInstaller, type Prompts } from "../src/wizard.ts";
 import type { Mode } from "../src/targets.ts";
 import { exists, read, sandbox, tree, write, type Sandbox } from "./helpers.ts";
 
@@ -40,6 +40,7 @@ interface Answers {
   agents?: string[] | Cancel;
   files?: (checked: string[]) => string[];
   proceed?: boolean | Cancel;
+  remove?: Mode | "both" | Cancel;
   plugin?: boolean | Cancel;
   scope?: Mode | Cancel;
   setup?: string[] | Cancel;
@@ -78,6 +79,7 @@ function makeClaudePlugin(log: string[], result: PluginInstall = { kind: "instal
 
 const SETUP_QUESTION = "Set up this repository?";
 const FILES_QUESTION = "Which files do you want to create?";
+const REMOVE_QUESTION = "Which install do you want to remove?";
 
 function makePrompts(answers: Answers): Prompts & { asked: string[]; fileOptions: FileOption[]; notes: string[]; setupQuestions: SetupQuestion[] } {
   const asked: string[] = [];
@@ -109,6 +111,7 @@ function makePrompts(answers: Answers): Prompts & { asked: string[]; fileOptions
     },
     async select<Value>({ message, initialValue }: { message: string; initialValue?: Value }) {
       asked.push(message);
+      if (message === REMOVE_QUESTION) return answers.remove as Value | Cancel;
       return (answers.scope ?? initialValue) as Value | Cancel;
     },
   };
@@ -541,6 +544,77 @@ test("the wizards show no import hint when CLAUDE.md imports AGENTS.md or Claude
   assert.ok(!(importingPrompts.notes[0] ?? "").includes(IMPORT_HINT));
   assert.ok(!(withoutClaudePrompts.notes[0] ?? "").includes(IMPORT_HINT));
   assert.ok(!output.includes(IMPORT_HINT));
+});
+
+function installBoth(): string {
+  const repo = box.repo();
+  install({ agents: ["codex"], dryRun: false, force: false });
+  init(repo, { agents: ["codex"], dryRun: false, force: false });
+  output.length = 0;
+  return repo;
+}
+
+test("the uninstall wizard removes only the install that the user picks", async () => {
+  const repo = installBoth();
+  const prompts = makePrompts({ remove: "project" });
+
+  const ok = await uninstallWizard(prompts, { cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(prompts.asked, [REMOVE_QUESTION, "Remove these files?"]);
+  assert.ok(!exists(path.join(repo, ".dotagents.json")));
+  assert.ok(!exists(path.join(repo, ".agents", "skills", "dot-plan", "SKILL.md")));
+  assert.ok(exists(globalManifest()));
+  assert.ok(exists(p(".agents", "skills", "dot-plan", "SKILL.md")));
+});
+
+test("the uninstall wizard asks no install question when only one install exists", async () => {
+  const repo = box.repo();
+  init(repo, { agents: ["codex"], dryRun: false, force: false });
+  const prompts = makePrompts({});
+
+  const ok = await uninstallWizard(prompts, { cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(prompts.asked, ["Remove these files?"]);
+  assert.ok(!exists(path.join(repo, ".dotagents.json")));
+});
+
+test("the uninstall wizard writes nothing when the user answers No", async () => {
+  const repo = installBoth();
+  const before = { home: tree(box.home), repo: tree(repo) };
+  const prompts = makePrompts({ proceed: false, remove: "both" });
+
+  const ok = await uninstallWizard(prompts, { cwd: repo });
+
+  assert.equal(ok, false);
+  assert.deepEqual({ home: tree(box.home), repo: tree(repo) }, before);
+  assert.ok(output.includes("Cancelled. Nothing changed."));
+});
+
+test("the uninstall wizard says that only the manifest is deleted when the files are gone", async () => {
+  const repo = box.repo();
+  init(repo, { agents: ["codex"], dryRun: false, force: false });
+  fs.rmSync(path.join(repo, ".agents"), { recursive: true });
+  fs.rmSync(path.join(repo, "AGENTS.md"));
+  const prompts = makePrompts({});
+
+  const ok = await uninstallWizard(prompts, { cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.match(prompts.notes[0] ?? "", /The project install in .+: no files to remove\. Only the manifest is deleted\./);
+  assert.ok(!exists(path.join(repo, ".dotagents.json")));
+});
+
+test("the uninstall wizard says that nothing is installed and asks nothing", async () => {
+  const repo = box.repo();
+  const prompts = makePrompts({});
+
+  const ok = await uninstallWizard(prompts, { cwd: repo });
+
+  assert.equal(ok, true);
+  assert.deepEqual(prompts.asked, []);
+  assert.deepEqual(output, ["Nothing to uninstall."]);
 });
 
 const NO_FLAGS = { "dry-run": false, force: false, global: false, project: false };

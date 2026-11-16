@@ -35,6 +35,8 @@ export const DEFAULT_SOURCE = "@igorlau/dotagents@latest";
 
 export const UP_TO_DATE = "Already up to date.";
 
+export const NOTHING_TO_UNINSTALL = "Nothing to uninstall.";
+
 export const PLUGIN_HINT =
   "Claude Code gets the dotagents skills from the plugin. To install it, run `/plugin marketplace add igorlau/dotagents` and `/plugin install dotagents@dotagents` in Claude Code.";
 
@@ -111,10 +113,11 @@ function scaffoldOps(root: string, agents: Agent[], files: string[]): Op[] {
 }
 
 /** Computes the changes of an uninstall for each existing install that `which` selects. */
-export function previewUninstall(cwd: string, which?: Mode): { mode: Mode; result: ApplyResult }[] {
+export function previewUninstall(cwd: string, which?: Mode): { mode: Mode; result: ApplyResult; root?: string }[] {
   return selectScopes(cwd, which).map((scope) => ({
     mode: scope.mode,
     result: plan(scope, readManifest(scope.manifestPath)!.agents, PREVIEW, true).result,
+    root: scope.root,
   }));
 }
 
@@ -207,7 +210,7 @@ export function update(cwd: string, which: "global" | "project" | undefined, opt
 export function uninstall(cwd: string, which: "global" | "project" | undefined, options: Omit<Options, "agents">): boolean {
   const scopes = selectScopes(cwd, which);
   if (scopes.length === 0) {
-    log("Nothing to uninstall.");
+    log(NOTHING_TO_UNINSTALL);
     return true;
   }
   let ok = true;
