@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { apply, type ApplyResult } from "./apply.ts";
+import { apply, type ApplyOptions, type ApplyResult } from "./apply.ts";
 import { readBlock } from "./blocks.ts";
 import { loadCatalog, loadScaffold } from "./catalog.ts";
 import { repoRoot } from "./git.ts";
@@ -67,12 +67,38 @@ function existingProjectScope(cwd: string): Scope | undefined {
   return manifest ? { mode: manifest.mode, root, manifestPath: projectManifestPath(root) } : undefined;
 }
 
-// Install, update, and uninstall all reduce to: apply a plan, then record it.
-function run(scope: Scope, agents: Agent[], options: Options, uninstall = false): boolean {
+const PREVIEW: ApplyOptions = { dryRun: true, force: false };
+
+function plan(scope: Scope, agents: Agent[], options: ApplyOptions, uninstall: boolean): { result: ApplyResult; skills: string[] } {
   const previous = readManifest(scope.manifestPath);
   const catalog = loadCatalog();
   const ops = uninstall ? [] : planInstall(catalog, scope.mode, agents, scope.root);
   const result = apply(ops, fromStored(previous?.entries ?? [], scope.root), options);
+  const skills = uninstall ? (previous?.skills ?? []) : catalog.skills.map((skill) => skill.name);
+  return { result, skills };
+}
+
+/** Computes the changes of a global install without writing files or logging. */
+export function previewInstall(agents: Agent[]): ApplyResult {
+  return plan(globalScope(), agents, PREVIEW, false).result;
+}
+
+/** Computes the changes of a project install into the repository that contains `cwd`. Throws outside a repository. */
+export function previewInit(cwd: string, agents: Agent[]): ApplyResult {
+  return plan(projectScope(cwd), agents, PREVIEW, false).result;
+}
+
+/** Computes the changes of an uninstall for each existing install that `which` selects. */
+export function previewUninstall(cwd: string, which?: Mode): { mode: Mode; result: ApplyResult }[] {
+  return selectScopes(cwd, which).map((scope) => ({
+    mode: scope.mode,
+    result: plan(scope, readManifest(scope.manifestPath)!.agents, PREVIEW, true).result,
+  }));
+}
+
+// Install, update, and uninstall all reduce to: apply a plan, then record it.
+function run(scope: Scope, agents: Agent[], options: Options, uninstall = false): boolean {
+  const { result, skills } = plan(scope, agents, options, uninstall);
   report(result, options.dryRun);
   if (!uninstall && scope.mode === "global" && agents.includes("claude") && !dotagentsPluginInstalled()) log(PLUGIN_HINT);
   if (options.dryRun) return result.problems.length === 0;
@@ -85,7 +111,7 @@ function run(scope: Scope, agents: Agent[], options: Options, uninstall = false)
       version: version(),
       mode: scope.mode,
       agents,
-      skills: uninstall ? (previous?.skills ?? []) : catalog.skills.map((skill) => skill.name),
+      skills,
       entries: toStored(result.entries, scope.root),
       updatedAt: new Date().toISOString(),
     });
@@ -212,7 +238,8 @@ function duplicateClaudeSkills(): string[] {
     .map((name) => `${path.join(skillsDir, name)}: Claude Code also loads this skill from the dotagents plugin. Delete the directory.`);
 }
 
-function dotagentsPluginInstalled(): boolean {
+/** Reports whether Claude Code lists the dotagents plugin in `installed_plugins.json`. */
+export function dotagentsPluginInstalled(): boolean {
   try {
     const installed = JSON.parse(fs.readFileSync(path.join(claudeHome(), "plugins", "installed_plugins.json"), "utf8"));
     return Object.keys(installed.plugins ?? {}).some((id) => id.startsWith("dotagents@"));
