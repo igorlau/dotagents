@@ -85,20 +85,29 @@ export function previewInstall(agents: Agent[]): ApplyResult {
   return plan(globalScope(), agents, PREVIEW, false).result;
 }
 
-/** Computes the changes of a project install into the repository that contains `cwd`, optionally after a `scaffold` that skips existing files. Throws outside a repository. */
-export function previewInit(cwd: string, agents: Agent[], { afterScaffold = false } = {}): ApplyResult {
+/** Computes the changes of a project install into the repository that contains `cwd`, after `scaffold` creates `scaffoldFiles`. Throws outside a repository. */
+export function previewInit(cwd: string, agents: Agent[], { scaffoldFiles = [] }: { scaffoldFiles?: string[] } = {}): ApplyResult {
   const scope = projectScope(cwd);
-  const pending = afterScaffold ? missingScaffoldOps(scope.root!, agents) : [];
-  return plan(scope, agents, PREVIEW, false, pending).result;
+  return plan(scope, agents, PREVIEW, false, scaffoldOps(scope.root!, agents, scaffoldFiles)).result;
 }
 
-/** Computes the files that `scaffold` with `skipExisting` would create in the repository that contains `cwd`. Throws outside a repository. */
-export function previewScaffold(cwd: string, agents: Agent[]): ApplyResult {
-  return apply(missingScaffoldOps(projectScope(cwd).root!, agents), [], PREVIEW);
+/** Returns the root of the repository that contains `cwd`. Throws outside a repository. */
+export function projectRoot(cwd: string): string {
+  return projectScope(cwd).root!;
 }
 
-function missingScaffoldOps(root: string, agents: Agent[]): Op[] {
-  return planScaffold(loadScaffold(), agents, root).filter((op) => !fs.existsSync(op.path));
+/** Lists the scaffold files for `agents` in the repository that contains `cwd`, and whether each one exists. Throws outside a repository. */
+export function listScaffoldFiles(cwd: string, agents: Agent[]): { exists: boolean; path: string }[] {
+  return planScaffold(loadScaffold(), agents, projectRoot(cwd)).map((op) => ({ exists: fs.existsSync(op.path), path: op.path }));
+}
+
+/** Computes the changes of `scaffold` for `files` in the repository that contains `cwd`. Throws outside a repository. */
+export function previewScaffold(cwd: string, agents: Agent[], files: string[]): ApplyResult {
+  return apply(scaffoldOps(projectRoot(cwd), agents, files), [], PREVIEW);
+}
+
+function scaffoldOps(root: string, agents: Agent[], files: string[]): Op[] {
+  return planScaffold(loadScaffold(), agents, root).filter((op) => files.includes(op.path));
 }
 
 /** Computes the changes of an uninstall for each existing install that `which` selects. */
@@ -159,11 +168,11 @@ export function init(cwd: string, options: Options): boolean {
 
 // Scaffold files belong to the repository once written, so no manifest tracks
 // them, and update and uninstall leave them alone.
-export function scaffold(cwd: string, options: Options, { skipExisting = false } = {}): boolean {
-  const root = projectScope(cwd).root!;
+export function scaffold(cwd: string, options: Options, { files }: { files?: string[] } = {}): boolean {
+  const root = projectRoot(cwd);
   log(`Scaffolding agent instructions into ${root}:`);
-  const ops = skipExisting ? missingScaffoldOps(root, options.agents) : planScaffold(loadScaffold(), options.agents, root);
-  const result = apply(ops, [], options);
+  const planned = files ?? listScaffoldFiles(cwd, options.agents).map((file) => file.path);
+  const result = apply(scaffoldOps(root, options.agents, planned), [], options);
   report(result, options.dryRun);
   if (!options.dryRun) log("Review the files, keep AGENTS.md current as the project takes shape, and commit them.");
   return result.problems.length === 0;

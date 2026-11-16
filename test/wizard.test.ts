@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterEach, beforeEach, mock, test } from "node:test";
 import type { ApplyResult, Change } from "../src/apply.ts";
 import { PLUGIN_HINT } from "../src/commands.ts";
-import { CANCEL, installWizard, opensWizard, summaryLines, type Cancel, type PluginInstall, type PluginInstaller, type Prompts } from "../src/wizard.ts";
+import { CANCEL, installWizard, opensWizard, scaffoldWizard, summaryLines, type Cancel, type PluginInstall, type PluginInstaller, type Prompts } from "../src/wizard.ts";
 import type { Mode } from "../src/targets.ts";
 import { exists, read, sandbox, tree, write, type Sandbox } from "./helpers.ts";
 
@@ -38,10 +38,18 @@ const p = (...parts: string[]) => path.join(box.home, ...parts);
 
 interface Answers {
   agents?: string[] | Cancel;
+  files?: (checked: string[]) => string[];
   proceed?: boolean | Cancel;
   plugin?: boolean | Cancel;
   scope?: Mode | Cancel;
   setup?: string[] | Cancel;
+}
+
+interface FileOption {
+  checked: boolean;
+  disabled: boolean;
+  hint?: string;
+  label?: string;
 }
 
 interface SetupQuestion {
@@ -69,13 +77,16 @@ function makeClaudePlugin(log: string[], result: PluginInstall = { kind: "instal
 }
 
 const SETUP_QUESTION = "Set up this repository?";
+const FILES_QUESTION = "Which files do you want to create?";
 
-function makePrompts(answers: Answers): Prompts & { asked: string[]; notes: string[]; setupQuestions: SetupQuestion[] } {
+function makePrompts(answers: Answers): Prompts & { asked: string[]; fileOptions: FileOption[]; notes: string[]; setupQuestions: SetupQuestion[] } {
   const asked: string[] = [];
+  const fileOptions: FileOption[] = [];
   const notes: string[] = [];
   const setupQuestions: SetupQuestion[] = [];
   return {
     asked,
+    fileOptions,
     notes,
     setupQuestions,
     async confirm({ message }) {
@@ -83,8 +94,12 @@ function makePrompts(answers: Answers): Prompts & { asked: string[]; notes: stri
       if (message === PLUGIN_QUESTION) return answers.plugin ?? true;
       return answers.proceed ?? true;
     },
-    async multiselect<Value>({ message, initialValues, options }: { message: string; initialValues: Value[]; options: { value: Value }[] }) {
+    async multiselect<Value>({ message, initialValues, options }: { message: string; initialValues: Value[]; options: { disabled?: boolean; hint?: string; label?: string; value: Value }[] }) {
       asked.push(message);
+      if (message === FILES_QUESTION) {
+        for (const { disabled = false, hint, label, value } of options) fileOptions.push({ checked: initialValues.includes(value), disabled, hint, label });
+        return (answers.files?.(initialValues as string[]) ?? initialValues) as Value[];
+      }
       if (message !== SETUP_QUESTION) return (answers.agents ?? initialValues) as Value[] | Cancel;
       setupQuestions.push({ initialValues, offered: options.map((option) => option.value) });
       return (answers.setup ?? initialValues) as Value[] | Cancel;
@@ -406,6 +421,84 @@ test("scaffold in the wizard keeps a team CLAUDE.md and reports no problem", asy
   assert.doesNotMatch(prompts.notes[0] ?? "", /CLAUDE\.md/);
   assert.equal(read(path.join(repo, "CLAUDE.md")), "# Team rules for Claude\n");
   assert.ok(exists(path.join(repo, "AGENTS.md")));
+});
+
+const SCAFFOLD_FILES = [".claude/settings.json", ".editorconfig", ".gitattributes", "AGENTS.md", "CLAUDE.md"];
+const scaffolded = (repo: string) => SCAFFOLD_FILES.filter((file) => exists(path.join(repo, file)));
+
+test("the scaffold wizard offers only AGENTS.md, .editorconfig, and .gitattributes for Codex and Copilot", async () => {
+  const repo = box.repo();
+  const prompts = makePrompts({});
+
+  const ok = await scaffoldWizard(prompts, { agents: ["codex", "copilot"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(prompts.fileOptions.map((option) => option.label), [".editorconfig", ".gitattributes", "AGENTS.md"]);
+  assert.deepEqual(scaffolded(repo), [".editorconfig", ".gitattributes", "AGENTS.md"]);
+});
+
+test("the scaffold wizard creates a CLAUDE.md with only @AGENTS.md for Claude Code and Copilot", async () => {
+  const repo = box.repo();
+  const prompts = makePrompts({ agents: ["claude", "copilot"] });
+
+  const ok = await scaffoldWizard(prompts, { cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(prompts.asked, ["Which agents do you use?", FILES_QUESTION, "Create these files?"]);
+  assert.equal(read(path.join(repo, "CLAUDE.md")).trim(), "@AGENTS.md");
+});
+
+test("the scaffold wizard marks existing files as skipped and leaves them unchanged", async () => {
+  const repo = box.repo({ ".editorconfig": "root = true\n" });
+  const prompts = makePrompts({});
+
+  const ok = await scaffoldWizard(prompts, { agents: ["codex"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(prompts.fileOptions[0], { checked: false, disabled: true, hint: "exists, skip", label: ".editorconfig" });
+  assert.ok(prompts.fileOptions.slice(1).every((option) => option.checked && !option.disabled));
+  assert.equal(read(path.join(repo, ".editorconfig")), "root = true\n");
+  assert.doesNotMatch(prompts.notes[0] ?? "", /editorconfig/);
+});
+
+test("the scaffold wizard creates only the files that the user keeps checked", async () => {
+  const repo = box.repo();
+  const prompts = makePrompts({ files: (checked) => checked.filter((file) => !file.endsWith(".gitattributes")) });
+
+  const ok = await scaffoldWizard(prompts, { agents: ["codex"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(scaffolded(repo), [".editorconfig", "AGENTS.md"]);
+});
+
+test("the scaffold wizard stops before the files step when every file exists", async () => {
+  const repo = box.repo({ ".editorconfig": "root = true\n", ".gitattributes": "* text=auto\n", "AGENTS.md": "# Team\n" });
+  const prompts = makePrompts({});
+
+  const ok = await scaffoldWizard(prompts, { agents: ["codex"], cwd: repo });
+
+  assert.equal(ok, true);
+  assert.deepEqual(prompts.asked, []);
+  assert.ok(output.includes("Every scaffold file exists. Nothing changed."));
+});
+
+test("the scaffold wizard fails outside a Git repository before the first prompt", async () => {
+  const prompts = makePrompts({});
+
+  await assert.rejects(scaffoldWizard(prompts, { cwd: box.home }), /Not inside a Git repository/);
+
+  assert.deepEqual(prompts.asked, []);
+});
+
+test("the scaffold wizard writes nothing when the user answers No", async () => {
+  const repo = box.repo();
+  const prompts = makePrompts({ proceed: false });
+
+  const ok = await scaffoldWizard(prompts, { agents: ["claude"], cwd: repo });
+
+  assert.equal(ok, false);
+  assert.deepEqual(scaffolded(repo), []);
+  assert.ok(output.includes("Cancelled. Nothing changed."));
 });
 
 const NO_FLAGS = { "dry-run": false, force: false, global: false, project: false };

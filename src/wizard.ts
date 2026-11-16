@@ -8,10 +8,12 @@ import {
   dotagentsPluginInstalled,
   init,
   install,
+  listScaffoldFiles,
   PLUGIN_HINT,
   previewInit,
   previewInstall,
   previewScaffold,
+  projectRoot,
   scaffold,
   setCheckHook,
   UP_TO_DATE,
@@ -86,16 +88,21 @@ export function opensWizard({ command, interactive, values }: { command?: string
 
 const AGENT_LABELS: Record<Agent, string> = { claude: "Claude Code", codex: "Codex", copilot: "GitHub Copilot" };
 
-/** Asks for the agents, the scope, and the Claude Code plugin, shows the changes, and installs after the user confirms. */
-export async function installWizard(prompts: Prompts, plugin: PluginInstaller, options: { agents?: Agent[]; cwd: string }): Promise<boolean> {
-  const agents =
-    options.agents ??
-    (await prompts.multiselect({
+async function askAgents(prompts: Prompts, agents?: Agent[]): Promise<Agent[] | Cancel> {
+  return (
+    agents ??
+    prompts.multiselect({
       initialValues: [...AGENTS],
       message: "Which agents do you use?",
       options: AGENTS.map((agent) => ({ label: AGENT_LABELS[agent], value: agent })),
       required: true,
-    }));
+    })
+  );
+}
+
+/** Asks for the agents, the scope, and the Claude Code plugin, shows the changes, and installs after the user confirms. */
+export async function installWizard(prompts: Prompts, plugin: PluginInstaller, options: { agents?: Agent[]; cwd: string }): Promise<boolean> {
+  const agents = await askAgents(prompts, options.agents);
   if (agents === CANCEL) return cancelled();
 
   const root = repoRoot(options.cwd);
@@ -120,9 +127,9 @@ export async function installWizard(prompts: Prompts, plugin: PluginInstaller, o
   const setup = root === undefined ? [] : await askSetup(prompts, root);
   if (setup === CANCEL) return cancelled();
 
-  const afterScaffold = setup.includes("scaffold");
-  const scaffoldLines = afterScaffold ? summaryLines(previewScaffold(options.cwd, agents)) : [];
-  const preview = scope === "global" ? previewInstall(agents) : previewInit(options.cwd, agents, { afterScaffold });
+  const scaffoldFiles = setup.includes("scaffold") ? newScaffoldFiles(options.cwd, agents) : [];
+  const scaffoldLines = scaffoldFiles.length > 0 ? summaryLines(previewScaffold(options.cwd, agents, scaffoldFiles)) : [];
+  const preview = scope === "global" ? previewInstall(agents) : previewInit(options.cwd, agents, { scaffoldFiles });
   const pluginLines = needsPlugin && !claudeFound ? [PLUGIN_HINT] : [];
   const checkLines = setup.includes("check") ? [`Enable the check hook in ${root}`] : [];
   prompts.note([...scaffoldLines, ...summaryLines(preview), ...pluginLines, ...checkLines].join("\n"), "Installation summary");
@@ -130,7 +137,7 @@ export async function installWizard(prompts: Prompts, plugin: PluginInstaller, o
   if (proceed !== true) return cancelled();
 
   const installOptions = { agents, dryRun: false, force: false };
-  const scaffolded = afterScaffold ? scaffold(options.cwd, installOptions, { skipExisting: true }) : true;
+  const scaffolded = scaffoldFiles.length > 0 ? scaffold(options.cwd, installOptions, { files: scaffoldFiles }) : true;
   const installed = scope === "global" ? install(installOptions, false) : init(options.cwd, installOptions);
   if (installPlugin) installClaudePlugin(plugin);
   if (claudeFound && !installPlugin) console.log(PLUGIN_HINT);
@@ -167,6 +174,43 @@ function hasMakeCheck(root: string): boolean {
   } catch {
     return false;
   }
+}
+
+function newScaffoldFiles(cwd: string, agents: Agent[]): string[] {
+  return listScaffoldFiles(cwd, agents)
+    .filter((file) => !file.exists)
+    .map((file) => file.path);
+}
+
+/** Asks for the agents and the files, shows the files to create, and creates the checked files after the user confirms. Throws outside a repository. */
+export async function scaffoldWizard(prompts: Prompts, options: { agents?: Agent[]; cwd: string }): Promise<boolean> {
+  const root = projectRoot(options.cwd);
+  const agents = await askAgents(prompts, options.agents);
+  if (agents === CANCEL) return cancelled();
+
+  const candidates = listScaffoldFiles(options.cwd, agents);
+  if (candidates.every((file) => file.exists)) {
+    console.log("Every scaffold file exists. Nothing changed.");
+    return true;
+  }
+  const files = await prompts.multiselect<string>({
+    initialValues: candidates.filter((file) => !file.exists).map((file) => file.path),
+    message: "Which files do you want to create?",
+    options: candidates.map((file) => ({
+      disabled: file.exists,
+      hint: file.exists ? "exists, skip" : undefined,
+      label: path.relative(root, file.path),
+      value: file.path,
+    })),
+    required: true,
+  });
+  if (files === CANCEL) return cancelled();
+
+  prompts.note(summaryLines(previewScaffold(options.cwd, agents, files)).join("\n"), "Scaffold summary");
+  const proceed = await prompts.confirm({ message: "Create these files?" });
+  if (proceed !== true) return cancelled();
+
+  return scaffold(options.cwd, { agents, dryRun: false, force: false }, { files });
 }
 
 function installClaudePlugin(plugin: PluginInstaller): void {
