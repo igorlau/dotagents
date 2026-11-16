@@ -6,7 +6,7 @@ import type { ApplyResult, Change } from "../src/apply.ts";
 import { init, install, PLUGIN_HINT } from "../src/commands.ts";
 import { CANCEL, installWizard, opensWizard, scaffoldWizard, summaryLines, uninstallWizard, type Cancel, type PluginInstall, type PluginInstaller, type Prompts } from "../src/wizard.ts";
 import type { Mode } from "../src/targets.ts";
-import { exists, read, sandbox, tree, write, type Sandbox } from "./helpers.ts";
+import { exists, git, read, sandbox, tree, write, type Sandbox } from "./helpers.ts";
 
 const HOME_VARIABLES = ["HOME", "CLAUDE_CONFIG_DIR", "CODEX_HOME", "COPILOT_HOME", "XDG_CONFIG_HOME"] as const;
 
@@ -347,6 +347,19 @@ test("the install wizard enables the check hook when the user accepts it", async
 
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(JSON.parse(read(configFile())).checkRepos, [fs.realpathSync(repo)]);
+});
+
+test("the summary shows the repository of the check hook under the home directory with ~", async () => {
+  const repo = p("repo");
+  write(path.join(repo, "package.json"), CHECK_SCRIPT["package.json"]);
+  write(path.join(repo, "AGENTS.md"), "# Team\n");
+  git(repo, ["init", "-q"]);
+  const prompts = makePrompts({ setup: ["check"] });
+
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.ok((prompts.notes[0] ?? "").includes(`Enable the check hook in ~${path.sep}repo`));
 });
 
 test("the install wizard does not offer the check hook without a check script", async () => {

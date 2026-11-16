@@ -135,7 +135,7 @@ export async function installWizard(prompts: Prompts, plugin: PluginInstaller, o
   const hintLines = root === undefined ? [] : importHint(root, agents, scaffoldFiles);
   const preview = scope === "global" ? previewInstall(agents) : previewInit(options.cwd, agents, { scaffoldFiles });
   const pluginLines = needsPlugin && !claudeFound ? [PLUGIN_HINT] : [];
-  const checkLines = setup.includes("check") ? [`Enable the check hook in ${root}`] : [];
+  const checkLines = root !== undefined && setup.includes("check") ? [`Enable the check hook in ${withTilde(root)}`] : [];
   prompts.note([...scaffoldLines, ...hintLines, ...summaryLines(preview), ...pluginLines, ...checkLines].join("\n"), "Installation summary");
   const proceed = await prompts.confirm({ message: "Proceed with installation?" });
   if (proceed !== true) return cancelled();
