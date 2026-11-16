@@ -33,6 +33,8 @@ interface Scope {
 
 export const DEFAULT_SOURCE = "@igorlau/dotagents@latest";
 
+export const UP_TO_DATE = "Already up to date.";
+
 const PLUGIN_HINT =
   "Claude Code gets the dotagents skills from the plugin. To install it, run `/plugin marketplace add igorlau/dotagents` and `/plugin install dotagents@dotagents` in Claude Code.";
 
@@ -121,9 +123,9 @@ function run(scope: Scope, agents: Agent[], options: Options, uninstall = false)
 
 function report(result: ApplyResult, dryRun: boolean): void {
   const prefix = dryRun ? "would " : "";
-  for (const change of result.changes) log(`  ${prefix}${change}`);
+  for (const change of result.changes) log(`  ${prefix}${change.action} ${change.path}`);
   for (const problem of result.problems) log(`  ! ${problem}`);
-  if (result.changes.length === 0 && result.problems.length === 0) log("  Already up to date.");
+  if (result.changes.length === 0 && result.problems.length === 0) log(`  ${UP_TO_DATE}`);
 }
 
 export function install(options: Options): boolean {

@@ -9,9 +9,16 @@ export interface ApplyOptions {
   force: boolean;
 }
 
+export type ChangeAction = "create" | "update" | "remove" | "add block to" | "update block in" | "remove block from";
+
+export interface Change {
+  action: ChangeAction;
+  path: string;
+}
+
 export interface ApplyResult {
   entries: Entry[];
-  changes: string[];
+  changes: Change[];
   problems: string[];
 }
 
@@ -55,7 +62,7 @@ function applyFile(op: Extract<Op, { kind: "file" }>, owned: Entry | undefined, 
   const current = read(op.path);
   if (current === undefined) {
     write(op.path, op.content, options, op.executable);
-    result.changes.push(`create ${op.path}`);
+    result.changes.push({ action: "create", path: op.path });
     return entry;
   }
   if (current === op.content) return entry;
@@ -70,7 +77,7 @@ function applyFile(op: Extract<Op, { kind: "file" }>, owned: Entry | undefined, 
     }
   }
   write(op.path, op.content, options, op.executable);
-  result.changes.push(`update ${op.path}`);
+  result.changes.push({ action: "update", path: op.path });
   return entry;
 }
 
@@ -86,7 +93,7 @@ function applyBlock(op: Extract<Op, { kind: "block" }>, owned: Entry | undefined
     return owned;
   }
   write(op.path, upsertBlock(current, body), options);
-  result.changes.push(`${block === undefined ? "add block to" : "update block in"} ${op.path}`);
+  result.changes.push({ action: block === undefined ? "add block to" : "update block in", path: op.path });
   return entry;
 }
 
@@ -104,7 +111,7 @@ function removeEntry(entry: Entry, options: ApplyOptions, result: ApplyResult): 
       fs.rmSync(entry.path);
       prune(path.dirname(entry.path));
     }
-    result.changes.push(`remove ${entry.path}`);
+    result.changes.push({ action: "remove", path: entry.path });
     return true;
   }
 
@@ -117,10 +124,10 @@ function removeEntry(entry: Entry, options: ApplyOptions, result: ApplyResult): 
   const rest = removeBlock(current);
   if (rest === "" && entry.created) {
     if (!options.dryRun) fs.rmSync(entry.path);
-    result.changes.push(`remove ${entry.path}`);
+    result.changes.push({ action: "remove", path: entry.path });
   } else {
     write(entry.path, rest, options);
-    result.changes.push(`remove block from ${entry.path}`);
+    result.changes.push({ action: "remove block from", path: entry.path });
   }
   return true;
 }
