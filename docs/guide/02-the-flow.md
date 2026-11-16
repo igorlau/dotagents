@@ -10,8 +10,9 @@ The flow has these steps, in this order:
 
 1. [`dot-grilling`](../../plugin/skills/dot-grilling/SKILL.md) asks
    questions in rounds until the plan is clear.
-1. [`dot-plan`](../../plugin/skills/dot-plan/SKILL.md) shows the entity
-   schemas, then the plan as small, verifiable steps.
+1. [`dot-plan`](../../plugin/skills/dot-plan/SKILL.md) lists the
+   requirements, shows the entity schemas, then writes the plan as small,
+   verifiable steps.
 1. [`dot-roadmap`](../../plugin/skills/dot-roadmap/SKILL.md) splits the plan
    into phases and task files. Each task lists its test cases.
 1. For each task, [`dot-flow`](../../plugin/skills/dot-flow/SKILL.md) runs
@@ -34,6 +35,7 @@ The agent stops and waits for you at these points:
 
 | After | You approve |
 | ----- | ----------- |
+| The requirements of `dot-plan` | The user needs, functional requirements, business rules, and non-negotiables |
 | The entity schemas of `dot-plan` | The data model, before the steps |
 | The plan | The steps |
 | The roadmap | The phases, the tasks, and the test cases |

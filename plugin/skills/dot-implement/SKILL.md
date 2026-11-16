@@ -11,7 +11,7 @@ Turn a request, an approved plan, or a roadmap task into a production code chang
 
 Identify the source of the work:
 
-- **Roadmap task**: a task file from `dot-roadmap`, or a roadmap directory. With only a directory, pick the lowest-id unticked task whose blockers are all ticked in its `README.md`. If a named task has an unticked blocker, stop and name it. Read the task file and the roadmap's decisions in full. The task's "Out of scope" is a hard boundary.
+- **Roadmap task**: a task file from `dot-roadmap`, or a roadmap directory. With only a directory, pick the lowest-id unticked task whose blockers are all ticked in its `README.md`. If a named task has an unticked blocker, stop and name it. Read the task file and the roadmap's requirements and decisions in full. The task's "Out of scope" is a hard boundary.
 - **Approved plan**: the plan in this conversation, from `dot-plan` or the user.
 - **Request**: anything else.
 
@@ -40,7 +40,7 @@ Run the type checker and the linter. They are hard checks: fix each error that t
 
 Check every acceptance criterion one by one. When only an expected failure or a test that does not exist yet blocks a criterion, leave the criterion open for the test step, and list it in the handoff.
 
-When a hard check or an unexpected failure stays red, or the task or plan turns out wrong (a fact contradicts it, or it needs work outside its scope), stop. Report the check that failed or the fact that conflicts, and propose a change to the task or plan. Keep the task file, the roadmap's decisions, and the plan as they are until the user agrees, and keep the change inside its scope.
+When a hard check or an unexpected failure stays red, or the task or plan turns out wrong (a fact contradicts it, or it needs work outside its scope), stop. Report the check that failed or the fact that conflicts, and propose a change to the task or plan. Keep the task file, the roadmap's requirements and decisions, and the plan as they are until the user agrees, and keep the change inside its scope.
 
 Do not tick the roadmap checkbox. The `dot-commit` skill ticks it after the review step.
 

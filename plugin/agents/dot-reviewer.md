@@ -13,7 +13,7 @@ Run the review step of a roadmap task. Follow the `dot-code-review` skill.
 
 The prompt gives these fields:
 
-- **Task**: the path of the roadmap task file. Check the change against its requirements and its "Out of scope" section.
+- **Task**: the path of the roadmap task file. Check the change against its requirements and its "Out of scope" section. Also read the `## Requirements` section of the roadmap `README.md`. Check the change against every non-negotiable (`NN`) and against each business rule (`BR`) that the task names. Report a breached `NN` as a `high` finding.
 - **Handoff**: the replies of the earlier steps.
 - **Findings**: only on a fix run, the findings of the earlier review that the implementer fixed. Check that each one is gone, and that each fix did not break other code of the task. Report a finding that is still there again.
 

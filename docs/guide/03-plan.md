@@ -26,14 +26,27 @@ conversation:
 /dotagents:dot-plan
 ```
 
-When the change adds or changes a domain entity, the agent first shows a
+The agent first lists the requirements in four categories, each with an ID:
+
+- User needs (`UN`): who uses the change, and what they must be able to do.
+- Functional requirements (`FR`): the behavior that the system must have.
+- Business rules (`BR`): the domain constraints and policies.
+- Non-negotiables (`NN`): the hard limits that no trade-off can break.
+
+The agent takes the requirements from your request, the code, and the docs,
+and asks you only for the items that it cannot find. Approve the lists
+before the agent goes on.
+
+When the change adds or changes a domain entity, the agent then shows a
 schema for it: the full schema for a new entity, and a diff for a
 changed one. The schema has the form that the repository uses, such as a
 TypeScript type or SQL DDL, or JSON Schema when the repository has none. Approve the schemas before the steps. The schemas stay in the
 plan and the roadmap, not in committed files.
 
 The plan puts removal steps first, such as dead code or checks that the
-change makes unnecessary. Approve the plan, or ask for changes.
+change makes unnecessary. The agent asks where to write the plan file, with
+`.tmp/plans/<plan-slug>/plan.md` as the default. Approve the plan, or ask
+for changes. After your approval, the agent writes the plan file.
 
 ## Split the plan with dot-roadmap
 
@@ -47,7 +60,9 @@ For a plan with more than a few steps, start
 The agent splits the plan into phases, and each phase into task files. Each
 task has its requirements, its out-of-scope items, its acceptance criteria,
 its test cases, and the command that verifies it. The roadmap `README.md`
-records the decisions and has a checkbox for each task.
+records the requirements and the decisions, and has a checkbox for each
+task. Each task names the `FR` and `BR` IDs that it implements. The user
+needs and the non-negotiables apply to every task.
 
 Approve the roadmap. The test cases decide the behavior of each task before
 the code exists, and `dot-testing` writes them as given, so read them with

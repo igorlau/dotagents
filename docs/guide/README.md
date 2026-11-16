@@ -8,8 +8,8 @@ commit. This guide teaches the workflow in order. Each page also stands alone.
    coding agent.
 1. [The flow](02-the-flow.md). The steps from an idea to a commit, and where
    you approve.
-1. [Plan the change](03-plan.md). `dot-grilling`, `dot-plan` with entity
-   schemas, and `dot-roadmap`.
+1. [Plan the change](03-plan.md). `dot-grilling`, `dot-plan` with
+   requirements and entity schemas, and `dot-roadmap`.
 1. [Build a task](04-build.md). Production code, tests, and review,
    by hand or with `dot-flow`.
 1. [Review and commit](05-review-and-commit.md). `dot-code-review`,

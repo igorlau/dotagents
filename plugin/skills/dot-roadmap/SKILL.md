@@ -11,9 +11,13 @@ A roadmap splits a plan into **phases**, and each phase into **tasks**. A phase 
 
 ## 1. Load the plan
 
-Work from the plan in this conversation, usually the shared understanding a `dot-grilling` session reached. If the user passed a path or URL, read it in full.
+Take the plan from the first of these sources that exists:
 
-Synthesize the plan. Do not interview the user. If the plan still has unsettled decisions, list them and suggest `dot-grilling` before you go on. Done when you can state the **destination** (what is true when the whole roadmap is done) and every decision the plan made.
+1. The path or URL that the user passed. Read it in full.
+2. The plan in this conversation, usually from `dot-plan`.
+3. The plan files under `.tmp/plans/`. With one file, use it. With more than one, ask the user which one.
+
+Synthesize the plan. Do not interview the user. If the plan still has unsettled decisions, list them and suggest `dot-grilling` before you go on. Done when you can state the **destination** (what is true when the whole roadmap is done), the requirements with their IDs, and every decision the plan made.
 
 ## 2. Gather facts
 
@@ -42,7 +46,9 @@ Split each phase into tasks. Each task:
 
 When one mechanical change breaks many call sites at once, read [`references/wide-refactor.md`](references/wide-refactor.md).
 
-Done when every requirement and decision from the plan belongs to exactly one task or to the roadmap's out-of-scope list, and every task has acceptance criteria that can fail.
+When a bullet of a task's requirements implements a functional requirement (`FR`) or a business rule (`BR`), start the bullet with its ID. User needs (`UN`) and non-negotiables (`NN`) apply to the whole roadmap: they stay in `README.md`, and no task claims them.
+
+Done when every `FR` and `BR` belongs to at least one task or to the roadmap's out-of-scope list, every decision belongs to exactly one task or to that list, and every task has acceptance criteria that can fail.
 
 ## 5. Review with the user
 
@@ -68,12 +74,20 @@ Write to `.tmp/roadmaps/<roadmap-slug>/` at the repository root. First run `git 
     └── 01-<task-slug>.md
 ```
 
-`README.md` is the index and the single source of truth for decisions; task files link to it and do not restate them. Put the entity schemas that the user approved in `dot-plan` in the decisions:
+`README.md` is the index and the single source of truth for requirements and decisions; task files link to it and do not restate them. Copy the requirements with their IDs from the plan, because the plan file can be deleted. Put the entity schemas that the user approved in `dot-plan` in the decisions:
 
 ```markdown
 # <Roadmap title>
 
 **Destination:** <what is true when the roadmap is done>
+**Plan:** <path of the plan file, or none>
+
+## Requirements
+
+- **User needs:** UN1: <need>, or none
+- **Functional requirements:** FR1: <requirement>, or none
+- **Business rules:** BR1: <rule>, or none
+- **Non-negotiables:** NN1: <limit>, or none
 
 ## Decisions
 
@@ -105,7 +119,7 @@ Each task file:
 
 ## Requirements
 
-- <what the change must do, specific enough to build without the conversation>
+- <FR or BR ID>: <what the change must do, specific enough to build without the conversation>
 - <files or modules it touches, when known>
 
 ## Out of scope

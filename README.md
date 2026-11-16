@@ -97,6 +97,8 @@ sequenceDiagram
     Main-->>User: Questions in rounds, with recommended answers
     User->>Main: Answers until the plan is clear
     User->>Main: dot-plan
+    Main-->>User: Requirements
+    User->>Main: Approve the requirements
     Main-->>User: Entity schemas
     User->>Main: Approve the schemas
     Main-->>User: Plan as small, verifiable steps
@@ -168,7 +170,7 @@ them:
 | Skill | Purpose |
 | ----- | ------- |
 | `dot-grilling` | Run an interview, in rounds of questions, that makes a plan clear. |
-| `dot-plan` | Plan a change as small, verifiable steps, with entity schemas. |
+| `dot-plan` | Plan a change as small, verifiable steps, with requirements and entity schemas. |
 | `dot-roadmap` | Split a plan into phases and tasks that each stand alone. |
 | `dot-flow` | Take a roadmap task through code, tests, and review, verify each step, and stop for your decision after the review. |
 | `dot-testing` | Write tests with a makeSut factory, alone or after `dot-implement`. |

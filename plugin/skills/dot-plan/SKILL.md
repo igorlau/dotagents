@@ -19,19 +19,32 @@ Read the code, tests, configuration, and docs that the change touches. Trace eac
 
 Facts are your job: look them up. Do not ask the user. Done when you can name every file you expect to change and why.
 
-## 3. Surface decisions
+## 3. List the requirements
+
+List the requirements in four categories, in this order. Give each requirement an ID with the category prefix and a number, such as `FR2`:
+
+- **User needs** (`UN`): who uses the change, and what they must be able to do.
+- **Functional requirements** (`FR`): the behavior that the system must have.
+- **Business rules** (`BR`): the domain constraints and policies, such as "a refund cannot exceed the payment".
+- **Non-negotiables** (`NN`): the hard limits that no trade-off can break, such as security, compatibility, a performance budget, or "no new dependency".
+
+Take the requirements from the request, the code, and the docs. Ask the user only for the items that you cannot find there. Write "none" for an empty category. Show the lists, and wait for the user to approve them.
+
+Done when the user approves the four lists.
+
+## 4. Surface decisions
 
 List the choices that the facts do not settle: behavior in edge cases, trade-offs, names that users see, anything hard to reverse. Give your recommendation for each one.
 
 If the list is long or the decisions depend on each other, use the `dot-grilling` skill to resolve them with the user. Done when every decision has an answer or is marked as an open question in the plan.
 
-## 4. Show entity schemas
+## 5. Show entity schemas
 
 When the change adds or changes a domain entity, read [`references/entity-schemas.md`](references/entity-schemas.md). Show the full schema of each new entity, and a before and after diff of each changed entity. Wait for the user to approve the schemas before you slice the work.
 
 Done when the user approves each schema, or the change touches no domain entity.
 
-## 5. Slice the work
+## 6. Slice the work
 
 Write the steps. For each step, include:
 
@@ -42,13 +55,21 @@ Put the removal steps first: delete the dead code, redundant checks, and stubs t
 
 Done when every step has a check that can fail, and the last check matches the done criterion.
 
-## 6. Present and wait
+## 7. Present and wait
 
 Show the plan in this shape:
 
 ```markdown
 **Goal:** <one sentence>
 **Done when:** <done criterion>
+
+## Requirements
+
+- **User needs:** UN1: <need>, or none
+- **Functional requirements:** FR1: <requirement>, or none
+- **Business rules:** BR1: <rule>, or none
+- **Non-negotiables:** NN1: <limit>, or none
+
 **Schemas:** <the approved entity schemas, or none>
 
 1. <change>. Check: <command or observation>
@@ -58,4 +79,8 @@ Show the plan in this shape:
 **Risks:** <what could make the plan wrong>
 ```
 
-Wait for the user's approval before you change any file. When the plan changes during the work, update it and say what changed.
+Ask the user where to write the plan, and offer `.tmp/plans/<plan-slug>/plan.md` at the repository root as the default. Wait for the user's approval before you change any file.
+
+After the approval, write the plan to that path in the same shape. For a path under `.tmp`, first run `git check-ignore -q .tmp`: if Git does not ignore `.tmp`, stop and tell the user. Do not edit `.gitignore`. Write any other path that the user picks.
+
+When the plan changes during the work, update the plan file and say what changed.
