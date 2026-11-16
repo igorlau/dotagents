@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import { afterEach, beforeEach, mock, test } from "node:test";
-import { CANCEL, installWizard, opensWizard, type Cancel, type Prompts } from "../src/wizard.ts";
+import type { ApplyResult, Change } from "../src/apply.ts";
+import { CANCEL, installWizard, opensWizard, summaryLines, type Cancel, type Prompts } from "../src/wizard.ts";
 import { exists, read, sandbox, tree, write, type Sandbox } from "./helpers.ts";
 
 const HOME_VARIABLES = ["HOME", "CLAUDE_CONFIG_DIR", "CODEX_HOME", "COPILOT_HOME", "XDG_CONFIG_HOME"] as const;
@@ -37,10 +38,12 @@ interface Answers {
   proceed?: boolean | Cancel;
 }
 
-function makePrompts(answers: Answers): Prompts & { asked: string[] } {
+function makePrompts(answers: Answers): Prompts & { asked: string[]; notes: string[] } {
   const asked: string[] = [];
+  const notes: string[] = [];
   return {
     asked,
+    notes,
     async confirm({ message }) {
       asked.push(message);
       return answers.proceed ?? true;
@@ -48,6 +51,9 @@ function makePrompts(answers: Answers): Prompts & { asked: string[] } {
     async multiselect<Value>({ message, initialValues }: { message: string; initialValues: Value[] }) {
       asked.push(message);
       return (answers.agents ?? initialValues) as Value[] | Cancel;
+    },
+    note(message, title) {
+      notes.push(`${title}\n${message}`);
     },
     async select({ message }) {
       asked.push(message);
@@ -100,9 +106,8 @@ test("the install wizard reports a conflict and does not overwrite a file that d
 
   assert.equal(ok, false);
   assert.equal(read(foreign), "mine\n");
-  const [, realInstall] = output.flatMap((line, index) => (line.startsWith("Installing") ? [index] : []));
-  const summary = output.slice(0, realInstall).join("\n");
-  assert.match(summary, /dot-plan[/\\]SKILL\.md: exists and wasn't written by dotagents/);
+  assert.equal(prompts.notes.length, 1);
+  assert.match(prompts.notes[0] ?? "", /dot-plan[/\\]SKILL\.md: exists and wasn't written by dotagents/);
 });
 
 test("the install wizard skips the agents step when the agents are given", async () => {
@@ -113,6 +118,45 @@ test("the install wizard skips the agents step when the agents are given", async
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(prompts.asked, ["Proceed with installation?"]);
   assert.deepEqual(JSON.parse(read(p(".config", "dotagents", "manifest.json"))).agents, ["codex"]);
+});
+
+const NO_CHANGES: ApplyResult = { changes: [], entries: [], problems: [] };
+
+test("the summary groups the skill files by target directory with a count for each action", () => {
+  const changes: Change[] = [
+    { action: "create", path: p(".agents", "skills", "dot-plan", "SKILL.md") },
+    { action: "create", path: p(".agents", "skills", "dot-plan", "references", "example.md") },
+    { action: "update", path: p(".agents", "skills", "dot-commit", "SKILL.md") },
+    { action: "remove", path: p(".agents", "skills", "dot-old", "SKILL.md") },
+    { action: "create", path: p(".claude", "rules", "dotagents.md") },
+    { action: "add block to", path: p(".codex", "AGENTS.md") },
+    { action: "update block in", path: p(".copilot", "copilot-instructions.md") },
+    { action: "remove block from", path: p("elsewhere", "AGENTS.md") },
+  ];
+
+  const lines = summaryLines({ ...NO_CHANGES, changes });
+
+  assert.deepEqual(lines, [
+    `~${path.sep}${path.join(".agents", "skills")}: create 2 files, update 1 file, remove 1 file`,
+    `~${path.sep}${path.join(".claude", "rules", "dotagents.md")}: create 1 file`,
+    `~${path.sep}${path.join(".codex", "AGENTS.md")}: add block to 1 file`,
+    `~${path.sep}${path.join(".copilot", "copilot-instructions.md")}: update block in 1 file`,
+    `~${path.sep}${path.join("elsewhere", "AGENTS.md")}: remove block from 1 file`,
+  ]);
+});
+
+test("the summary lists each problem", () => {
+  const problems = ["/repo/a.md: modified locally, skipped (use --force to overwrite)", "/repo/b.md: exists and wasn't written by dotagents (use --force to overwrite)"];
+
+  const lines = summaryLines({ ...NO_CHANGES, changes: [{ action: "create", path: p(".codex", "AGENTS.md") }], problems });
+
+  assert.deepEqual(lines.slice(1), problems);
+});
+
+test("the summary says that the install is up to date when nothing changes", () => {
+  const lines = summaryLines(NO_CHANGES);
+
+  assert.deepEqual(lines, ["Already up to date."]);
 });
 
 const NO_FLAGS = { "dry-run": false, force: false, global: false, project: false };
