@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, mock, test } from "node:test";
 import type { ApplyResult, Change } from "../src/apply.ts";
@@ -40,6 +41,12 @@ interface Answers {
   proceed?: boolean | Cancel;
   plugin?: boolean | Cancel;
   scope?: Mode | Cancel;
+  setup?: string[] | Cancel;
+}
+
+interface SetupQuestion {
+  initialValues: unknown[];
+  offered: unknown[];
 }
 
 const NO_CLAUDE: PluginInstaller = {
@@ -61,20 +68,26 @@ function makeClaudePlugin(log: string[], result: PluginInstall = { kind: "instal
   };
 }
 
-function makePrompts(answers: Answers): Prompts & { asked: string[]; notes: string[] } {
+const SETUP_QUESTION = "Set up this repository?";
+
+function makePrompts(answers: Answers): Prompts & { asked: string[]; notes: string[]; setupQuestions: SetupQuestion[] } {
   const asked: string[] = [];
   const notes: string[] = [];
+  const setupQuestions: SetupQuestion[] = [];
   return {
     asked,
     notes,
+    setupQuestions,
     async confirm({ message }) {
       asked.push(message);
       if (message === PLUGIN_QUESTION) return answers.plugin ?? true;
       return answers.proceed ?? true;
     },
-    async multiselect<Value>({ message, initialValues }: { message: string; initialValues: Value[] }) {
+    async multiselect<Value>({ message, initialValues, options }: { message: string; initialValues: Value[]; options: { value: Value }[] }) {
       asked.push(message);
-      return (answers.agents ?? initialValues) as Value[] | Cancel;
+      if (message !== SETUP_QUESTION) return (answers.agents ?? initialValues) as Value[] | Cancel;
+      setupQuestions.push({ initialValues, offered: options.map((option) => option.value) });
+      return (answers.setup ?? initialValues) as Value[] | Cancel;
     },
     note(message, title) {
       notes.push(`${title}\n${message}`);
@@ -193,7 +206,7 @@ test("the install wizard installs into the repository when the user picks the re
   const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["claude"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
-  assert.deepEqual(prompts.asked, [SCOPE_QUESTION, "Proceed with installation?"]);
+  assert.deepEqual(prompts.asked, [SCOPE_QUESTION, SETUP_QUESTION, "Proceed with installation?"]);
   assert.ok(exists(path.join(repo, ".dotagents.json")));
   assert.ok(exists(path.join(repo, ".claude", "skills", "dot-plan", "SKILL.md")));
   assert.ok(!exists(globalManifest()));
@@ -267,7 +280,7 @@ test("the install wizard skips the plugin step in the repository scope", async (
   const ok = await installWizard(prompts, plugin, { agents: ["claude"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
-  assert.deepEqual(prompts.asked, [SCOPE_QUESTION, "Proceed with installation?"]);
+  assert.deepEqual(prompts.asked, [SCOPE_QUESTION, SETUP_QUESTION, "Proceed with installation?"]);
 });
 
 test("the summary shows the /plugin commands when claude is not on the PATH", async () => {
@@ -303,6 +316,96 @@ test("the install continues and shows the /plugin commands when the plugin insta
   assert.ok(output.includes(PLUGIN_HINT));
   assert.ok(exists(p(".claude", "rules", "dotagents.md")));
   assert.ok(exists(globalManifest()));
+});
+
+const CHECK_SCRIPT = { "package.json": JSON.stringify({ scripts: { check: "tsc" } }) };
+const configFile = () => p(".config", "dotagents", "config.json");
+
+test("the install wizard enables the check hook when the user accepts it", async () => {
+  const repo = box.repo({ ...CHECK_SCRIPT, "AGENTS.md": "# Team\n" });
+  const prompts = makePrompts({ setup: ["check"] });
+
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(JSON.parse(read(configFile())).checkRepos, [fs.realpathSync(repo)]);
+});
+
+test("the install wizard does not offer the check hook without a check script", async () => {
+  const repo = box.repo({ "AGENTS.md": "# Team\n" });
+  const prompts = makePrompts({});
+
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.ok(!prompts.asked.includes(SETUP_QUESTION));
+});
+
+test("the install wizard does not offer the check hook when it is enabled", async () => {
+  const repo = box.repo({ Makefile: "check:\n\ttrue\n", "AGENTS.md": "# Team\n" });
+  write(configFile(), JSON.stringify({ checkRepos: [fs.realpathSync(repo)] }));
+  const prompts = makePrompts({});
+
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.ok(!prompts.asked.includes(SETUP_QUESTION));
+});
+
+test("the install wizard does not offer scaffold when AGENTS.md exists", async () => {
+  const repo = box.repo({ ...CHECK_SCRIPT, "AGENTS.md": "# Team\n" });
+  const prompts = makePrompts({});
+
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(prompts.setupQuestions.map((question) => question.offered), [["check"]]);
+});
+
+test("the install wizard runs scaffold before init, so init writes the rules only in AGENTS.md", async () => {
+  const repo = box.repo();
+  const prompts = makePrompts({ scope: "project", setup: ["scaffold"] });
+
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["claude"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.match(read(path.join(repo, "CLAUDE.md")), /^@AGENTS\.md$/m);
+  assert.match(read(path.join(repo, "AGENTS.md")), /<!-- dotagents:start -->/);
+  assert.ok(!exists(path.join(repo, ".claude", "rules", "dotagents.md")));
+});
+
+test("the check and scaffold steps come unchecked", async () => {
+  const repo = box.repo(CHECK_SCRIPT);
+  const prompts = makePrompts({});
+
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(prompts.setupQuestions, [{ initialValues: [], offered: ["check", "scaffold"] }]);
+  assert.ok(!exists(path.join(repo, "AGENTS.md")));
+  assert.ok(!exists(configFile()));
+});
+
+test("the summary matches the files after scaffold and the repository install", async () => {
+  const repo = box.repo();
+  const prompts = makePrompts({ scope: "project", setup: ["scaffold"] });
+
+  await installWizard(prompts, NO_CLAUDE, { agents: ["claude"], cwd: repo });
+
+  assert.doesNotMatch(prompts.notes[0] ?? "", /rules[/\\]dotagents\.md/);
+  assert.ok(!exists(path.join(repo, ".claude", "rules", "dotagents.md")));
+});
+
+test("scaffold in the wizard keeps a team CLAUDE.md and reports no problem", async () => {
+  const repo = box.repo({ "CLAUDE.md": "# Team rules for Claude\n" });
+  const prompts = makePrompts({ scope: "project", setup: ["scaffold"] });
+
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["claude"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.doesNotMatch(prompts.notes[0] ?? "", /CLAUDE\.md/);
+  assert.equal(read(path.join(repo, "CLAUDE.md")), "# Team rules for Claude\n");
+  assert.ok(exists(path.join(repo, "AGENTS.md")));
 });
 
 const NO_FLAGS = { "dry-run": false, force: false, global: false, project: false };

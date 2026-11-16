@@ -1,8 +1,21 @@
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import * as clack from "@clack/prompts";
 import type { ApplyResult, ChangeAction } from "./apply.ts";
-import { dotagentsPluginInstalled, init, install, PLUGIN_HINT, previewInit, previewInstall, UP_TO_DATE } from "./commands.ts";
+import {
+  checkHookEnabled,
+  dotagentsPluginInstalled,
+  init,
+  install,
+  PLUGIN_HINT,
+  previewInit,
+  previewInstall,
+  previewScaffold,
+  scaffold,
+  setCheckHook,
+  UP_TO_DATE,
+} from "./commands.ts";
 import { repoRoot } from "./git.ts";
 import { homeDir } from "./paths.ts";
 import { AGENTS, type Agent, type Mode } from "./targets.ts";
@@ -85,8 +98,9 @@ export async function installWizard(prompts: Prompts, plugin: PluginInstaller, o
     }));
   if (agents === CANCEL) return cancelled();
 
+  const root = repoRoot(options.cwd);
   const scope =
-    repoRoot(options.cwd) === undefined
+    root === undefined
       ? "global"
       : await prompts.select<Mode>({
           initialValue: "global",
@@ -103,17 +117,56 @@ export async function installWizard(prompts: Prompts, plugin: PluginInstaller, o
   const installPlugin = claudeFound && (await prompts.confirm({ message: "Install the dotagents plugin for Claude Code?" }));
   if (installPlugin === CANCEL) return cancelled();
 
-  const preview = scope === "global" ? previewInstall(agents) : previewInit(options.cwd, agents);
+  const setup = root === undefined ? [] : await askSetup(prompts, root);
+  if (setup === CANCEL) return cancelled();
+
+  const afterScaffold = setup.includes("scaffold");
+  const scaffoldLines = afterScaffold ? summaryLines(previewScaffold(options.cwd, agents)) : [];
+  const preview = scope === "global" ? previewInstall(agents) : previewInit(options.cwd, agents, { afterScaffold });
   const pluginLines = needsPlugin && !claudeFound ? [PLUGIN_HINT] : [];
-  prompts.note([...summaryLines(preview), ...pluginLines].join("\n"), "Installation summary");
+  const checkLines = setup.includes("check") ? [`Enable the check hook in ${root}`] : [];
+  prompts.note([...scaffoldLines, ...summaryLines(preview), ...pluginLines, ...checkLines].join("\n"), "Installation summary");
   const proceed = await prompts.confirm({ message: "Proceed with installation?" });
   if (proceed !== true) return cancelled();
 
   const installOptions = { agents, dryRun: false, force: false };
-  const ok = scope === "global" ? install(installOptions, false) : init(options.cwd, installOptions);
+  const scaffolded = afterScaffold ? scaffold(options.cwd, installOptions, { skipExisting: true }) : true;
+  const installed = scope === "global" ? install(installOptions, false) : init(options.cwd, installOptions);
   if (installPlugin) installClaudePlugin(plugin);
   if (claudeFound && !installPlugin) console.log(PLUGIN_HINT);
-  return ok;
+  if (setup.includes("check")) setCheckHook(options.cwd, true, false);
+  return scaffolded && installed;
+}
+
+type SetupStep = "check" | "scaffold";
+
+/** Offers the repository steps that apply, all unchecked: the `check` hook, and `scaffold` when the repository has no AGENTS.md. */
+async function askSetup(prompts: Prompts, root: string): Promise<SetupStep[] | Cancel> {
+  const options: clack.Option<SetupStep>[] = [];
+  if (hasCheckScript(root) && !checkHookEnabled(root)) options.push({ label: "Enable the check hook", value: "check" });
+  if (!fs.existsSync(path.join(root, "AGENTS.md"))) options.push({ label: "Create AGENTS.md and the agent instruction files", value: "scaffold" });
+  if (options.length === 0) return [];
+  return prompts.multiselect<SetupStep>({ initialValues: [], message: "Set up this repository?", options, required: false });
+}
+
+function hasCheckScript(root: string): boolean {
+  return hasNpmCheck(root) || hasMakeCheck(root);
+}
+
+function hasNpmCheck(root: string): boolean {
+  try {
+    return Boolean(JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).scripts?.check);
+  } catch {
+    return false;
+  }
+}
+
+function hasMakeCheck(root: string): boolean {
+  try {
+    return /^check:/m.test(fs.readFileSync(path.join(root, "Makefile"), "utf8"));
+  } catch {
+    return false;
+  }
 }
 
 function installClaudePlugin(plugin: PluginInstaller): void {

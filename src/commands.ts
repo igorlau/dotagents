@@ -16,7 +16,7 @@ import {
   type Manifest,
 } from "./manifest.ts";
 import { claudeHome, codexHome, configDir, packageRoot } from "./paths.ts";
-import { planInstall, planScaffold, type Agent, type Mode } from "./targets.ts";
+import { planInstall, planScaffold, type Agent, type Mode, type Op } from "./targets.ts";
 
 export interface Options {
   agents: Agent[];
@@ -71,10 +71,10 @@ function existingProjectScope(cwd: string): Scope | undefined {
 
 const PREVIEW: ApplyOptions = { dryRun: true, force: false };
 
-function plan(scope: Scope, agents: Agent[], options: ApplyOptions, uninstall: boolean): { result: ApplyResult; skills: string[] } {
+function plan(scope: Scope, agents: Agent[], options: ApplyOptions, uninstall: boolean, pending: Op[] = []): { result: ApplyResult; skills: string[] } {
   const previous = readManifest(scope.manifestPath);
   const catalog = loadCatalog();
-  const ops = uninstall ? [] : planInstall(catalog, scope.mode, agents, scope.root);
+  const ops = uninstall ? [] : planInstall(catalog, scope.mode, agents, scope.root, pending);
   const result = apply(ops, fromStored(previous?.entries ?? [], scope.root), options);
   const skills = uninstall ? (previous?.skills ?? []) : catalog.skills.map((skill) => skill.name);
   return { result, skills };
@@ -85,9 +85,20 @@ export function previewInstall(agents: Agent[]): ApplyResult {
   return plan(globalScope(), agents, PREVIEW, false).result;
 }
 
-/** Computes the changes of a project install into the repository that contains `cwd`. Throws outside a repository. */
-export function previewInit(cwd: string, agents: Agent[]): ApplyResult {
-  return plan(projectScope(cwd), agents, PREVIEW, false).result;
+/** Computes the changes of a project install into the repository that contains `cwd`, optionally after a `scaffold` that skips existing files. Throws outside a repository. */
+export function previewInit(cwd: string, agents: Agent[], { afterScaffold = false } = {}): ApplyResult {
+  const scope = projectScope(cwd);
+  const pending = afterScaffold ? missingScaffoldOps(scope.root!, agents) : [];
+  return plan(scope, agents, PREVIEW, false, pending).result;
+}
+
+/** Computes the files that `scaffold` with `skipExisting` would create in the repository that contains `cwd`. Throws outside a repository. */
+export function previewScaffold(cwd: string, agents: Agent[]): ApplyResult {
+  return apply(missingScaffoldOps(projectScope(cwd).root!, agents), [], PREVIEW);
+}
+
+function missingScaffoldOps(root: string, agents: Agent[]): Op[] {
+  return planScaffold(loadScaffold(), agents, root).filter((op) => !fs.existsSync(op.path));
 }
 
 /** Computes the changes of an uninstall for each existing install that `which` selects. */
@@ -148,10 +159,11 @@ export function init(cwd: string, options: Options): boolean {
 
 // Scaffold files belong to the repository once written, so no manifest tracks
 // them, and update and uninstall leave them alone.
-export function scaffold(cwd: string, options: Options): boolean {
+export function scaffold(cwd: string, options: Options, { skipExisting = false } = {}): boolean {
   const root = projectScope(cwd).root!;
   log(`Scaffolding agent instructions into ${root}:`);
-  const result = apply(planScaffold(loadScaffold(), options.agents, root), [], options);
+  const ops = skipExisting ? missingScaffoldOps(root, options.agents) : planScaffold(loadScaffold(), options.agents, root);
+  const result = apply(ops, [], options);
   report(result, options.dryRun);
   if (!options.dryRun) log("Review the files, keep AGENTS.md current as the project takes shape, and commit them.");
   return result.problems.length === 0;
@@ -291,6 +303,12 @@ export function readSource(): string {
 
 export function saveSource(source: string): void {
   writeConfig({ source });
+}
+
+/** Reports whether the plugin's `check` hook runs in the repository that contains `cwd`. */
+export function checkHookEnabled(cwd: string): boolean {
+  const root = repoRoot(cwd);
+  return root !== undefined && (readConfig().checkRepos ?? []).includes(fs.realpathSync(root));
 }
 
 /** Enables or disables the plugin's `check` hook for the repository that contains `cwd`. Throws outside a repository. */

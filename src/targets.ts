@@ -25,7 +25,7 @@ interface Layout {
   copilotRules: string;
 }
 
-function layout(mode: Mode, root: string): Layout {
+function layout(mode: Mode, root: string, pending: Op[]): Layout {
   if (mode === "global") {
     return {
       skillDirs: {
@@ -43,7 +43,8 @@ function layout(mode: Mode, root: string): Layout {
   }
   // Copilot reads AGENTS.md too, so both agents share one block.
   const agentsMd = path.join(root, "AGENTS.md");
-  const claudeRulesInAgentsMd = importsAgentsMd(path.join(root, "CLAUDE.md"));
+  const claudeMd = path.join(root, "CLAUDE.md");
+  const claudeRulesInAgentsMd = importsAgentsMd(pending.find((op) => op.path === claudeMd)?.content ?? readIfExists(claudeMd));
   return {
     skillDirs: {
       claude: path.join(root, ".claude", "skills"),
@@ -57,8 +58,9 @@ function layout(mode: Mode, root: string): Layout {
   };
 }
 
-export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root = ""): Op[] {
-  const target = layout(mode, root);
+/** Plans an install. `pending` holds the ops of another step that runs first, such as scaffold, so the plan sees the files that it writes. */
+export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root = "", pending: Op[] = []): Op[] {
+  const target = layout(mode, root, pending);
   const ops = new Map<string, Op>();
   const add = (op: Op) => ops.set(op.path, op);
 
@@ -91,8 +93,12 @@ export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root 
   return [...ops.values()];
 }
 
-function importsAgentsMd(claudeMd: string): boolean {
-  return fs.existsSync(claudeMd) && /^@(\.\/)?AGENTS\.md\s*$/m.test(fs.readFileSync(claudeMd, "utf8"));
+function importsAgentsMd(claudeMd: string | undefined): boolean {
+  return claudeMd !== undefined && /^@(\.\/)?AGENTS\.md\s*$/m.test(claudeMd);
+}
+
+function readIfExists(file: string): string | undefined {
+  return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : undefined;
 }
 
 // AGENTS.md serves every agent; CLAUDE.md and .claude/ serve only Claude Code.
