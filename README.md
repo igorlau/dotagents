@@ -13,30 +13,24 @@ dotagents has two parts:
 
 ## Install
 
-To install the plugin, run the following commands in Claude Code:
+To install dotagents, run the following command in a terminal:
 
-```text
-/plugin marketplace add igorlau/dotagents
-/plugin install dotagents@dotagents
+```bash
+npx --yes @igorlau/dotagents
 ```
+
+The wizard asks for your coding agents and where to install. For a global
+install with Claude Code, it offers to install the Claude Code plugin. In a
+repository, it can enable the `check` hook. It shows a summary and writes
+nothing before you confirm.
 
 The plugin skills have the `dotagents:` namespace, such as
-`/dotagents:dot-plan`.
+`/dotagents:dot-plan`. The plugin hook runs the `check` script of a
+repository at the end of each turn that changes files, only in a repository
+that you enable.
 
-To install the rules for all your projects, and the skills for Codex and
-Copilot, run the following command:
-
-```bash
-npx --yes @igorlau/dotagents install
-```
-
-The plugin hook runs the `check` script of a repository at the end of each
-turn that changes files. The hook runs only in a repository that you enable.
-To enable it, run the following command in the repository:
-
-```bash
-npx --yes @igorlau/dotagents check enable
-```
+For scripts and CI, use the commands with flags. Without a terminal, no
+wizard opens. See [Install dotagents](docs/guide/01-install.md).
 
 `npx` runs dotagents without an install. To run `dotagents` as a command in
 any terminal, install it globally:

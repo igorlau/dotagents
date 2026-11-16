@@ -7,6 +7,7 @@ import { claudePlugin, clackPrompts, installWizard, opensWizard, scaffoldWizard,
 const HELP = `dotagents: install curated agent skills and rules
 
 Usage:
+  dotagents                         In a terminal, open the install wizard
   dotagents install                 Install globally (default for all projects)
   dotagents init                    Install into the current repository (commit the files)
   dotagents scaffold                Create starter AGENTS.md, CLAUDE.md, and settings in the current repository
@@ -24,6 +25,9 @@ Options:
   --source <spec>   With install: where self-update fetches dotagents from
   -v, --version     Print the version
   -h, --help        Print this help
+
+In a terminal, install, scaffold, and uninstall open a wizard. --dry-run and
+--force skip the wizard, and so does --source for install.
 `;
 
 async function main(argv: string[]): Promise<number> {

@@ -5,7 +5,45 @@ dotagents has two parts. The plugin has the skills, the agents, and the
 the skills for Codex and Copilot. Plugins cannot ship always-on rules, so
 every coding agent needs the CLI.
 
-## Install for Claude Code
+## Install with the wizard
+
+To install dotagents, run the following command in a terminal:
+
+```bash
+npx --yes @igorlau/dotagents
+```
+
+The wizard asks these questions, in this order:
+
+1. Which coding agents you use. All three are checked.
+1. Where to install. Global is the default. The option for the repository
+   appears only inside a Git repository.
+1. Whether to install the Claude Code plugin. This question appears only for
+   a global install with Claude Code checked, when the plugin is not
+   installed yet and `claude` is on the PATH. Without `claude`, the summary
+   shows the 2 `/plugin` commands.
+1. Whether to set up the repository. Inside a Git repository, the wizard can
+   enable the `check` hook and create `AGENTS.md` and the other starter files
+   with `scaffold`. The `check` option appears when the repository has a
+   `check` script and the hook is off. The `scaffold` option appears when the
+   repository has no `AGENTS.md`. Both options come unchecked. When neither
+   option applies, the wizard skips this question.
+
+Then the wizard shows a summary and asks for confirmation. It writes nothing
+before you confirm, and it never overwrites a file that you changed or that
+dotagents did not write.
+
+On Windows, if you installed Claude Code with npm, the wizard cannot start
+`claude`. It then shows the 2 `/plugin` commands instead of the plugin
+question. Run them in Claude Code.
+
+## Install with flags
+
+Use the flags in scripts and CI. Without a terminal, no wizard opens. A flag
+skips its own question: for example, `--agents` skips the question about the
+coding agents. `--dry-run` and `--force` skip the wizard.
+
+### Install for Claude Code
 
 To install the plugin, run the following commands in Claude Code:
 
@@ -24,7 +62,7 @@ The plugin skills have the `dotagents:` namespace, such as
 `/dotagents:dot-plan`. Each commit is a new plugin version, because
 `plugin.json` has no version.
 
-## Install for Codex and Copilot
+### Install for Codex and Copilot
 
 To install the rules and the skills, run the following command:
 
@@ -50,7 +88,8 @@ the output to that agent, and the agent continues. When the script fails a
 second time, the hook shows you a warning and lets the agent stop. The hook runs only in a repository that
 you enable, because the script is code of the repository.
 
-To enable the hook, run the following command in the repository:
+The install wizard offers to enable the hook. To enable it with a command,
+run the following command in the repository:
 
 ```bash
 npx --yes @igorlau/dotagents check enable
@@ -71,7 +110,13 @@ repository:
 npx --yes @igorlau/dotagents init
 ```
 
-Commit the new files. In a team repository, use only the global install.
+You can also pick the repository in the install wizard. Commit the new
+files. In a team repository, use only the global install.
+
+To create the starter files, such as `AGENTS.md` and `CLAUDE.md`, run
+`npx --yes @igorlau/dotagents scaffold`. In a terminal, it asks which files to
+create. To remove an install, run `npx --yes @igorlau/dotagents uninstall`.
+In a terminal, it shows the files to remove and asks for confirmation.
 
 ## Check the install
 

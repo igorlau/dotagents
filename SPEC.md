@@ -62,6 +62,7 @@ The following table gives each decision and its reason:
 | 28 | State each always-on rule as the behavior to follow, and keep the lists of words and patterns to avoid in `lint:content`. State the "repository conventions first" agreement one time, in `core.md`, not in each skill. | A word to avoid that loads on every turn makes the word more available to the model, and a rule that the model cannot follow weakens the other rules. An earlier rule against all `-ing` verb forms was such a rule. A paragraph that 14 skills repeated cost tokens on each run and said what the rules already say. |
 | 29 | Warn at the start of a Claude Code session when `~/.claude/rules/dotagents.md` differs from the rules in the plugin. | The plugin updates on every commit, and the rules update only with `dotagents update`, so the skills can name a rule that the installed rules do not have. |
 | 30 | `dot-plan` lists the requirements before the decisions: user needs (`UN`), functional requirements (`FR`), business rules (`BR`), and non-negotiables (`NN`), each with an ID. The user approves them. After the approval of the plan, `dot-plan` writes it to a file, by default `.tmp/plans/<plan-slug>/plan.md`. `dot-roadmap` copies the requirements to the roadmap `README.md`, and each `FR` and `BR` belongs to at least one task. `UN` and `NN` apply to every task, and a breached `NN` is a `high` review finding. | The decisions, the schemas, and the slices follow from the requirements, so a missed rule costs a rewrite. IDs let each task and review finding point to the requirement that it serves. A business rule can constrain more than one task, so a rule maps to at least one task, not to exactly one. A plan file keeps the plan when the conversation ends. |
+| 31 | In a terminal, `dotagents` with no arguments, `install`, `scaffold`, and `uninstall` open a wizard. The wizard uses `@clack/prompts`, pinned to 1.9.0, which is the first runtime dependency. Each flag skips its own step: `--agents` skips the agents step, and `--global` and `--project` skip the install question of `uninstall`. `--dry-run`, `--force`, and `--source` turn off the wizard, and without a terminal the commands work as before. The wizard offers the Claude Code plugin only in the global scope. It always copies files, and it never offers `--force`. | Five separate commands were too many for a first install. Flags keep scripts and CI free of prompts. A project install already writes `.claude/skills/`, so the plugin would make Claude Code list each skill twice. Global mode has no second copy that a symlink could save, and committed symlinks break for collaborators on Windows. A prompt library costs less than a terminal interface written by hand. |
 
 ## Install modes
 
@@ -75,6 +76,11 @@ The following table gives the two install modes:
 In a team repository, use only the global install. It writes nothing to the
 repository, so the Git history of the team and your edits to tracked files,
 such as `AGENTS.md`, stay as they are.
+
+In project mode, when a line of `CLAUDE.md` is `@AGENTS.md`, `init` writes the
+rules for Claude Code only in the `AGENTS.md` block, and writes no
+`.claude/rules/dotagents.md`. Claude Code then loads the rules one time.
+`update` removes an older `.claude/rules/dotagents.md`.
 
 If the catalog gets project-specific content, such as stack profiles, team
 repositories can need a per-repository install again. The options were the
@@ -148,8 +154,10 @@ The reasons for these locations are the following:
   both. When Copilot also has the dotagents plugin, it can list the skills
   twice in global mode too.
 - In project mode, Claude Code reads `AGENTS.md` when the project has no
-  `CLAUDE.md`, so it can see the rules twice. The same occurs after
-  `scaffold`, whose `CLAUDE.md` imports `AGENTS.md`.
+  `CLAUDE.md`, so it can see the rules twice.
+- On Windows, an npm install of Claude Code is `claude.cmd`, which the wizard
+  cannot start. The wizard then shows the `/plugin` commands instead of the
+  plugin step.
 
 ## Commands
 
@@ -172,6 +180,10 @@ The common options are the following:
 - `--agents claude,codex,copilot`: limit the install to some coding agents.
 - `--dry-run`: print the changes and write nothing.
 - `--force`: overwrite files that you changed or that dotagents does not own.
+
+In a terminal, `dotagents` with no arguments, `install`, `scaffold`, and
+`uninstall` open a wizard. The wizard asks one question for each step, shows
+a summary, and writes nothing before you confirm. See decision 31.
 
 ## Manifest
 
