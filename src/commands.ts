@@ -341,6 +341,18 @@ export function setCheckHook(cwd: string, enabled: boolean, dryRun: boolean): vo
 export function selfUpdate(args: string[]): boolean {
   const source = readSource();
   log(`Running the latest dotagents from ${source}:`);
-  const result = spawnSync("npx", ["--yes", "--prefer-online", source, "update", ...args], { stdio: "inherit" });
+  const npx = npxCommand(["--yes", "--prefer-online", source, "update", ...args]);
+  const result = spawnSync(npx.command, npx.args, { shell: npx.shell, stdio: "inherit" });
   return result.status === 0;
+}
+
+/**
+ * Builds the command that starts `npx`. On Windows, `npx` is `npx.cmd`, which Node starts only through a shell,
+ * so the arguments go into one quoted command line. `cmd.exe` still reads `"` and `%` inside quotes, so those throw.
+ */
+export function npxCommand(args: string[], platform: NodeJS.Platform = process.platform): { args: string[]; command: string; shell: boolean } {
+  if (platform !== "win32") return { args, command: "npx", shell: false };
+  const unsafe = args.find((arg) => /["%]/.test(arg));
+  if (unsafe !== undefined) throw new Error(`Cannot pass ${unsafe} to npx on Windows. Remove the " and % characters.`);
+  return { args: [], command: ["npx", ...args.map((arg) => `"${arg}"`)].join(" "), shell: true };
 }

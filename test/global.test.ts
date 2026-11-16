@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, test } from "node:test";
+import { npxCommand } from "../src/commands.ts";
 import { hash } from "../src/manifest.ts";
 import { exists, read, sandbox, tree, write, type Sandbox } from "./helpers.ts";
 
@@ -200,4 +201,23 @@ test("the CLI prints the help and exits 1 with no arguments and no TTY", () => {
   assert.equal(result.status, 1, result.output);
   assert.match(result.output, /^dotagents: install curated agent skills and rules/);
   assert.deepEqual(tree(box.home), []);
+});
+
+test("self-update starts npx directly outside Windows", () => {
+  const args = ["--yes", "@igorlau/dotagents@latest", "update", "--global"];
+
+  const command = npxCommand(args, "linux");
+
+  assert.deepEqual(command, { args, command: "npx", shell: false });
+});
+
+test("self-update starts npx through the shell with quoted arguments on Windows", () => {
+  const command = npxCommand(["--yes", "C:\\My Repos\\dotagents", "update"], "win32");
+
+  assert.deepEqual(command, { args: [], command: 'npx "--yes" "C:\\My Repos\\dotagents" "update"', shell: true });
+});
+
+test("self-update refuses an argument that cmd.exe would change on Windows", () => {
+  assert.throws(() => npxCommand(["--yes", "%TEMP%\\dotagents"], "win32"), /Remove the " and % characters/);
+  assert.throws(() => npxCommand(['a"b'], "win32"), /Remove the " and % characters/);
 });
