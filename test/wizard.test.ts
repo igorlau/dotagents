@@ -418,7 +418,7 @@ test("scaffold in the wizard keeps a team CLAUDE.md and reports no problem", asy
   const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["claude"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
-  assert.doesNotMatch(prompts.notes[0] ?? "", /CLAUDE\.md/);
+  assert.doesNotMatch(prompts.notes[0] ?? "", /wasn't written by dotagents/);
   assert.equal(read(path.join(repo, "CLAUDE.md")), "# Team rules for Claude\n");
   assert.ok(exists(path.join(repo, "AGENTS.md")));
 });
@@ -499,6 +499,48 @@ test("the scaffold wizard writes nothing when the user answers No", async () => 
   assert.equal(ok, false);
   assert.deepEqual(scaffolded(repo), []);
   assert.ok(output.includes("Cancelled. Nothing changed."));
+});
+
+const IMPORT_HINT = "CLAUDE.md does not import AGENTS.md. Add the line `@AGENTS.md` to CLAUDE.md so Claude Code reads it, then run `dotagents update`.";
+const TEAM_CLAUDE_MD = { "CLAUDE.md": "# Team rules for Claude\n" };
+
+test("the scaffold wizard shows the import hint when a team CLAUDE.md does not import AGENTS.md", async () => {
+  const repo = box.repo(TEAM_CLAUDE_MD);
+  const prompts = makePrompts({});
+
+  const ok = await scaffoldWizard(prompts, { agents: ["claude"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.ok((prompts.notes[0] ?? "").includes(IMPORT_HINT));
+  assert.ok(output.includes(IMPORT_HINT));
+  assert.equal(read(path.join(repo, "CLAUDE.md")), TEAM_CLAUDE_MD["CLAUDE.md"]);
+  assert.ok(exists(path.join(repo, "AGENTS.md")));
+});
+
+test("the install wizard shows the import hint after scaffold next to a team CLAUDE.md", async () => {
+  const repo = box.repo(TEAM_CLAUDE_MD);
+  const prompts = makePrompts({ scope: "project", setup: ["scaffold"] });
+
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["claude"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.ok((prompts.notes[0] ?? "").includes(IMPORT_HINT));
+  assert.equal(output.at(-1), IMPORT_HINT);
+  assert.equal(read(path.join(repo, "CLAUDE.md")), TEAM_CLAUDE_MD["CLAUDE.md"]);
+});
+
+test("the wizards show no import hint when CLAUDE.md imports AGENTS.md or Claude Code is not checked", async () => {
+  const importing = box.repo({ "CLAUDE.md": "# Team rules for Claude\n\n@AGENTS.md\n" });
+  const withoutClaude = box.repo(TEAM_CLAUDE_MD);
+  const importingPrompts = makePrompts({});
+  const withoutClaudePrompts = makePrompts({});
+
+  await scaffoldWizard(importingPrompts, { agents: ["claude"], cwd: importing });
+  await scaffoldWizard(withoutClaudePrompts, { agents: ["codex"], cwd: withoutClaude });
+
+  assert.ok(!(importingPrompts.notes[0] ?? "").includes(IMPORT_HINT));
+  assert.ok(!(withoutClaudePrompts.notes[0] ?? "").includes(IMPORT_HINT));
+  assert.ok(!output.includes(IMPORT_HINT));
 });
 
 const NO_FLAGS = { "dry-run": false, force: false, global: false, project: false };

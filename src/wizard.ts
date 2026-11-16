@@ -20,7 +20,7 @@ import {
 } from "./commands.ts";
 import { repoRoot } from "./git.ts";
 import { homeDir } from "./paths.ts";
-import { AGENTS, type Agent, type Mode } from "./targets.ts";
+import { AGENTS, claudeMdSkipsAgentsMd, type Agent, type Mode } from "./targets.ts";
 
 export const CANCEL = Symbol("cancel");
 export type Cancel = typeof CANCEL;
@@ -129,10 +129,11 @@ export async function installWizard(prompts: Prompts, plugin: PluginInstaller, o
 
   const scaffoldFiles = setup.includes("scaffold") ? newScaffoldFiles(options.cwd, agents) : [];
   const scaffoldLines = scaffoldFiles.length > 0 ? summaryLines(previewScaffold(options.cwd, agents, scaffoldFiles)) : [];
+  const hintLines = root === undefined ? [] : importHint(root, agents, scaffoldFiles);
   const preview = scope === "global" ? previewInstall(agents) : previewInit(options.cwd, agents, { scaffoldFiles });
   const pluginLines = needsPlugin && !claudeFound ? [PLUGIN_HINT] : [];
   const checkLines = setup.includes("check") ? [`Enable the check hook in ${root}`] : [];
-  prompts.note([...scaffoldLines, ...summaryLines(preview), ...pluginLines, ...checkLines].join("\n"), "Installation summary");
+  prompts.note([...scaffoldLines, ...hintLines, ...summaryLines(preview), ...pluginLines, ...checkLines].join("\n"), "Installation summary");
   const proceed = await prompts.confirm({ message: "Proceed with installation?" });
   if (proceed !== true) return cancelled();
 
@@ -142,6 +143,7 @@ export async function installWizard(prompts: Prompts, plugin: PluginInstaller, o
   if (installPlugin) installClaudePlugin(plugin);
   if (claudeFound && !installPlugin) console.log(PLUGIN_HINT);
   if (setup.includes("check")) setCheckHook(options.cwd, true, false);
+  for (const line of hintLines) console.log(line);
   return scaffolded && installed;
 }
 
@@ -206,11 +208,21 @@ export async function scaffoldWizard(prompts: Prompts, options: { agents?: Agent
   });
   if (files === CANCEL) return cancelled();
 
-  prompts.note(summaryLines(previewScaffold(options.cwd, agents, files)).join("\n"), "Scaffold summary");
+  const hintLines = importHint(root, agents, files);
+  prompts.note([...summaryLines(previewScaffold(options.cwd, agents, files)), ...hintLines].join("\n"), "Scaffold summary");
   const proceed = await prompts.confirm({ message: "Create these files?" });
   if (proceed !== true) return cancelled();
 
-  return scaffold(options.cwd, { agents, dryRun: false, force: false }, { files });
+  const ok = scaffold(options.cwd, { agents, dryRun: false, force: false }, { files });
+  for (const line of hintLines) console.log(line);
+  return ok;
+}
+
+const IMPORT_HINT = "CLAUDE.md does not import AGENTS.md. Add the line `@AGENTS.md` to CLAUDE.md so Claude Code reads it, then run `dotagents update`.";
+
+function importHint(root: string, agents: Agent[], files: string[]): string[] {
+  if (!agents.includes("claude") || !files.includes(path.join(root, "AGENTS.md"))) return [];
+  return claudeMdSkipsAgentsMd(root) ? [IMPORT_HINT] : [];
 }
 
 function installClaudePlugin(plugin: PluginInstaller): void {

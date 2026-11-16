@@ -93,6 +93,12 @@ export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root 
   return [...ops.values()];
 }
 
+/** Reports whether the repository at `root` has a CLAUDE.md that does not import AGENTS.md. */
+export function claudeMdSkipsAgentsMd(root: string): boolean {
+  const claudeMd = readIfExists(path.join(root, "CLAUDE.md"));
+  return claudeMd !== undefined && !importsAgentsMd(claudeMd);
+}
+
 function importsAgentsMd(claudeMd: string | undefined): boolean {
   return claudeMd !== undefined && /^@(\.\/)?AGENTS\.md\s*$/m.test(claudeMd);
 }
