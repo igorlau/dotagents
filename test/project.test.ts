@@ -106,3 +106,54 @@ test("init keeps .claude/rules/dotagents.md when CLAUDE.md does not import AGENT
   assert.ok(exists(claudeRulesFile(repo)));
   assert.equal(blockCount(repo), 0);
 });
+
+test("init writes the Claude Code rules only in the AGENTS.md block when the repository has no CLAUDE.md", () => {
+  const repo = box.repo({ "AGENTS.md": TEAM_FILES["AGENTS.md"] });
+
+  const result = box.run(["init", "--agents", "claude"], repo);
+
+  assert.equal(result.status, 0, result.output);
+  assert.equal(blockCount(repo), 1);
+  assert.ok(!exists(claudeRulesFile(repo)));
+});
+
+test("init keeps .claude/rules/dotagents.md when the repository has a CLAUDE.local.md", () => {
+  const repo = box.repo({ "CLAUDE.local.md": "# My notes\n" });
+
+  const result = box.run(["init", "--agents", "claude"], repo);
+
+  assert.equal(result.status, 0, result.output);
+  assert.ok(exists(claudeRulesFile(repo)));
+});
+
+test("init keeps .claude/rules/dotagents.md when the repository has a .claude/CLAUDE.md", () => {
+  const repo = box.repo({ ".claude/CLAUDE.md": "# Team instructions for Claude\n" });
+
+  const result = box.run(["init", "--agents", "claude"], repo);
+
+  assert.equal(result.status, 0, result.output);
+  assert.ok(exists(claudeRulesFile(repo)));
+});
+
+test("doctor reports the rules file when a CLAUDE.md appears after a project install without one", () => {
+  const repo = box.repo({ "AGENTS.md": TEAM_FILES["AGENTS.md"] });
+  box.run(["init", "--agents", "claude"], repo);
+  write(path.join(repo, "CLAUDE.md"), TEAM_FILES["CLAUDE.md"]);
+
+  const result = box.run(["doctor"], repo);
+
+  assert.equal(result.status, 1, result.output);
+  assert.match(result.output, /rules[/\\]dotagents\.md: not installed\. Run `dotagents update`\./);
+});
+
+test("update says that Claude Code reads the rules from AGENTS.md when it removes the rules file", () => {
+  const repo = box.repo(TEAM_FILES);
+  box.run(["init", "--agents", "claude"], repo);
+  git(repo, ["rm", "-q", "CLAUDE.md"]);
+
+  const result = box.run(["update", "--project"], repo);
+
+  assert.equal(result.status, 0, result.output);
+  assert.ok(!exists(claudeRulesFile(repo)));
+  assert.match(result.output, /Claude Code now reads the rules from AGENTS\.md\./);
+});

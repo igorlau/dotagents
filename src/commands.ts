@@ -16,7 +16,7 @@ import {
   type Manifest,
 } from "./manifest.ts";
 import { claudeHome, codexHome, configDir, packageRoot } from "./paths.ts";
-import { planInstall, planScaffold, type Agent, type Mode, type Op } from "./targets.ts";
+import { planInstall, planScaffold, projectClaudeRulesFile, type Agent, type Mode, type Op } from "./targets.ts";
 
 export interface Options {
   agents: Agent[];
@@ -126,6 +126,10 @@ function run(scope: Scope, agents: Agent[], options: Options, uninstall = false)
   const { result, skills } = plan(scope, agents, options, uninstall);
   report(result, options.dryRun);
   if (options.dryRun) return result.problems.length === 0;
+  const claudeRulesFile = scope.root === undefined ? undefined : projectClaudeRulesFile(scope.root);
+  if (!uninstall && result.changes.some((change) => change.action === "remove" && change.path === claudeRulesFile)) {
+    log("Claude Code now reads the rules from AGENTS.md.");
+  }
 
   if (result.entries.length === 0) {
     fs.rmSync(scope.manifestPath, { force: true });
@@ -234,7 +238,14 @@ export function doctor(cwd: string): boolean {
   for (const scope of scopes) {
     const manifest = readManifest(scope.manifestPath) as Manifest;
     log(`Checking ${describe(scope)} (dotagents ${manifest.version}, agents: ${manifest.agents.join(", ")})`);
-    for (const entry of fromStored(manifest.entries, scope.root)) {
+    const entries = fromStored(manifest.entries, scope.root);
+    if (version() === manifest.version) {
+      const installed = new Set(entries.map((entry) => entry.path));
+      for (const op of planInstall(loadCatalog(), scope.mode, manifest.agents, scope.root)) {
+        if (!installed.has(op.path)) issues.push(`${op.path}: not installed. Run \`dotagents update\`.`);
+      }
+    }
+    for (const entry of entries) {
       if (!fs.existsSync(entry.path)) {
         issues.push(`${entry.path}: missing. Run \`dotagents update\`.`);
         continue;

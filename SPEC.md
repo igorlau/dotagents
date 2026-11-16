@@ -77,7 +77,9 @@ In a team repository, use only the global install. It writes nothing to the
 repository, so the Git history of the team and your edits to tracked files,
 such as `AGENTS.md`, stay as they are.
 
-In project mode, when a line of `CLAUDE.md` is `@AGENTS.md`, `init` writes the
+In project mode, Claude Code reads `AGENTS.md` in 2 cases: a line of
+`CLAUDE.md` is `@AGENTS.md`, or the repository has no `CLAUDE.md`,
+`.claude/CLAUDE.md`, or `CLAUDE.local.md`. In both cases, `init` writes the
 rules for Claude Code only in the `AGENTS.md` block, and writes no
 `.claude/rules/dotagents.md`. Claude Code then loads the rules one time.
 `update` removes an older `.claude/rules/dotagents.md`.
@@ -153,8 +155,14 @@ The reasons for these locations are the following:
   only the first location and Codex only the second, so dotagents writes
   both. When Copilot also has the dotagents plugin, it can list the skills
   twice in global mode too.
-- In project mode, Claude Code reads `AGENTS.md` when the project has no
-  `CLAUDE.md`, so it can see the rules twice.
+- In project mode without a `CLAUDE.md`, the rules for Claude Code are only in
+  the `AGENTS.md` block. Claude Code reads that block only in version 2.1.277
+  or later. If you add a `CLAUDE.md` without `@AGENTS.md` later, Claude Code
+  stops reading `AGENTS.md`. `dotagents doctor` reports this state. Run
+  `dotagents update` to write `.claude/rules/dotagents.md` again.
+- With the **Project instructions** setting `claude-md-and-agents-md`, Claude
+  Code reads `CLAUDE.md` and `AGENTS.md` together, so it can see the rules
+  twice in project mode.
 - On Windows, an npm install of Claude Code is `claude.cmd`, which the wizard
   cannot start. The wizard then shows the `/plugin` commands instead of the
   plugin step.

@@ -43,15 +43,14 @@ function layout(mode: Mode, root: string, pending: Op[]): Layout {
   }
   // Copilot reads AGENTS.md too, so both agents share one block.
   const agentsMd = path.join(root, "AGENTS.md");
-  const claudeMd = path.join(root, "CLAUDE.md");
-  const claudeRulesInAgentsMd = importsAgentsMd(pending.find((op) => op.path === claudeMd)?.content ?? readIfExists(claudeMd));
+  const claudeRulesInAgentsMd = claudeReadsAgentsMd(root, pending);
   return {
     skillDirs: {
       claude: path.join(root, ".claude", "skills"),
       codex: path.join(root, ".agents", "skills"),
       copilot: path.join(root, ".agents", "skills"),
     },
-    claudeRules: claudeRulesInAgentsMd ? agentsMd : path.join(root, ".claude", "rules", RULES_FILE),
+    claudeRules: claudeRulesInAgentsMd ? agentsMd : projectClaudeRulesFile(root),
     claudeRulesInAgentsMd,
     codexRules: agentsMd,
     copilotRules: agentsMd,
@@ -91,6 +90,19 @@ export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root 
   if (agents.includes("copilot")) add({ kind: "block", path: target.copilotRules, content: rules });
 
   return [...ops.values()];
+}
+
+/** The rules file for Claude Code in a project install, when Claude Code does not read AGENTS.md. */
+export function projectClaudeRulesFile(root: string): string {
+  return path.join(root, ".claude", "rules", RULES_FILE);
+}
+
+// Claude Code reads AGENTS.md when the project has no CLAUDE.md or CLAUDE.local.md: https://code.claude.com/docs/en/memory#agents-md
+function claudeReadsAgentsMd(root: string, pending: Op[]): boolean {
+  const claudeMdPath = path.join(root, "CLAUDE.md");
+  const claudeMd = pending.find((op) => op.path === claudeMdPath)?.content ?? readIfExists(claudeMdPath);
+  if (claudeMd !== undefined) return importsAgentsMd(claudeMd);
+  return !["CLAUDE.local.md", path.join(".claude", "CLAUDE.md")].some((rel) => fs.existsSync(path.join(root, rel)));
 }
 
 /** Reports whether the repository at `root` has a CLAUDE.md that does not import AGENTS.md. */
