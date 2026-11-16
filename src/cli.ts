@@ -2,7 +2,7 @@
 import { parseArgs } from "node:util";
 import { doctor, init, install, list, saveSource, scaffold, selfUpdate, setCheckHook, uninstall, update, version } from "./commands.ts";
 import { parseAgents } from "./targets.ts";
-import { clackPrompts, installWizard, opensWizard } from "./wizard.ts";
+import { claudePlugin, clackPrompts, installWizard, opensWizard } from "./wizard.ts";
 
 const HELP = `dotagents: install curated agent skills and rules
 
@@ -54,7 +54,7 @@ async function main(argv: string[]): Promise<number> {
   const interactive = process.stdin.isTTY === true && process.stdout.isTTY === true;
   if (opensWizard({ command, interactive, values })) {
     const agents = values.agents === undefined ? undefined : parseAgents(values.agents);
-    return (await installWizard(clackPrompts, { agents, cwd: process.cwd() })) ? 0 : 1;
+    return (await installWizard(clackPrompts, claudePlugin, { agents, cwd: process.cwd() })) ? 0 : 1;
   }
   if (!command) {
     console.log(HELP);

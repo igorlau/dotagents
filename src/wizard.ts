@@ -1,7 +1,8 @@
+import { spawnSync } from "node:child_process";
 import path from "node:path";
 import * as clack from "@clack/prompts";
 import type { ApplyResult, ChangeAction } from "./apply.ts";
-import { init, install, previewInit, previewInstall, UP_TO_DATE } from "./commands.ts";
+import { dotagentsPluginInstalled, init, install, PLUGIN_HINT, previewInit, previewInstall, UP_TO_DATE } from "./commands.ts";
 import { repoRoot } from "./git.ts";
 import { homeDir } from "./paths.ts";
 import { AGENTS, type Agent, type Mode } from "./targets.ts";
@@ -35,6 +36,26 @@ export const clackPrompts: Prompts = {
   },
 };
 
+export type PluginInstall = { kind: "installed" } | { kind: "failed"; output: string } | { kind: "missing" };
+
+/** Installs the dotagents plugin for Claude Code. Tests pass a fake. */
+export interface PluginInstaller {
+  available(): boolean;
+  install(): PluginInstall;
+}
+
+export const claudePlugin: PluginInstaller = {
+  available() {
+    return spawnSync("claude", ["--version"], { stdio: "ignore" }).error === undefined;
+  },
+  install() {
+    const result = spawnSync("claude", ["plugin", "install", "dotagents", "--marketplace", "igorlau/dotagents"], { encoding: "utf8" });
+    if ((result.error as NodeJS.ErrnoException | undefined)?.code === "ENOENT") return { kind: "missing" };
+    if (result.error) return { kind: "failed", output: result.error.message };
+    return result.status === 0 ? { kind: "installed" } : { kind: "failed", output: `${result.stdout}${result.stderr}`.trim() };
+  },
+};
+
 interface WizardFlags {
   "dry-run": boolean;
   force: boolean;
@@ -52,8 +73,8 @@ export function opensWizard({ command, interactive, values }: { command?: string
 
 const AGENT_LABELS: Record<Agent, string> = { claude: "Claude Code", codex: "Codex", copilot: "GitHub Copilot" };
 
-/** Asks for the agents and the scope, shows the changes, and installs after the user confirms. */
-export async function installWizard(prompts: Prompts, options: { agents?: Agent[]; cwd: string }): Promise<boolean> {
+/** Asks for the agents, the scope, and the Claude Code plugin, shows the changes, and installs after the user confirms. */
+export async function installWizard(prompts: Prompts, plugin: PluginInstaller, options: { agents?: Agent[]; cwd: string }): Promise<boolean> {
   const agents =
     options.agents ??
     (await prompts.multiselect({
@@ -77,13 +98,32 @@ export async function installWizard(prompts: Prompts, options: { agents?: Agent[
         });
   if (scope === CANCEL) return cancelled();
 
+  const needsPlugin = scope === "global" && agents.includes("claude") && !dotagentsPluginInstalled();
+  const claudeFound = needsPlugin && plugin.available();
+  const installPlugin = claudeFound && (await prompts.confirm({ message: "Install the dotagents plugin for Claude Code?" }));
+  if (installPlugin === CANCEL) return cancelled();
+
   const preview = scope === "global" ? previewInstall(agents) : previewInit(options.cwd, agents);
-  prompts.note(summaryLines(preview).join("\n"), "Installation summary");
+  const pluginLines = needsPlugin && !claudeFound ? [PLUGIN_HINT] : [];
+  prompts.note([...summaryLines(preview), ...pluginLines].join("\n"), "Installation summary");
   const proceed = await prompts.confirm({ message: "Proceed with installation?" });
   if (proceed !== true) return cancelled();
 
   const installOptions = { agents, dryRun: false, force: false };
-  return scope === "global" ? install(installOptions) : init(options.cwd, installOptions);
+  const ok = scope === "global" ? install(installOptions, false) : init(options.cwd, installOptions);
+  if (installPlugin) installClaudePlugin(plugin);
+  if (claudeFound && !installPlugin) console.log(PLUGIN_HINT);
+  return ok;
+}
+
+function installClaudePlugin(plugin: PluginInstaller): void {
+  const result = plugin.install();
+  if (result.kind === "installed") {
+    console.log("The dotagents plugin for Claude Code is installed.");
+    return;
+  }
+  if (result.kind === "failed") console.log(result.output);
+  console.log(PLUGIN_HINT);
 }
 
 function cancelled(): false {

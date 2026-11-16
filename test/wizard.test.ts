@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { afterEach, beforeEach, mock, test } from "node:test";
 import type { ApplyResult, Change } from "../src/apply.ts";
-import { CANCEL, installWizard, opensWizard, summaryLines, type Cancel, type Prompts } from "../src/wizard.ts";
+import { PLUGIN_HINT } from "../src/commands.ts";
+import { CANCEL, installWizard, opensWizard, summaryLines, type Cancel, type PluginInstall, type PluginInstaller, type Prompts } from "../src/wizard.ts";
 import type { Mode } from "../src/targets.ts";
 import { exists, read, sandbox, tree, write, type Sandbox } from "./helpers.ts";
 
@@ -37,7 +38,27 @@ const p = (...parts: string[]) => path.join(box.home, ...parts);
 interface Answers {
   agents?: string[] | Cancel;
   proceed?: boolean | Cancel;
+  plugin?: boolean | Cancel;
   scope?: Mode | Cancel;
+}
+
+const NO_CLAUDE: PluginInstaller = {
+  available: () => false,
+  install: () => {
+    throw new Error("Unexpected plugin install");
+  },
+};
+
+const PLUGIN_QUESTION = "Install the dotagents plugin for Claude Code?";
+
+function makeClaudePlugin(log: string[], result: PluginInstall = { kind: "installed" }): PluginInstaller {
+  return {
+    available: () => true,
+    install: () => {
+      log.push(`plugin install, files installed: ${exists(p(".config", "dotagents", "manifest.json"))}`);
+      return result;
+    },
+  };
 }
 
 function makePrompts(answers: Answers): Prompts & { asked: string[]; notes: string[] } {
@@ -48,6 +69,7 @@ function makePrompts(answers: Answers): Prompts & { asked: string[]; notes: stri
     notes,
     async confirm({ message }) {
       asked.push(message);
+      if (message === PLUGIN_QUESTION) return answers.plugin ?? true;
       return answers.proceed ?? true;
     },
     async multiselect<Value>({ message, initialValues }: { message: string; initialValues: Value[] }) {
@@ -67,7 +89,7 @@ function makePrompts(answers: Answers): Prompts & { asked: string[]; notes: stri
 test("the install wizard installs for the checked agents after the confirmation", async () => {
   const prompts = makePrompts({ agents: ["codex", "copilot"], proceed: true });
 
-  const ok = await installWizard(prompts, { cwd: box.home });
+  const ok = await installWizard(prompts, NO_CLAUDE, { cwd: box.home });
 
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(prompts.asked, ["Which agents do you use?", "Proceed with installation?"]);
@@ -81,7 +103,7 @@ test("the install wizard installs for the checked agents after the confirmation"
 test("the install wizard writes nothing when the user answers No", async () => {
   const prompts = makePrompts({ proceed: false });
 
-  const ok = await installWizard(prompts, { cwd: box.home });
+  const ok = await installWizard(prompts, NO_CLAUDE, { cwd: box.home });
 
   assert.equal(ok, false);
   assert.deepEqual(tree(box.home), []);
@@ -91,7 +113,7 @@ test("the install wizard writes nothing when the user answers No", async () => {
 test("the install wizard writes nothing when the user cancels", async () => {
   const prompts = makePrompts({ agents: CANCEL });
 
-  const ok = await installWizard(prompts, { cwd: box.home });
+  const ok = await installWizard(prompts, NO_CLAUDE, { cwd: box.home });
 
   assert.equal(ok, false);
   assert.deepEqual(prompts.asked, ["Which agents do you use?"]);
@@ -104,7 +126,7 @@ test("the install wizard reports a conflict and does not overwrite a file that d
   write(foreign, "mine\n");
   const prompts = makePrompts({ proceed: true });
 
-  const ok = await installWizard(prompts, { cwd: box.home });
+  const ok = await installWizard(prompts, NO_CLAUDE, { cwd: box.home });
 
   assert.equal(ok, false);
   assert.equal(read(foreign), "mine\n");
@@ -115,7 +137,7 @@ test("the install wizard reports a conflict and does not overwrite a file that d
 test("the install wizard skips the agents step when the agents are given", async () => {
   const prompts = makePrompts({});
 
-  const ok = await installWizard(prompts, { agents: ["codex"], cwd: box.home });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: box.home });
 
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(prompts.asked, ["Proceed with installation?"]);
@@ -168,7 +190,7 @@ test("the install wizard installs into the repository when the user picks the re
   const repo = box.repo();
   const prompts = makePrompts({ scope: "project" });
 
-  const ok = await installWizard(prompts, { agents: ["claude"], cwd: repo });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["claude"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(prompts.asked, [SCOPE_QUESTION, "Proceed with installation?"]);
@@ -181,7 +203,7 @@ test("the install wizard installs into the repository when the user picks the re
 test("the install wizard asks no scope question outside a Git repository", async () => {
   const prompts = makePrompts({});
 
-  const ok = await installWizard(prompts, { agents: ["codex"], cwd: box.home });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: box.home });
 
   assert.equal(ok, true, output.join("\n"));
   assert.ok(!prompts.asked.includes(SCOPE_QUESTION));
@@ -194,7 +216,7 @@ test("the install wizard installs globally when Git is not installed", async () 
   const savedPath = process.env.PATH;
   process.env.PATH = box.home;
 
-  const ok = await installWizard(prompts, { agents: ["codex"], cwd: repo }).finally(() => {
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo }).finally(() => {
     process.env.PATH = savedPath;
   });
 
@@ -207,12 +229,80 @@ test("the scope step offers the global scope as the default", async () => {
   const repo = box.repo();
   const prompts = makePrompts({});
 
-  const ok = await installWizard(prompts, { agents: ["codex"], cwd: repo });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
   assert.ok(prompts.asked.includes(SCOPE_QUESTION));
   assert.ok(exists(globalManifest()));
   assert.ok(!exists(path.join(repo, ".dotagents.json")));
+});
+
+test("the plugin step runs the installer after the confirmation when the user accepts it", async () => {
+  const prompts = makePrompts({ plugin: true });
+  const plugin = makeClaudePlugin(prompts.asked);
+
+  const ok = await installWizard(prompts, plugin, { agents: ["claude"], cwd: box.home });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(prompts.asked, [PLUGIN_QUESTION, "Proceed with installation?", "plugin install, files installed: true"]);
+  assert.ok(!output.includes(PLUGIN_HINT));
+});
+
+test("the install wizard skips the plugin step when the plugin is installed", async () => {
+  write(p(".claude", "plugins", "installed_plugins.json"), JSON.stringify({ plugins: { "dotagents@dotagents": [] } }));
+  const prompts = makePrompts({});
+  const plugin = makeClaudePlugin(prompts.asked);
+
+  const ok = await installWizard(prompts, plugin, { agents: ["claude"], cwd: box.home });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(prompts.asked, ["Proceed with installation?"]);
+});
+
+test("the install wizard skips the plugin step in the repository scope", async () => {
+  const repo = box.repo();
+  const prompts = makePrompts({ scope: "project" });
+  const plugin = makeClaudePlugin(prompts.asked);
+
+  const ok = await installWizard(prompts, plugin, { agents: ["claude"], cwd: repo });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(prompts.asked, [SCOPE_QUESTION, "Proceed with installation?"]);
+});
+
+test("the summary shows the /plugin commands when claude is not on the PATH", async () => {
+  const prompts = makePrompts({});
+
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["claude"], cwd: box.home });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.ok(!prompts.asked.includes(PLUGIN_QUESTION));
+  assert.match(prompts.notes[0] ?? "", /\/plugin marketplace add igorlau\/dotagents/);
+  assert.ok(!output.includes(PLUGIN_HINT), "the summary already showed the commands");
+});
+
+test("the install wizard shows the /plugin commands once when the user declines the plugin step", async () => {
+  const prompts = makePrompts({ plugin: false });
+  const plugin = makeClaudePlugin(prompts.asked);
+
+  const ok = await installWizard(prompts, plugin, { agents: ["claude"], cwd: box.home });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.deepEqual(prompts.asked, [PLUGIN_QUESTION, "Proceed with installation?"]);
+  assert.equal(output.filter((line) => line === PLUGIN_HINT).length, 1);
+});
+
+test("the install continues and shows the /plugin commands when the plugin install fails", async () => {
+  const prompts = makePrompts({ plugin: true });
+  const plugin = makeClaudePlugin(prompts.asked, { kind: "failed", output: "marketplace unreachable" });
+
+  const ok = await installWizard(prompts, plugin, { agents: ["claude", "codex"], cwd: box.home });
+
+  assert.equal(ok, true, output.join("\n"));
+  assert.ok(output.includes("marketplace unreachable"));
+  assert.ok(output.includes(PLUGIN_HINT));
+  assert.ok(exists(p(".claude", "rules", "dotagents.md")));
+  assert.ok(exists(globalManifest()));
 });
 
 const NO_FLAGS = { "dry-run": false, force: false, global: false, project: false };

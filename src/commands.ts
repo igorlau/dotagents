@@ -35,7 +35,7 @@ export const DEFAULT_SOURCE = "@igorlau/dotagents@latest";
 
 export const UP_TO_DATE = "Already up to date.";
 
-const PLUGIN_HINT =
+export const PLUGIN_HINT =
   "Claude Code gets the dotagents skills from the plugin. To install it, run `/plugin marketplace add igorlau/dotagents` and `/plugin install dotagents@dotagents` in Claude Code.";
 
 // Release tags carry a real version. Builds from a branch carry X.Y.0-dev,
@@ -102,7 +102,6 @@ export function previewUninstall(cwd: string, which?: Mode): { mode: Mode; resul
 function run(scope: Scope, agents: Agent[], options: Options, uninstall = false): boolean {
   const { result, skills } = plan(scope, agents, options, uninstall);
   report(result, options.dryRun);
-  if (!uninstall && scope.mode === "global" && agents.includes("claude") && !dotagentsPluginInstalled()) log(PLUGIN_HINT);
   if (options.dryRun) return result.problems.length === 0;
 
   if (result.entries.length === 0) {
@@ -128,9 +127,15 @@ function report(result: ApplyResult, dryRun: boolean): void {
   if (result.changes.length === 0 && result.problems.length === 0) log(`  ${UP_TO_DATE}`);
 }
 
-export function install(options: Options): boolean {
+export function install(options: Options, pluginHint = true): boolean {
   log(`Installing dotagents ${version()} globally for ${options.agents.join(", ")}:`);
-  return run(globalScope(), options.agents, options);
+  const ok = run(globalScope(), options.agents, options);
+  if (pluginHint) logPluginHint(options.agents);
+  return ok;
+}
+
+function logPluginHint(agents: Agent[]): void {
+  if (agents.includes("claude") && !dotagentsPluginInstalled()) log(PLUGIN_HINT);
 }
 
 export function init(cwd: string, options: Options): boolean {
@@ -173,6 +178,7 @@ export function update(cwd: string, which: "global" | "project" | undefined, opt
     const manifest = readManifest(scope.manifestPath)!;
     log(`Updating ${describe(scope)} to dotagents ${version()}:`);
     ok = run(scope, manifest.agents, { ...options, agents: manifest.agents }) && ok;
+    if (scope.mode === "global") logPluginHint(manifest.agents);
   }
   return ok;
 }
