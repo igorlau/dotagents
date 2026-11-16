@@ -2,6 +2,7 @@
 import { parseArgs } from "node:util";
 import { doctor, init, install, list, saveSource, scaffold, selfUpdate, setCheckHook, uninstall, update, version } from "./commands.ts";
 import { parseAgents } from "./targets.ts";
+import { clackPrompts, installWizard, opensWizard } from "./wizard.ts";
 
 const HELP = `dotagents: install curated agent skills and rules
 
@@ -25,7 +26,7 @@ Options:
   -h, --help        Print this help
 `;
 
-function main(argv: string[]): number {
+async function main(argv: string[]): Promise<number> {
   const { values, positionals } = parseArgs({
     args: argv,
     allowPositionals: true,
@@ -45,10 +46,19 @@ function main(argv: string[]): number {
     console.log(version());
     return 0;
   }
-  const [command, subcommand] = positionals;
-  if (values.help || !command) {
+  if (values.help) {
     console.log(HELP);
-    return command || values.help ? 0 : 1;
+    return 0;
+  }
+  const [command, subcommand] = positionals;
+  const interactive = process.stdin.isTTY === true && process.stdout.isTTY === true;
+  if (opensWizard({ command, interactive, values })) {
+    const agents = values.agents === undefined ? undefined : parseAgents(values.agents);
+    return (await installWizard(clackPrompts, { agents })) ? 0 : 1;
+  }
+  if (!command) {
+    console.log(HELP);
+    return 1;
   }
 
   const options = { agents: parseAgents(values.agents), dryRun: values["dry-run"], force: values.force };
@@ -85,7 +95,7 @@ function main(argv: string[]): number {
 }
 
 try {
-  process.exitCode = main(process.argv.slice(2));
+  process.exitCode = await main(process.argv.slice(2));
 } catch (error) {
   console.error(`dotagents: ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;

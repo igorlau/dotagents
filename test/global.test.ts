@@ -193,3 +193,11 @@ test("check enable fails outside a repository", () => {
   assert.equal(result.status, 1);
   assert.match(result.output, /Not inside a Git repository/);
 });
+
+test("the CLI prints the help and exits 1 with no arguments and no TTY", () => {
+  const result = box.run([]);
+
+  assert.equal(result.status, 1, result.output);
+  assert.match(result.output, /^dotagents: install curated agent skills and rules/);
+  assert.deepEqual(tree(box.home), []);
+});
