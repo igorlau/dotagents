@@ -13,7 +13,7 @@ commit. This guide teaches the workflow in order. Each page also stands alone.
 1. [Build a task](04-build.md). Production code, tests, and review,
    by hand or with `dot-flow`.
 1. [Review and commit](05-review-and-commit.md). `dot-code-review`,
-   `dot-comments`, and `dot-commit`.
+   `dot-stack-review`, `dot-comments`, and `dot-commit`.
 1. [Rules and principles](06-rules-and-principles.md). The always-on rules,
    and the principles inside the skills.
 1. [Make it yours](07-make-it-yours.md). `dot-correct`, the `check` hook,
