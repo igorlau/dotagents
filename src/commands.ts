@@ -50,6 +50,14 @@ export function version(): string {
   return commit ? `${base}+${commit}` : base;
 }
 
+const RELEASE = /^\d+\.\d+\.\d+$/;
+
+/** Reports whether release `cli` is older than release `installed`. A build from a branch is never older. */
+export function isOlderRelease(cli: string, installed: string): boolean {
+  if (!RELEASE.test(cli) || !RELEASE.test(installed)) return false;
+  return cli.localeCompare(installed, "en", { numeric: true }) < 0;
+}
+
 function log(message = ""): void {
   console.log(message);
 }
@@ -204,6 +212,11 @@ export function update(cwd: string, which: "global" | "project" | undefined, opt
   let ok = true;
   for (const scope of scopes) {
     const manifest = readManifest(scope.manifestPath)!;
+    if (isOlderRelease(version(), manifest.version) && !options.force) {
+      log(`Skipping ${describe(scope)}: it has dotagents ${manifest.version}, and this CLI is older (${version()}). Run \`dotagents self-update\`, or pass --force to downgrade.`);
+      ok = false;
+      continue;
+    }
     log(`Updating ${describe(scope)} to dotagents ${version()}:`);
     ok = run(scope, manifest.agents, { ...options, agents: manifest.agents }) && ok;
     if (scope.mode === "global") logPluginHint(manifest.agents);
@@ -261,7 +274,11 @@ export function doctor(cwd: string): boolean {
     if (scope.mode === "global" && manifest.agents.includes("claude")) {
       issues.push(...(dotagentsPluginInstalled() ? duplicateClaudeSkills() : [PLUGIN_HINT]));
     }
-    if (version() !== manifest.version) log(`  Installed version ${manifest.version} differs from this CLI (${version()}). Run \`dotagents update\`.`);
+    if (isOlderRelease(version(), manifest.version)) {
+      log(`  This CLI (${version()}) is older than the install (${manifest.version}). Run \`dotagents self-update\`.`);
+    } else if (version() !== manifest.version) {
+      log(`  Installed version ${manifest.version} differs from this CLI (${version()}). Run \`dotagents update\`.`);
+    }
   }
 
   const checkRepos = readConfig().checkRepos ?? [];
@@ -351,19 +368,45 @@ export function setCheckHook(cwd: string, enabled: boolean, dryRun: boolean): vo
 
 export function selfUpdate(args: string[]): boolean {
   const source = readSource();
-  log(`Running the latest dotagents from ${source}:`);
-  const npx = npxCommand(["--yes", "--prefer-online", source, "update", ...args]);
-  const result = spawnSync(npx.command, npx.args, { shell: npx.shell, stdio: "inherit" });
-  return result.status === 0;
+  if (!isInside(packageRoot, npmGlobalRoot())) {
+    log(`Running the latest dotagents from ${source}:`);
+    return runInherited(packageManagerCommand("npx", ["--yes", "--prefer-online", source, "update", ...args]));
+  }
+  log(`Installing the latest dotagents from ${source} with npm:`);
+  if (!runInherited(packageManagerCommand("npm", ["install", "--global", "--prefer-online", source]))) return false;
+  return runInherited({ args: [path.join(packageRoot, "dist", "cli.js"), "update", ...args], command: process.execPath, shell: false });
+}
+
+function runInherited({ args, command, shell }: PackageManagerCommand): boolean {
+  return spawnSync(command, args, { shell, stdio: "inherit" }).status === 0;
+}
+
+function npmGlobalRoot(): string | undefined {
+  const { args, command, shell } = packageManagerCommand("npm", ["root", "--global"]);
+  const result = spawnSync(command, args, { encoding: "utf8", shell });
+  return result.status === 0 ? result.stdout.trim() : undefined;
+}
+
+/** Reports whether `dir` is inside `parent`. */
+export function isInside(dir: string, parent: string | undefined): boolean {
+  if (parent === undefined) return false;
+  const relative = path.relative(parent, dir);
+  return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
+}
+
+interface PackageManagerCommand {
+  args: string[];
+  command: string;
+  shell: boolean;
 }
 
 /**
- * Builds the command that starts `npx`. On Windows, `npx` is `npx.cmd`, which Node starts only through a shell,
+ * Builds the command that starts `npm` or `npx`. On Windows, both are `.cmd` files, which Node starts only through a shell,
  * so the arguments go into one quoted command line. `cmd.exe` still reads `"` and `%` inside quotes, so those throw.
  */
-export function npxCommand(args: string[], platform: NodeJS.Platform = process.platform): { args: string[]; command: string; shell: boolean } {
-  if (platform !== "win32") return { args, command: "npx", shell: false };
+export function packageManagerCommand(name: "npm" | "npx", args: string[], platform: NodeJS.Platform = process.platform): PackageManagerCommand {
+  if (platform !== "win32") return { args, command: name, shell: false };
   const unsafe = args.find((arg) => /["%]/.test(arg));
-  if (unsafe !== undefined) throw new Error(`Cannot pass ${unsafe} to npx on Windows. Remove the " and % characters.`);
-  return { args: [], command: ["npx", ...args.map((arg) => `"${arg}"`)].join(" "), shell: true };
+  if (unsafe !== undefined) throw new Error(`Cannot pass ${unsafe} to ${name} on Windows. Remove the " and % characters.`);
+  return { args: [], command: [name, ...args.map((arg) => `"${arg}"`)].join(" "), shell: true };
 }

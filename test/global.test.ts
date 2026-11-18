@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, test } from "node:test";
-import { npxCommand } from "../src/commands.ts";
+import { isInside, isOlderRelease, packageManagerCommand } from "../src/commands.ts";
 import { hash } from "../src/manifest.ts";
 import { exists, read, sandbox, tree, write, type Sandbox } from "./helpers.ts";
 
@@ -206,18 +206,43 @@ test("the CLI prints the help and exits 1 with no arguments and no TTY", () => {
 test("self-update starts npx directly outside Windows", () => {
   const args = ["--yes", "@igorlau/dotagents@latest", "update", "--global"];
 
-  const command = npxCommand(args, "linux");
+  const command = packageManagerCommand("npx", args, "linux");
 
   assert.deepEqual(command, { args, command: "npx", shell: false });
 });
 
 test("self-update starts npx through the shell with quoted arguments on Windows", () => {
-  const command = npxCommand(["--yes", "C:\\My Repos\\dotagents", "update"], "win32");
+  const command = packageManagerCommand("npx", ["--yes", "C:\\My Repos\\dotagents", "update"], "win32");
 
   assert.deepEqual(command, { args: [], command: 'npx "--yes" "C:\\My Repos\\dotagents" "update"', shell: true });
 });
 
+test("self-update installs with npm through the shell on Windows", () => {
+  const command = packageManagerCommand("npm", ["install", "--global", "@igorlau/dotagents@latest"], "win32");
+
+  assert.deepEqual(command, { args: [], command: 'npm "install" "--global" "@igorlau/dotagents@latest"', shell: true });
+});
+
+test("self-update uses npm only when the CLI runs from the global node_modules of npm", () => {
+  const globalRoot = path.join(path.sep, "usr", "lib", "node_modules");
+
+  assert.equal(isInside(path.join(globalRoot, "@igorlau", "dotagents"), globalRoot), true);
+  assert.equal(isInside(path.join(path.sep, "home", "me", ".npm", "_npx", "abc", "node_modules", "@igorlau", "dotagents"), globalRoot), false);
+  assert.equal(isInside(path.join(path.sep, "usr", "lib", "node_modules_old", "dotagents"), globalRoot), false);
+  assert.equal(isInside(globalRoot, globalRoot), false);
+  assert.equal(isInside(path.join(globalRoot, "@igorlau", "dotagents"), undefined), false);
+});
+
+test("a release older than the installed release is older, and a build from a branch never is", () => {
+  assert.equal(isOlderRelease("1.0.16", "1.0.20"), true);
+  assert.equal(isOlderRelease("1.0.9", "1.0.10"), true);
+  assert.equal(isOlderRelease("1.0.20", "1.0.20"), false);
+  assert.equal(isOlderRelease("2.0.0", "1.9.9"), false);
+  assert.equal(isOlderRelease("1.0.0-dev+abc1234", "1.0.20"), false);
+  assert.equal(isOlderRelease("1.0.20", "1.1.0-dev+abc1234"), false);
+});
+
 test("self-update refuses an argument that cmd.exe would change on Windows", () => {
-  assert.throws(() => npxCommand(["--yes", "%TEMP%\\dotagents"], "win32"), /Remove the " and % characters/);
-  assert.throws(() => npxCommand(['a"b'], "win32"), /Remove the " and % characters/);
+  assert.throws(() => packageManagerCommand("npx", ["--yes", "%TEMP%\\dotagents"], "win32"), /Remove the " and % characters/);
+  assert.throws(() => packageManagerCommand("npm", ['a"b'], "win32"), /Remove the " and % characters/);
 });

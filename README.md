@@ -150,7 +150,7 @@ The following table gives a summary of the commands. For the options, run
 | `uninstall` | Remove everything that dotagents installed. |
 | `doctor` | Find missing or changed files in the installs. |
 | `list` | List the skills. |
-| `self-update` | Run `update` with the latest release. |
+| `self-update` | Run `update` with the latest release. A CLI installed with `npm install -g` updates itself first. |
 | `check enable`, `check disable` | Start or stop the plugin `check` hook in the current repository. |
 
 dotagents does not overwrite a file that you changed or that it did not

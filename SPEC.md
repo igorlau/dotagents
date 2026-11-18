@@ -181,7 +181,7 @@ The following table gives the commands:
 | `dotagents uninstall [--global \| --project]` | Remove everything that dotagents installed. |
 | `dotagents doctor` | Find missing or changed files, Git visibility problems, and problems of a coding agent in the installs. |
 | `dotagents list` | List the skills in the catalog. |
-| `dotagents self-update` | Run `update` with the latest release from the recorded source. |
+| `dotagents self-update` | Run `update` with the latest release from the recorded source. A CLI installed with `npm install -g` updates itself first. |
 | `dotagents check enable`, `dotagents check disable` | Start or stop the plugin `check` hook in the current repository. |
 
 The common options are the following:
