@@ -41,7 +41,7 @@ sequenceDiagram
     alt Fix
         User->>Main: Fix these findings
         Main->>Implementer: Task, Findings
-        Note over Main,Reviewer: Steps 2 and 3 run again. The review reads the full change and the findings.
+        Note over Main,Reviewer: Steps 2 and 3 run again. The review reads the changes since the last review, and grades the findings.
     else Accept
         User->>Main: dot-commit
     end
