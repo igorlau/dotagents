@@ -110,13 +110,18 @@ sequenceDiagram
         Main->>Main: Run the tests of the reply
         Main->>Agents: 3. Review (dot-reviewer)
         Agents-->>Main: Findings
-        Main-->>User: Findings
+        loop At most 2 automatic rounds, until a stop rule fires
+            Main->>Agents: Steps 1 to 3 again for the high and medium findings
+            Agents-->>Main: Status of each finding, and new findings
+        end
+        Main-->>User: Round history and findings
         break A blocker, or a check that differs from the reply
             Main-->>User: Stop. The files stay as they are.
         end
         opt Fix
             User->>Main: Fix these findings
             Main->>Agents: Steps 1 to 3 again, or only step 1 on the light path
+            Main-->>User: Round history and findings
         end
         User->>Main: Accept
         User->>Main: dot-commit
@@ -166,7 +171,7 @@ them:
 | `dot-grilling` | Run an interview, in rounds of questions, that makes a plan clear. |
 | `dot-plan` | Plan a change as small, verifiable steps, with requirements and entity schemas. |
 | `dot-roadmap` | Split a plan into phases and tasks that each stand alone. |
-| `dot-flow` | Take a roadmap task through code, tests, and review, verify each step, and stop for your decision after the review. |
+| `dot-flow` | Take a roadmap task through code, tests, and review, verify each step, fix the `high` and `medium` findings in automatic rounds, and stop for your decision. |
 | `dot-testing` | Write tests with a makeSut factory, alone or after `dot-implement`. |
 | `dot-implement` | Write the code of a change or roadmap task to the standards of the repository and the language. |
 | `dot-code-review` | Review a diff for correctness bugs and maintainability problems. |

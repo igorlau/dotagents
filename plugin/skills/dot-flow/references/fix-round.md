@@ -1,6 +1,6 @@
 # Fix round
 
-Read this file in the [`dot-flow`](../SKILL.md) skill when the user picks Fix. Read its "Snapshots" section earlier, when the first review of the task ends. The file gives the snapshots, the light path, the choice between a full review and a delta review, and the fields of step 3 on a fix run. Both runners use it.
+Read this file in the [`dot-flow`](../SKILL.md) skill before the first fix round, automatic or picked by the user. Read its "Snapshots" section earlier, when the first review of the task ends. The file gives the snapshots, the light path, the choice between a full review and a delta review, and the fields of step 3 on a fix run. Both runners use it.
 
 ## Snapshots
 
@@ -30,7 +30,7 @@ The light path applies when the user picks Fix and every finding to fix is `low`
 - `git diff --name-only <old-tree> <tree>` lists only files that the findings to fix or the light-fixed findings name.
 - The checks of the reply and the full test command pass, with no failed test.
 
-When all 3 are true, skip steps 2 and 3. Show each fixed finding as "fixed, not reviewed", then show the other findings and the Fix or Accept choice again. Keep the old tree, so that the next review also reads the light fix. Add the light-fixed findings to the **Earlier findings** of the next review, so that it grades them.
+When all 3 are true, skip steps 2 and 3. Add a `light` row to the round history, and show the stop of `SKILL.md` step 4 again, with each fixed finding as "fixed, not reviewed". Keep the old tree, so that the next review also reads the light fix. Add the light-fixed findings to the **Earlier findings** of the next review, so that it grades them.
 
 When a condition is false, run steps 2 and 3 as a normal fix round.
 
@@ -57,8 +57,8 @@ On a fix run, add these fields after **Handoff**:
   - `open`: the problem is still there.
   - `regressed`: the fix made the problem worse, or moved it to other code.
 
-A full review keeps the rule "report every finding at every severity".
+Only the round 1 review reports `low` findings. A review with **Earlier findings**, full or delta, reports only new `high` and `medium` findings, plus the status of each earlier finding.
 
 **Earlier findings** lists only the findings that the round sent to fix and the light-fixed findings. Keep each earlier finding that the review grades `open` or `regressed` as the last review that reported it gave it, with its `file:line` and **Fix** line. Show it again at the next decision with its status. This applies after a full review and after a delta review.
 
-After a delta review, also keep each finding of the last review that is not in **Earlier findings** unchanged, and show it again at the next decision. No reviewer grades it again. After a full review, the report replaces the other findings, so keep none of them. The highest severity that you show also covers the carried findings.
+Also keep each finding that remained before the round and that is not in **Earlier findings**, unchanged, and show it again at the next decision. No reviewer grades it again. After a full review, keep only the `low` ones. The report replaces the carried `high` and `medium` findings, and a later review does not report a `low` finding again. The highest severity that you show also covers the carried findings.
