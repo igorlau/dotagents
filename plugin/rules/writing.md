@@ -29,6 +29,10 @@ Apply these rules to all text that you write for a person to read: chat replies,
 
 - Use periods and commas, not em dashes.
 - Use a colon only before a list or an example.
-- Use bold only for a UI label or a label that a template asks for. Do not use emoji.
+- Use bold only for a UI label or a label that a template asks for.
+- A user reply is a chat reply, or a file that Git ignores and that you write for the user.
+- In a user reply, write one fact per line in a short list. Use prose only for reasoning that needs linked sentences.
+- In a user reply, start a line that states a failure, a result, a skipped check or a risk, or a neutral fact with 🔴, 🟢, 🟡, or 🔵. In a status report, list the marked lines in that order.
+- Do not use emoji in tracked files, commit messages, pull requests, or the output of code.
 - Use sentence case for headings.
 - Answer directly. Do not write chatbot phrases, such as "I hope this helps", or flattery.

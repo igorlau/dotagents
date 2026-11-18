@@ -224,7 +224,7 @@ Rules load into every conversation. dotagents joins every file in
 | `ponytail.md` | Smallest complete change, reuse before new code, short replies | Vendored from the `AGENTS.md` file in `DietrichGebert/ponytail` (MIT), adapted |
 | `comments.md` | Delete code comments by default, and keep only the named exceptions | Original, based on the `pstack` comment policy from `cursor/plugins` (MIT) |
 | `code-style.md` | Early returns, and sorted keys in JSON files | Original |
-| `writing.md` | Plain, short sentences and no AI tells in all text that agents write | Original, based on ASD-STE100, with patterns condensed from `pstack/skills/unslop` in `cursor/plugins` (MIT) |
+| `writing.md` | Plain, short sentences and no AI tells in all text that agents write, and colored status markers in chat | Original, based on ASD-STE100, with patterns condensed from `pstack/skills/unslop` in `cursor/plugins` (MIT) |
 
 Each rule says one thing in one place. For example, `comments.md` owns the
 comment guidance, so `ponytail.md` has no comment bullet.

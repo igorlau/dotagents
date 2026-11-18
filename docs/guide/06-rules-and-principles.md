@@ -14,7 +14,7 @@ coding agent. The following table lists the rules:
 | [`ponytail.md`](../../plugin/rules/ponytail.md) | Make the smallest complete change, and reuse code before it writes new code. |
 | [`comments.md`](../../plugin/rules/comments.md) | Delete code comments by default, and keep only the named exceptions. |
 | [`code-style.md`](../../plugin/rules/code-style.md) | Use early returns, and sort keys in JSON files. |
-| [`writing.md`](../../plugin/rules/writing.md) | Write short, plain sentences, based on ASD-STE100, in all text: chat, commits, pull requests, and docs. |
+| [`writing.md`](../../plugin/rules/writing.md) | Write short, plain sentences, based on ASD-STE100, in all text: chat, commits, pull requests, and docs. Mark result, failure, risk, and fact lines in chat with colored markers. |
 
 The rules cost tokens on every turn, so they have a character budget. The
 conventions of the repository come first. Where a repository differs from a
