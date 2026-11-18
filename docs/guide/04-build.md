@@ -62,7 +62,8 @@ differs.
 
 A fix of only `low` findings with no behavior change can take a light path.
 It takes the light path when it stays in the files that the findings name,
-and passes the checks and the tests. On the light path, `dot-flow` skips the test and review steps.
+and passes the checks and the tests. On the light path, `dot-flow` skips the
+test and review steps.
 
 After a stop, fix the problem, and ask for the same step again.
 

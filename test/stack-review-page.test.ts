@@ -44,8 +44,7 @@ function commit(dir: string, message: string) {
   git(dir, ["-c", "user.name=test", "-c", "user.email=test@example.com", "commit", "-q", "-m", message]);
 }
 
-/** Forks feat/x from main, then commits to main after the fork, so a diff against main differs from one against the merge base. */
-function makeStackRepo(): string {
+function makeRepoWithMainAheadOfFork(): string {
   const dir = box.repo({ "src/a.ts": "export const a = 1;\n", "src/same.ts": "same\n", "src/shared.ts": "one\n" });
   git(dir, ["checkout", "-q", "-b", "feat/x"]);
   write(path.join(dir, "src/a.ts"), "export const a = 2;\n");
@@ -90,7 +89,7 @@ const diffOf = (block: string) => block.slice(block.indexOf('<pre class="diff">'
 
 before(() => {
   box = sandbox();
-  repo = makeStackRepo();
+  repo = makeRepoWithMainAheadOfFork();
   const result = runScript(validStack());
   assert.equal(result.status, 0, result.stderr);
   pagePath = result.stdout.trim();
