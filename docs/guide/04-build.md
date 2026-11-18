@@ -41,7 +41,7 @@ sequenceDiagram
     alt Fix
         User->>Main: Fix these findings
         Main->>Implementer: Task, Findings
-        Note over Main,Reviewer: Steps 2 and 3 run again. The review reads the changes since the last review, and grades the findings.
+        Note over Main,Reviewer: Steps 2 and 3 run again, except on the light path. The review reads the changes since the last review, and grades the findings.
     else Accept
         User->>Main: dot-commit
     end
@@ -55,6 +55,10 @@ always-on rules. No agent can start another agent.
 `dot-flow` does not take the word of an agent. After the code and after the
 tests, it runs the commands of the reply again, and stops when a result
 differs.
+
+A fix of only `low` findings with no behavior change can take a light path.
+It takes the light path when it stays in the files that the findings name,
+and passes the checks and the tests. On the light path, `dot-flow` skips the test and review steps.
 
 After a stop, fix the problem, and ask for the same step again.
 

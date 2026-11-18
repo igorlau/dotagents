@@ -116,7 +116,7 @@ sequenceDiagram
         end
         opt Fix
             User->>Main: Fix these findings
-            Main->>Agents: Steps 1 to 3 again
+            Main->>Agents: Steps 1 to 3 again, or only step 1 on the light path
         end
         User->>Main: Accept
         User->>Main: dot-commit

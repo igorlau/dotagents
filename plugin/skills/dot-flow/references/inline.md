@@ -2,7 +2,7 @@
 
 Inline steps for the [`dot-flow`](../SKILL.md) skill, for an agent that cannot start the dotagents agents, such as Codex or Copilot. The verification, the stops, and the decision after the review stay as `SKILL.md` gives them. You run each step yourself, in this conversation, instead of in an agent.
 
-1. Implement: use the `dot-implement` skill for the task, and end the step with its handoff. Write no tests in this step.
+1. Implement: use the `dot-implement` skill for the task, and end the step with its handoff. Write no tests in this step. On a fix run, end the handoff with the line `**Behavior change:** <yes | no>`. A behavior change is a change to what the code does for any input. Then take the light path or run steps 2 and 3, as [`fix-round.md`](fix-round.md#light-path) gives it.
 2. Test: use the `dot-testing` skill with its `references/after-implement.md` and the handoff of step 1, and end the step with the reply that the reference gives.
 3. Review: use the `dot-code-review` skill for the task. Start the report with the line `**Highest severity:** <high | medium | low | none>`. Also read the `## Requirements` section of the roadmap `README.md`, check the change against every non-negotiable (`NN`) and each business rule (`BR`) that the task names, and report a breached `NN` as a `high` finding. On a fix run, write the new tree, pick a full or a delta review, and grade the earlier findings, as [`fix-round.md`](fix-round.md) gives it. On a delta review, the target is `git diff <old-tree> <new-tree>`. A full review has the target `git diff HEAD`, plus the untracked files that `git status --short` lists, and reports every finding at every severity. Keep the code as it is. Delete each test that you write to prove a finding.
 

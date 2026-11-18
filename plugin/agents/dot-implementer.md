@@ -23,3 +23,5 @@ Write no tests, do not commit, and do not tick the roadmap checkbox.
 ## Output
 
 End with the handoff of step 5 of `dot-implement`, and write nothing after it. The next step writes the tests.
+
+On a run with **Findings**, end the handoff with the line `**Behavior change:** <yes | no>`. A behavior change is a change to what the code does for any input.
