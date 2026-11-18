@@ -19,7 +19,7 @@ const validStack = () => ({
       files: ["src/a.ts", "src/shared.ts"],
       findings: [
         {
-          body: "Body with <script>bad()</script>",
+          body: "Body with <script>bad()</script>\n**Fix:** Use `<b>` here.",
           file: "src/a.ts",
           kind: "correctness",
           line: 1,
@@ -85,7 +85,8 @@ function fileBlock(layerIndex: number, file: string): string {
   return block;
 }
 
-const diffOf = (block: string) => block.slice(block.indexOf('<pre class="diff">'), block.indexOf("</pre>"));
+const diffOf = (block: string) => block.slice(block.indexOf('<table class="diff">'), block.indexOf("</table>"));
+const row = (kind: string, text: string) => new RegExp(`<tr class="${kind}[^"]*"[^>]*>.*<td class="code">${text}</td></tr>`);
 
 before(() => {
   box = sandbox();
@@ -119,15 +120,15 @@ test("the stack review page shows each layer with its purpose, dependencies, and
 test("the stack review page embeds the diff of each file from the merge base", () => {
   const diff = diffOf(fileBlock(1, "src/a.ts"));
 
-  assert.match(diff, /<span class="del">-export const a = 1;<\/span>/);
-  assert.match(diff, /<span class="add">\+export const a = 2;<\/span>/);
-  assert.match(diffOf(fileBlock(0, "src/shared.ts")), /<span class="add">\+shared added line<\/span>/);
+  assert.match(diff, row("del", "-export const a = 1;"));
+  assert.match(diff, row("add", "\\+export const a = 2;"));
+  assert.match(diffOf(fileBlock(0, "src/shared.ts")), row("add", "\\+shared added line"));
   assert.doesNotMatch(page, /main-only line/);
 });
 
 test("the stack review page shows each finding next to its file", () => {
   const block = fileBlock(1, "src/a.ts");
-  const finding = decode(block.slice(block.indexOf('<div class="finding'), block.indexOf('<pre class="diff">')));
+  const finding = decode(block.slice(block.indexOf('<div class="finding'), block.indexOf('<table class="diff">')));
 
   assert.match(block, /class="finding high"/);
   assert.match(finding, /high/);
@@ -136,6 +137,32 @@ test("the stack review page shows each finding next to its file", () => {
   assert.match(finding, /correctness/);
   assert.doesNotMatch(fileBlock(1, "src/shared.ts"), /class="finding/);
   assert.doesNotMatch(fileBlock(0, "src/shared.ts"), /class="finding/);
+});
+
+test("the stack review page numbers the diff lines, hides the Git header lines, and marks the line of each finding", () => {
+  const diff = diffOf(fileBlock(1, "src/a.ts"));
+
+  assert.match(diff, /<tr class="del"><td class="ln">1<\/td><td class="ln"><\/td>/);
+  assert.match(diff, /<tr class="add flagged high" id="layer-2-file-1-line-1"><td class="ln"><\/td><td class="ln">1<\/td>/);
+  assert.match(fileBlock(1, "src/a.ts"), /<a href="#layer-2-file-1-line-1"><code>src\/a\.ts:1<\/code><\/a>/);
+  assert.doesNotMatch(diff, /diff --git|index [0-9a-f]|--- a\/|\+\+\+ b\//);
+});
+
+test("the stack review page opens each file and closes its diff, and keeps the findings outside the diff", () => {
+  const block = fileBlock(1, "src/a.ts");
+  const diffSection = block.slice(block.indexOf('<details class="diff-section">'));
+
+  assert.match(block, /^ open>/);
+  assert.match(diffSection, /^<details class="diff-section">\n<summary>Diff<\/summary>\n<table class="diff">/);
+  assert.ok(block.indexOf('<div class="finding') < block.indexOf('<details class="diff-section">'));
+  assert.match(page, /<button type="button" data-toggle-all="open">Expand all<\/button>/);
+  assert.match(page, /<button type="button" data-toggle-all="close">Collapse all<\/button>/);
+});
+
+test("the stack review page renders bold and code spans in a finding body, and escapes the text in them", () => {
+  const block = fileBlock(1, "src/a.ts");
+
+  assert.match(block, /<strong>Fix:<\/strong> Use <code>&#60;b&#62;<\/code> here\./);
 });
 
 test("the stack review page shows the full diff of a file that two layers share in both layers", () => {
@@ -149,7 +176,7 @@ test("the stack review page shows the full diff of a file that two layers share 
 test("the stack review page escapes HTML in diff lines and findings", () => {
   const text = decode(page);
 
-  for (const raw of ["<script", "<img", "<b>", "<i>"]) assert.ok(!page.includes(raw), `the page has a raw ${raw}`);
+  for (const raw of ["<script>alert", "<script>bad", "<img", "<b>", "<i>"]) assert.ok(!page.includes(raw), `the page has a raw ${raw}`);
   assert.ok(text.includes("+<script>alert(1)</script>"));
   assert.ok(text.includes(ODD_FILE));
   assert.ok(text.includes("Contracts <i>"));
