@@ -28,7 +28,7 @@ Run the steps in this order. For each step, start a new agent of the named type,
 | ---- | ----- | ------------- |
 | 1. Implement | `dotagents:dot-implementer` | Task |
 | 2. Test | `dotagents:dot-tester` | Task, Handoff: the reply of step 1 |
-| 3. Review | `dotagents:dot-reviewer` | Task, Handoff: the replies of steps 1 and 2, Findings: only on a fix run |
+| 3. Review | `dotagents:dot-reviewer` | Task, Handoff: the replies of steps 1 and 2, Since and Earlier findings: only on a fix run |
 
 Write the prompt as labeled fields, and leave out a field that the step does not take:
 
@@ -38,6 +38,9 @@ Write the prompt as labeled fields, and leave out a field that the step does not
 <the replies of the earlier steps, unchanged>
 **Findings:**
 <the findings that the user named, unchanged>
+**Since:** <old-tree> <new-tree>
+**Earlier findings:**
+<the findings that the round sent to fix, unchanged>
 ```
 
 Copy the replies and the findings unchanged, because the agents read their fields. Add no other fields or instructions, such as a list of files to review.
@@ -61,9 +64,11 @@ Done when the review reply arrived, or the flow stopped.
 
 ## 4. Decide after the review
 
+When the first review reply of the task arrives, write the old tree, as the "Snapshots" section of [`references/fix-round.md`](references/fix-round.md#snapshots) gives it.
+
 Show the user the **Highest severity** line and one line for each finding: its severity, summary, and `file:line`. Show each `high` finding with its **Fix** line. The presumed blockers of the maintainability pass are `high`. Then wait for the user to pick one:
 
-- **Fix**: the user names the findings to fix. Run step 1 again in a new agent, with the findings as a **Findings** field, then run steps 2 and 3 again. Give step 3 the same **Findings** field. The review target stays the full uncommitted change of the task, not the files that the fix changed.
+- **Fix**: the user names the findings to fix. Read [`references/fix-round.md`](references/fix-round.md) now, for the snapshots and the fields of step 3. Run step 1 again in a new agent, with the findings as a **Findings** field, then run steps 2 and 3 again.
 - **Accept**: the user accepts the findings that remain.
 
 Done when the user accepts.
