@@ -163,7 +163,7 @@ agreements, the smallest complete change from
 [ponytail](https://github.com/DietrichGebert/ponytail), code comments, code
 style, and writing.
 
-The 14 skills in [`plugin/skills/`](plugin/skills/) load when a task needs
+The 15 skills in [`plugin/skills/`](plugin/skills/) load when a task needs
 them:
 
 | Skill | Purpose |
@@ -175,6 +175,7 @@ them:
 | `dot-testing` | Write tests with a makeSut factory, alone or after `dot-implement`. |
 | `dot-implement` | Write the code of a change or roadmap task to the standards of the repository and the language. |
 | `dot-code-review` | Review a diff for correctness bugs and maintainability problems. |
+| `dot-stack-review` | Review the commits of a branch as an ordered stack of dependency layers. |
 | `dot-comments` | Delete the comments in a diff that no exception protects. |
 | `dot-commit` | Commit changes as small, logical commits. |
 | `dot-debug` | Find the cause of a hard bug with a feedback loop. |

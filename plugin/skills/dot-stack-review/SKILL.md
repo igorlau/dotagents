@@ -1,0 +1,76 @@
+---
+name: dot-stack-review
+description: Review the commits of a branch as an ordered stack of dependency layers, and report each layer with its findings.
+disable-model-invocation: true
+---
+
+# Stack review
+
+Review the committed changes of a branch as a **stack**: layers of files in dependency order. A reader understands layer 1 on its own, and each later layer from the layers above it. The `dot-code-review` skill gives the review. This skill gives the layers and the report.
+
+## 1. Pick the target
+
+- **Head**: the branch that the user named, or the current branch.
+- **Base**: the branch that the user named, or the default branch from `git symbolic-ref --short refs/remotes/origin/HEAD`, such as `origin/main`. Use a local branch only when the user names it. When the repository has no `origin/HEAD`, ask the user for the base.
+- **Merge base**: `git merge-base <base> <head>`. Compare head with the merge base, never with the tip of base, so commits that base got after the fork stay out.
+- **Diff**: `git diff <merge-base> <head>`, with `--numstat` for the line counts. It has the committed changes only.
+
+Read each file with `git show <head>:<path>`, and keep the current checkout. For a file that head deletes, read it with `git show <merge-base>:<path>`.
+
+State the target in one line: `<head> vs <base> (merge base <short sha>)`.
+
+Done when you have the merge base and the list of changed files.
+
+## 2. Group the layers
+
+Group the changed files into layers by dependency, such as types and contracts, core logic, callers, tests, then docs and config.
+
+- Derive each dependency from the imports and the diff. File A depends on file B when A imports, calls, links, or names something that the diff adds or changes in B. A folder name is a hint only.
+- A layer holds whole files. Split a file into hunks only when it holds changes for 2 layers. List the file in both layers, each with its own hunks.
+- Order the layers in the order that a reader must understand them. Each layer depends only on layers with a lower number. Merge 2 layers that depend on each other.
+
+Show the layer map, one line per layer: the number, the name, and the files. Then continue to step 3. The user can ask for new layers after the report.
+
+Done when each changed hunk is in exactly one layer, and no layer depends on a layer below it.
+
+## 3. Review
+
+Use the `dot-code-review` skill on the diff of step 1, with its passes and its finding format. Run one review, in layer order: layer 1 first, then each next layer. Give each finding the layer of its hunk.
+
+Done when each layer has its findings, or is clean.
+
+## 4. Report
+
+Fill this template. The overview stack comes first, with layer 1 at the top. Each row shows the layer number, the name, the file count, the findings by severity or `clean`, and the layers that it needs. Then each layer gets a section, in layer order. One "Make it impossible" section, in the `dot-code-review` format, ends the report.
+
+````markdown
+```text
+<head> vs <base> (merge base <short sha>)
+
+┌──────────────────────────────────────────────────────────┐
+│ 1  Contracts      2 files   high 1                       │
+├──────────────────────────────────────────────────────────┤
+│ 2  Core logic     3 files   medium 1   needs 1           │
+├──────────────────────────────────────────────────────────┤
+│ 3  Callers        1 file    clean      needs 1, 2        │
+└──────────────────────────────────────────────────────────┘
+```
+
+## Layer 1: <name>
+Purpose: <one line>
+Depends on: <nothing | layers 1, 2>
+
+| File | + | - |
+| ---- | - | - |
+| path/to/file.ts | 12 | 4 |
+
+<each finding of the layer in the dot-code-review format, or "No findings.">
+
+## Make it impossible
+
+<one line for each class of finding in all layers>
+````
+
+For a split file, count only the lines of the hunks in that layer.
+
+Done when the report has every layer of step 2 and every finding of step 3.

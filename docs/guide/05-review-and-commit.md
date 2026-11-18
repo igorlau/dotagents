@@ -23,6 +23,20 @@ each class of finding. To add one, use `dot-correct`. See [Make it yours](07-mak
 
 Ask the agent to fix the findings that you accept, then review again.
 
+## Review a branch as a stack with dot-stack-review
+
+Start [`dot-stack-review`](../../plugin/skills/dot-stack-review/SKILL.md)
+with a head branch and a base branch, or with no arguments for the current
+branch against the default branch:
+
+```text
+/dotagents:dot-stack-review feat/my-change against main
+```
+
+Use it for a large branch. It groups the committed changes into layers by
+dependency, and reports the review of each layer in the order that you must
+read them.
+
 ## Delete comments with dot-comments
 
 The always-on comments rule deletes comments by default. To check the
