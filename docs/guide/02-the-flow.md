@@ -51,9 +51,9 @@ at most 2 automatic rounds for the task. Only the first review reports `low`
 findings. To fix findings at a stop, name them. `dot-flow` runs the three
 steps again with those findings. The new review reads only the changes since
 the last review, and gives each named finding a status: fixed, open, or
-regressed. When the fix
-changed a file that no finding names, other than the test files of the test
-step, the new review reads the full change of the task again. You can fix
+regressed. When the fix changed a file that no finding names, other than the
+test files of the test step, the new review reads the full change of the task
+again. You can fix
 only `low` findings with no behavior change. When that fix stays in the files
 that the findings name, and passes the checks and the tests, `dot-flow`
 skips the test and review steps.
