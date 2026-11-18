@@ -40,7 +40,7 @@ Write the prompt as labeled fields, and leave out a field that the step does not
 <the findings that the user named, unchanged>
 **Since:** <old-tree> <new-tree>
 **Earlier findings:**
-<the findings that the round sent to fix, unchanged>
+<the findings that the round sent to fix and the light-fixed findings, unchanged>
 ```
 
 Copy the replies and the findings unchanged, because the agents read their fields. Add no other fields or instructions, such as a list of files to review.
@@ -68,7 +68,7 @@ When the first review reply of the task arrives, write the old tree, as the "Sna
 
 Show the user the **Highest severity** line and one line for each finding: its severity, summary, and `file:line`. Show each `high` finding with its **Fix** line. The presumed blockers of the maintainability pass are `high`. Then wait for the user to pick one:
 
-- **Fix**: the user names the findings to fix. Read [`references/fix-round.md`](references/fix-round.md) now, for the snapshots and the fields of step 3. Run step 1 again in a new agent, with the findings as a **Findings** field, then run steps 2 and 3 again.
+- **Fix**: the user names the findings to fix. Read [`references/fix-round.md`](references/fix-round.md) now, for the snapshots, the light path, and the fields of step 3. Run step 1 again in a new agent, with the findings as a **Findings** field. Then take the light path, or run steps 2 and 3 again.
 - **Accept**: the user accepts the findings that remain.
 
 Done when the user accepts.
