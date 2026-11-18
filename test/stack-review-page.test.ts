@@ -1,0 +1,209 @@
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { after, before, test } from "node:test";
+import { git, sandbox, write, type Sandbox } from "./helpers.ts";
+
+const SCRIPT = fileURLToPath(new URL("../plugin/skills/dot-stack-review/scripts/page.mjs", import.meta.url));
+const ODD_FILE = "src/<b>.txt";
+
+const validStack = () => ({
+  base: "main",
+  head: "feat/x",
+  layers: [
+    { dependsOn: [], files: ["src/shared.ts"], findings: [], name: "Contracts <i>", purpose: "Define the shape" },
+    {
+      dependsOn: [1],
+      files: ["src/a.ts", "src/shared.ts"],
+      findings: [
+        {
+          body: "Body with <script>bad()</script>",
+          file: "src/a.ts",
+          kind: "correctness",
+          line: 1,
+          severity: "high",
+          summary: "Value <img src=x> changed",
+        },
+      ],
+      name: "Logic",
+      purpose: "Use the shape",
+    },
+    { dependsOn: [1, 2], files: [ODD_FILE], findings: [], name: "Escapes", purpose: "Hold odd names" },
+  ],
+});
+
+let box: Sandbox;
+let repo: string;
+let pagePath: string;
+let page: string;
+
+function commit(dir: string, message: string) {
+  git(dir, ["add", "-A"]);
+  git(dir, ["-c", "user.name=test", "-c", "user.email=test@example.com", "commit", "-q", "-m", message]);
+}
+
+/** Forks feat/x from main, then commits to main after the fork, so a diff against main differs from one against the merge base. */
+function makeStackRepo(): string {
+  const dir = box.repo({ "src/a.ts": "export const a = 1;\n", "src/same.ts": "same\n", "src/shared.ts": "one\n" });
+  git(dir, ["checkout", "-q", "-b", "feat/x"]);
+  write(path.join(dir, "src/a.ts"), "export const a = 2;\n");
+  write(path.join(dir, "src/shared.ts"), "one\nshared added line\n");
+  write(path.join(dir, ODD_FILE), "<script>alert(1)</script>\n");
+  commit(dir, "feature");
+  git(dir, ["checkout", "-q", "main"]);
+  write(path.join(dir, "src/shared.ts"), "one\nmain-only line\n");
+  commit(dir, "main after the fork");
+  git(dir, ["checkout", "-q", "feat/x"]);
+  return dir;
+}
+
+function runScript(stack: unknown, raw?: string, cwd = repo) {
+  const layersFile = path.join(box.home, "layers.json");
+  write(layersFile, raw ?? JSON.stringify(stack));
+  const env = { PATH: process.env.PATH, HOME: box.home, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" };
+  return spawnSync(process.execPath, [SCRIPT, layersFile], { cwd, env, encoding: "utf8" });
+}
+
+function decode(html: string): string {
+  return html
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)))
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&");
+}
+
+const layerSections = () => page.split('<details class="layer"').slice(1);
+
+function fileBlock(layerIndex: number, file: string): string {
+  const block = layerSections()[layerIndex]
+    .split('<details class="file"')
+    .slice(1)
+    .find((candidate) => decode(candidate.slice(0, candidate.indexOf("</summary>"))).includes(file));
+  assert.ok(block, `layer ${layerIndex + 1} has no block for ${file}`);
+  return block;
+}
+
+const diffOf = (block: string) => block.slice(block.indexOf('<pre class="diff">'), block.indexOf("</pre>"));
+
+before(() => {
+  box = sandbox();
+  repo = makeStackRepo();
+  const result = runScript(validStack());
+  assert.equal(result.status, 0, result.stderr);
+  pagePath = result.stdout.trim();
+  page = fs.readFileSync(pagePath, "utf8");
+});
+after(() => box?.cleanup());
+
+test("the stack review page shows each layer with its purpose, dependencies, and files in layer order", () => {
+  const sections = layerSections();
+  const overview = page.slice(page.indexOf('<ol class="stack">'), page.indexOf("</ol>"));
+
+  assert.equal(sections.length, 3);
+  assert.deepEqual(sections.map((section) => section.match(/id="layer-(\d+)"/)?.[1]), ["1", "2", "3"]);
+  assert.deepEqual([...overview.matchAll(/href="#layer-(\d+)"/g)].map((match) => match[1]), ["1", "2", "3"]);
+  assert.match(sections[0], /Purpose: Define the shape/);
+  assert.match(sections[0], /Depends on: nothing/);
+  assert.match(sections[1], /Purpose: Use the shape/);
+  assert.match(sections[1], /Depends on: layer 1\b/);
+  assert.match(sections[2], /Purpose: Hold odd names/);
+  assert.match(sections[2], /Depends on: layers 1, 2/);
+  fileBlock(0, "src/shared.ts");
+  fileBlock(1, "src/a.ts");
+  fileBlock(1, "src/shared.ts");
+  fileBlock(2, ODD_FILE);
+});
+
+test("the stack review page embeds the diff of each file from the merge base", () => {
+  const diff = diffOf(fileBlock(1, "src/a.ts"));
+
+  assert.match(diff, /<span class="del">-export const a = 1;<\/span>/);
+  assert.match(diff, /<span class="add">\+export const a = 2;<\/span>/);
+  assert.match(diffOf(fileBlock(0, "src/shared.ts")), /<span class="add">\+shared added line<\/span>/);
+  assert.doesNotMatch(page, /main-only line/);
+});
+
+test("the stack review page shows each finding next to its file", () => {
+  const block = fileBlock(1, "src/a.ts");
+  const finding = decode(block.slice(block.indexOf('<div class="finding'), block.indexOf('<pre class="diff">')));
+
+  assert.match(block, /class="finding high"/);
+  assert.match(finding, /high/);
+  assert.match(finding, /Value <img src=x> changed/);
+  assert.match(finding, /src\/a\.ts:1/);
+  assert.match(finding, /correctness/);
+  assert.doesNotMatch(fileBlock(1, "src/shared.ts"), /class="finding/);
+  assert.doesNotMatch(fileBlock(0, "src/shared.ts"), /class="finding/);
+});
+
+test("the stack review page shows the full diff of a file that two layers share in both layers", () => {
+  const first = diffOf(fileBlock(0, "src/shared.ts"));
+  const second = diffOf(fileBlock(1, "src/shared.ts"));
+
+  assert.match(first, /\+shared added line/);
+  assert.equal(second, first);
+});
+
+test("the stack review page escapes HTML in diff lines and findings", () => {
+  const text = decode(page);
+
+  for (const raw of ["<script", "<img", "<b>", "<i>"]) assert.ok(!page.includes(raw), `the page has a raw ${raw}`);
+  assert.ok(text.includes("+<script>alert(1)</script>"));
+  assert.ok(text.includes(ODD_FILE));
+  assert.ok(text.includes("Contracts <i>"));
+  assert.ok(text.includes("Value <img src=x> changed"));
+  assert.ok(text.includes("Body with <script>bad()</script>"));
+});
+
+test("the stack review page loads no network resources", () => {
+  assert.doesNotMatch(page, /\b(?:src|href)\s*=\s*["']?\s*(?:https?:)?\/\//i);
+  assert.doesNotMatch(page, /url\(\s*["']?\s*(?:https?:)?\/\//i);
+  assert.doesNotMatch(page, /@import/i);
+});
+
+test("the stack review page script exits with an error when the layers file is invalid", async (t) => {
+  const withFinding = (change: Record<string, unknown>) => {
+    const stack = validStack();
+    Object.assign(stack.layers[1].findings[0], change);
+    return stack;
+  };
+  const forward = validStack();
+  forward.layers[0].dependsOn = [2];
+  const unchanged = validStack();
+  unchanged.layers[0].files.push("src/same.ts");
+  const cases = [
+    { field: "layers[1].findings[0].severity", label: "a bad severity", stack: withFinding({ severity: "critical" }) },
+    { field: "layers[1].findings[0].file", label: "a finding file outside its layer", stack: withFinding({ file: ODD_FILE }) },
+    { field: "layers[0].dependsOn", label: "a forward dependsOn", stack: forward },
+    { field: "head", label: "a head that starts with -", stack: { ...validStack(), head: "--output=x" } },
+    { field: "layers[0].files[1]", label: "a file with no changes between the merge base and head", stack: unchanged },
+    { field: undefined, label: "bad JSON", raw: "{ not json" },
+  ];
+
+  for (const { field, label, raw, stack } of cases) {
+    await t.test(label, () => {
+      const result = runScript(stack, raw);
+
+      assert.notEqual(result.status, 0);
+      assert.notEqual(result.stderr.trim(), "");
+      if (field) assert.ok(result.stderr.includes(field), result.stderr);
+      assert.deepEqual(fs.readdirSync(path.dirname(pagePath)), [path.basename(pagePath)]);
+    });
+  }
+});
+
+test("the stack review page script writes the page at the repository root and prints its path", () => {
+  assert.equal(pagePath, path.join(fs.realpathSync(repo), ".tmp", "stack-review", "feat-x.html"));
+  assert.ok(fs.existsSync(pagePath));
+});
+
+test("the stack review page script writes the full diffs when it runs from a subdirectory of the repository", () => {
+  const result = runScript(validStack(), undefined, path.join(repo, "src"));
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), pagePath);
+  assert.equal(fs.readFileSync(pagePath, "utf8"), page);
+});
