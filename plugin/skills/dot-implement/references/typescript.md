@@ -62,7 +62,8 @@ The repository's conventions and its compiler and linter configuration come firs
 - Keep default parameter values free of side effects.
 - Mark properties that are never reassigned after the constructor `readonly`. Use parameter properties instead of code that copies constructor arguments by hand.
 - Initialize every class property in its declaration or the constructor, and set optional ones to `undefined`, so the object's shape never changes.
-- Keep visibility as narrow as possible. Prefer a module-level function to a private method. Leave out the `public` modifier except on a mutable parameter property, and never use `obj['name']` to get around `private`.
+- Keep visibility as narrow as possible. Leave out the `public` modifier except on a mutable parameter property, and never use `obj['name']` to get around `private`.
+- Put a function or a constant in the class whose data it uses, when that class is its main caller. Make it an instance method when it reads `this`, and `static` when it does not. Make it `private` when only the class calls it. Keep it at module level when several classes or no class use it. Do not create a class only to hold functions.
 - Keep getters free of side effects, and skip accessors that only pass a property through.
 - Leave prototypes and built-in objects unmodified.
 

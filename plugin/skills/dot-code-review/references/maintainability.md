@@ -30,6 +30,7 @@ Report each of these as `medium`:
 - Duplicated helpers: copied logic, or a new helper next to a canonical one that does the same job.
 - Needless sequential work: independent steps that run one after the other for no reason.
 - Half-applied state: related updates that can stop part of the way through. Ask for an atomic structure.
+- Stray class helpers: a module-level function or constant that uses the data of one class, and has that class as its main caller. Move it into the class as a method or a static member.
 
 ## Reader load
 
