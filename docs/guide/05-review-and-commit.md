@@ -37,6 +37,17 @@ Use it for a large branch. It groups the committed changes into layers by
 dependency, and reports the review of each layer in the order that you must
 read them.
 
+After the report, the agent offers an HTML page of the stack, with the diff
+of each file and its findings. To get the page without the offer, add `page`:
+
+```text
+/dotagents:dot-stack-review page
+```
+
+The agent writes the page to `.tmp/stack-review/` in the repository, and
+prints its path. The page makes no network requests. Git must ignore `.tmp`,
+or the agent stops before it writes the page.
+
 ## Delete comments with dot-comments
 
 The always-on comments rule deletes comments by default. To check the

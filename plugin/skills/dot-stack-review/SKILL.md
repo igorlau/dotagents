@@ -14,6 +14,7 @@ Review the committed changes of a branch as a **stack**: layers of files in depe
 - **Base**: the branch that the user named, or the default branch from `git symbolic-ref --short refs/remotes/origin/HEAD`, such as `origin/main`. Use a local branch only when the user names it. When the repository has no `origin/HEAD`, ask the user for the base.
 - **Merge base**: `git merge-base <base> <head>`. Compare head with the merge base, never with the tip of base, so commits that base got after the fork stay out.
 - **Diff**: `git diff <merge-base> <head>`, with `--numstat` for the line counts. It has the committed changes only.
+- **Page**: when the arguments include `page`, run step 5 after the report, without the offer.
 
 Read each file with `git show <head>:<path>`, and keep the current checkout. For a file that head deletes, read it with `git show <merge-base>:<path>`.
 
@@ -73,4 +74,43 @@ Depends on: <nothing | layers 1, 2>
 
 For a split file, count only the lines of the hunks in that layer.
 
+End the report with a one-line offer of the HTML page of step 5. When the user accepts, run step 5.
+
 Done when the report has every layer of step 2 and every finding of step 3.
+
+## 5. Page
+
+Write a self-contained HTML page of the stack, with the diff of each file and its findings.
+
+1. Run `git check-ignore -q .tmp` at the repository root. When it exits with a non-zero code, stop, and tell the user that Git does not ignore `.tmp`, so the page could reach a commit.
+2. Write the layers of step 2 and the findings of step 3 to `.tmp/stack-review/<branch-slug>.json`. `<branch-slug>` is head with each character other than a letter, a digit, `.`, `_`, or `-` replaced by `-`, such as `feat-flow-fix-loop`. Sort the keys. `dependsOn` has the 1-based numbers of the layers that a layer needs.
+
+   ```json
+   {
+     "base": "main",
+     "head": "feat/my-change",
+     "layers": [
+       {
+         "dependsOn": [],
+         "files": ["src/types.ts"],
+         "findings": [
+           {
+             "body": "**Scenario:** ...\n**Fix:** ...",
+             "file": "src/types.ts",
+             "kind": "correctness",
+             "line": 42,
+             "severity": "high",
+             "summary": "One-line summary"
+           }
+         ],
+         "name": "Contracts",
+         "purpose": "One line"
+       }
+     ]
+   }
+   ```
+
+3. Run the script of this skill directory from the repository root: `node <skill directory>/scripts/page.mjs .tmp/stack-review/<branch-slug>.json`. It runs `git merge-base` and `git diff` itself, and prints the path of the page.
+4. When the script exits with a non-zero code, fix the field that its message names, and run it again.
+
+Done when the user has the path of the page.
