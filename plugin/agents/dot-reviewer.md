@@ -25,7 +25,9 @@ The prompt gives these fields:
 
 When the task or the handoff is missing, stop and report it.
 
-Without **Since**, the target is the uncommitted change: `git diff HEAD`, plus the untracked files that `git status --short` lists. Review the whole target. Report every finding at every severity in this review, so that no finding waits for a later round.
+Without **Since**, the target is the uncommitted change: `git diff HEAD`, plus the untracked files that `git status --short` lists. Review the whole target.
+
+Without **Earlier findings**, report every finding at every severity, so that no finding waits for a later round. With **Earlier findings**, on a full or a delta review, report only new `high` and `medium` findings.
 
 Keep the code as it is. Delete each test that you write to prove a finding. Do not commit, and do not tick the roadmap checkbox.
 

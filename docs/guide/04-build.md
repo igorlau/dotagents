@@ -6,7 +6,7 @@ approved, not the code that the agent wrote.
 
 ## Run a task with dot-flow
 
-To run the steps, with a check of each result and one stop after the review, start
+To run the steps, with a check of each result and automatic fix rounds after the review, start
 [`dot-flow`](../../plugin/skills/dot-flow/SKILL.md) with a task file or a
 roadmap directory:
 
@@ -37,7 +37,11 @@ sequenceDiagram
     Main->>Main: Run the tests. All tests must pass.
     Main->>Reviewer: Task, Handoffs of steps 1 and 2
     Reviewer-->>Main: Highest severity and findings
-    Main-->>User: Findings, each high finding with its fix
+    loop At most 2 automatic rounds, until a stop rule fires
+        Main->>Implementer: Task, Findings: the high and medium findings
+        Note over Main,Reviewer: Steps 2 and 3 run again. The review grades the findings, and reports only new high and medium findings.
+    end
+    Main-->>User: Round history, findings, each high finding with its fix
     alt Fix
         User->>Main: Fix these findings
         Main->>Implementer: Task, Findings

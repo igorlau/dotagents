@@ -39,16 +39,19 @@ The agent stops and waits for you at these points:
 | The entity schemas of `dot-plan` | The data model, before the steps |
 | The plan | The steps |
 | The roadmap | The phases, the tasks, and the test cases |
-| The review of `dot-flow` | The findings to fix, or the change as it is |
+| A stop of the review loop of `dot-flow` | The findings to fix, or the change as it is |
 | Each commit group of `dot-commit` | The files and the message |
 
 `dot-flow` does not stop after the code or the tests. A reply of an agent is
 a claim, so `dot-flow` runs the type checker, the linter, and the tests
 again itself, and continues only when the results agree with the reply.
 
-To fix findings, name them. `dot-flow` runs the three steps again with those
-findings. The new review reads only the changes since the last review, and
-gives each named finding a status: fixed, open, or regressed. When the fix
+After a review, `dot-flow` fixes the `high` and `medium` findings itself, in
+at most 2 automatic rounds for the task. Only the first review reports `low`
+findings. To fix findings at a stop, name them. `dot-flow` runs the three
+steps again with those findings. The new review reads only the changes since
+the last review, and gives each named finding a status: fixed, open, or
+regressed. When the fix
 changed a file that no finding names, other than the test files of the test
 step, the new review reads the full change of the task again. You can fix
 only `low` findings with no behavior change. When that fix stays in the files
@@ -61,6 +64,13 @@ skips the test and review steps.
 
 - A step reports a blocker.
 - A check that `dot-flow` runs gives a result that differs from the reply.
+- Only `low` findings remain, or no findings remain.
+- 2 automatic rounds ran.
+- A finding that a round sent to fix is still open, or regressed.
+- The count of `high` and `medium` findings did not go down after a round.
+
+At a stop of the review loop, `dot-flow` shows a table with one row for each
+round, then the findings that remain.
 
 `dot-flow` never commits, and never ticks the roadmap. You run `dot-commit`
 when you accept the change.
