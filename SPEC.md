@@ -408,13 +408,15 @@ npx --yes @igorlau/dotagents install
 npx --yes @igorlau/dotagents@1.0.7 install
 ```
 
-The release workflow runs on every push to `main`. If the checks pass, the
-workflow does these steps:
+The release workflow runs on every push to `main`. Release-please reads the
+Conventional Commits since the last release, and keeps a release pull
+request open with the next version and the changelog. When the maintainer
+merges that pull request, the workflow does these steps:
 
-1. It sets the version to `MAJOR.MINOR.RUN_NUMBER`.
+1. Release-please tags the release commit and creates a GitHub release.
+1. The workflow runs the checks on the tag.
 1. It stages the package on npm with trusted publishing.
-1. It tags the release commit.
-1. It attaches the `npm pack` tarball to a GitHub release, as an offline
+1. It attaches the `npm pack` tarball to the GitHub release, as an offline
    fallback.
 
 The trusted publisher can only stage, so a version reaches users only after
@@ -424,7 +426,7 @@ two-factor authentication.
 An install from Git, such as `npx github:igorlau/dotagents`, still works for
 tests of unreleased commits. npm runs the `prepare` script, which compiles
 the TypeScript and records the commit in `dist/build-info.json`. Thus these
-builds report versions such as `1.0.0-dev+30d0533`.
+builds report the last release and the commit, such as `2.0.0+30d0533`.
 
 ## Tests
 

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "56d328ec6312fbd40f5da29b7d0b0392aca62983",
+  "packages": {
+    ".": {
+      "package-name": "@igorlau/dotagents",
+      "release-type": "node"
+    }
+  }
+}

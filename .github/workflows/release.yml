@@ -1,13 +1,15 @@
 name: Release
 
-# Every push to main that passes the checks is staged on npm and tagged.
-# The maintainer approves each staged version on npmjs.com with 2FA.
+# release-please keeps a release pull request open from the Conventional
+# Commits on main. Its merge tags the version, and the publish job stages it
+# on npm. The maintainer approves each staged version on npmjs.com with 2FA.
 on:
   push:
     branches: [main]
 
 permissions:
   contents: write
+  pull-requests: write
   # Lets npm trusted publishing exchange a GitHub OIDC token for publish rights.
   id-token: write
 
@@ -16,10 +18,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  publish:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -31,31 +49,16 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint:content
       - run: npm test
+      - name: Check that the build reports the release version
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: test "$(node dist/cli.js --version)" = "${TAG#v}"
+      - run: npm stage publish
 
-      # The patch number comes from the run number, so main keeps MAJOR.MINOR
-      # in package.json and nobody bumps versions by hand.
-      - name: Compute version
-        run: |
-          base=$(node -p "require('./package.json').version.split('.').slice(0, 2).join('.')")
-          echo "VERSION=$base.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
-
-      - name: Stage the npm release
-        run: |
-          npm version "$VERSION" --no-git-tag-version
-          npm stage publish
-
-      # The tag points to a commit outside main that records the version.
-      - name: Tag the release
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit --quiet -am "release: v$VERSION"
-          git tag "v$VERSION"
-          git push origin "v$VERSION"
-
-      - name: Publish the GitHub release with a tarball
+      - name: Attach the tarball to the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
         run: |
           npm pack
-          gh release create "v$VERSION" "igorlau-dotagents-$VERSION.tgz" --title "v$VERSION" --generate-notes
+          gh release upload "$TAG" igorlau-dotagents-*.tgz

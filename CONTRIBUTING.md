@@ -187,13 +187,19 @@ a test in `test/`.
 
 ## Commit and release
 
-Write commit messages in the Conventional Commits format. CI stages every
-push to `main` that passes the checks on npm as
-`@igorlau/dotagents@MAJOR.MINOR.RUN_NUMBER`, and tags it
-`vMAJOR.MINOR.RUN_NUMBER`. The version becomes available after the
+Write commit messages in the Conventional Commits format. The commit types
+set the next version: `fix` raises the patch, `feat` raises the minor, and a
+`!` or a `BREAKING CHANGE:` footer raises the major.
+
+On every push to `main`, release-please opens or updates a release pull
+request. That pull request sets the next version in `package.json` and adds
+the changes to `CHANGELOG.md`. Merge it to release. The merge tags the
+version, and CI stages it on npm. The version becomes available after the
 maintainer approves it on npmjs.com, under **Staged Packages**.
 
-On `main`, `package.json` keeps the version `MAJOR.MINOR.0-dev`, and builds
-from a branch report the commit, such as `1.0.0-dev+30d0533`. To start a new
-minor or major series, change `MAJOR.MINOR` in `package.json`, and keep the
-`.0-dev` suffix.
+The release pull request runs no CI checks, because GitHub Actions opens it.
+The release workflow runs the checks before it stages the package.
+
+To force a version, add a `Release-As: 2.1.0` footer to a commit message.
+Builds from a branch report the last release and the commit, such as
+`2.0.0+30d0533`.
