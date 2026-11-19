@@ -68,9 +68,6 @@ To add a skill, do these steps:
 1. Keep `SKILL.md` within 8,000 characters. Keep only what applies on every
    run. Move conditional content, such as a language, a mode, or a rare
    case, to `references/TOPIC.md`, behind a line that says when to read it.
-1. For a skill that sets `disable-model-invocation`, add
-   `agents/openai.yaml` with `allow_implicit_invocation: false`, so Codex
-   follows the same choice.
 1. State a convention of the repository only when the skill needs more than
    the first working agreement in `plugin/rules/core.md`.
 1. Add the skill to the skills table in the `README.md`, and to the skills
@@ -79,8 +76,7 @@ To add a skill, do these steps:
 
 ## Add an agent
 
-Only the plugin ships agents. In Codex and Copilot, `dot-flow` runs its
-steps in the main session instead. To add an agent, do these steps:
+Only the plugin ships agents. To add an agent, do these steps:
 
 1. Create `plugin/agents/AGENT_NAME.md`. Replace `AGENT_NAME` with a name
    with the `dot-` prefix. The `name` field in the frontmatter must be the
@@ -101,8 +97,8 @@ agent does not need to load them.
 
 ## Add a hook
 
-The plugin hooks are in `plugin/hooks/hooks.json`. Claude Code, Copilot, and
-Codex load this file. To add a hook, do these steps:
+The plugin hooks are in `plugin/hooks/hooks.json`. Claude Code and Copilot
+load this file. To add a hook, do these steps:
 
 1. Put the script in `plugin/hooks/`, and start it from `hooks.json` with
    `node "${CLAUDE_PLUGIN_ROOT}/hooks/SCRIPT_NAME"`. Replace `SCRIPT_NAME`

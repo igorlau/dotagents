@@ -23,7 +23,6 @@ test("install writes rules for every agent, and skills for every agent but Claud
   assert.ok(!exists(p(".claude", "skills")), "Claude Code gets skills from the plugin");
   const claudeRules = read(p(".claude", "rules", "dotagents.md"));
   assert.match(claudeRules, /## Working agreements[\s\S]*## Code comments[\s\S]*## Ponytail/);
-  assert.match(read(p(".codex", "AGENTS.md")), /<!-- dotagents:start -->[\s\S]*Working agreements[\s\S]*<!-- dotagents:end -->/);
   assert.match(read(p(".copilot", "copilot-instructions.md")), /<!-- dotagents:start -->[\s\S]*Working agreements[\s\S]*<!-- dotagents:end -->/);
   assert.ok(exists(p(".config", "dotagents", "manifest.json")));
 });
@@ -47,15 +46,102 @@ test("--agents limits the install", () => {
   assert.ok(!exists(p(".copilot")));
 });
 
-test("the Codex block preserves existing AGENTS.md content, and uninstall restores it", () => {
-  const original = "# My global rules\n\n- Prefer tabs.\n";
-  write(p(".codex", "AGENTS.md"), original);
+const ORIGINAL_CODEX = "# mine\n";
+const manifestPath = () => p(".config", "dotagents", "manifest.json");
+
+function installWithOldCodexState(): void {
   box.run(["install"]);
-  assert.match(read(p(".codex", "AGENTS.md")), /^# My global rules\n\n- Prefer tabs\.\n\n<!-- dotagents:start -->/);
+  const body = "old codex rules";
+  write(p(".codex", "AGENTS.md"), `${ORIGINAL_CODEX}\n<!-- dotagents:start -->\n${body}\n<!-- dotagents:end -->\n`);
+  const manifest = JSON.parse(read(manifestPath()));
+  manifest.agents = ["claude", "codex", "copilot"];
+  manifest.entries.push({ path: p(".codex", "AGENTS.md"), kind: "block", hash: hash(body) });
+  write(manifestPath(), JSON.stringify(manifest));
+}
+
+test("update removes the old Codex block, keeps the user content, and drops codex from the manifest", () => {
+  installWithOldCodexState();
+
+  const result = box.run(["update"]);
+
+  assert.equal(result.status, 0, result.output);
+  assert.equal(read(p(".codex", "AGENTS.md")), ORIGINAL_CODEX);
+  assert.deepEqual(JSON.parse(read(manifestPath())).agents, ["claude", "copilot"]);
+});
+
+test("update announces the removal when codex was the only agent", () => {
+  box.run(["install", "--agents", "claude"]);
+  const body = "old codex rules";
+  write(p(".codex", "AGENTS.md"), `${ORIGINAL_CODEX}\n<!-- dotagents:start -->\n${body}\n<!-- dotagents:end -->\n`);
+  const manifest = JSON.parse(read(manifestPath()));
+  manifest.agents = ["codex"];
+  manifest.entries.push({ path: p(".codex", "AGENTS.md"), kind: "block", hash: hash(body) });
+  write(manifestPath(), JSON.stringify(manifest));
+
+  const result = box.run(["update"]);
+
+  assert.equal(result.status, 0, result.output);
+  assert.match(result.output, /codex is no longer supported\. Removing the global install\./);
+  assert.doesNotMatch(result.output, /Updating/);
+  assert.ok(!exists(p(".claude", "rules", "dotagents.md")));
+  assert.equal(read(p(".codex", "AGENTS.md")), ORIGINAL_CODEX);
+});
+
+test("update keeps the install for Claude Code when codex is listed beside it", () => {
+  installWithOldCodexState();
+
+  const result = box.run(["update"]);
+
+  assert.match(result.output, /Updating/);
+  assert.doesNotMatch(result.output, /no longer supported/);
+  assert.ok(exists(p(".claude", "rules", "dotagents.md")));
+});
+
+test("uninstall removes the old Codex block from a manifest that lists codex", () => {
+  installWithOldCodexState();
 
   const result = box.run(["uninstall"]);
+
   assert.equal(result.status, 0, result.output);
-  assert.equal(read(p(".codex", "AGENTS.md")), original);
+  assert.equal(read(p(".codex", "AGENTS.md")), ORIGINAL_CODEX);
+});
+
+test("doctor does not fail on a manifest that lists codex", () => {
+  installWithOldCodexState();
+  installPlugin();
+
+  const result = box.run(["doctor"]);
+
+  assert.equal(result.status, 0, result.output);
+  assert.doesNotMatch(result.output, /codex/i);
+  assert.doesNotMatch(result.output, /TypeError|Error:/);
+});
+
+test("project update removes the old Codex block, keeps the user text, and drops codex from the manifest", () => {
+  const userText = "# Team instructions\n\n- Use pnpm.\n";
+  const body = "old codex rules";
+  const repo = box.repo({ "AGENTS.md": userText, "CLAUDE.md": "# Team instructions for Claude\n" });
+  box.run(["init", "--agents", "claude"], repo);
+  const agentsFile = path.join(repo, "AGENTS.md");
+  const manifestFile = path.join(repo, ".dotagents.json");
+  write(agentsFile, `${userText}\n<!-- dotagents:start -->\n${body}\n<!-- dotagents:end -->\n`);
+  const manifest = JSON.parse(read(manifestFile));
+  manifest.agents = ["claude", "codex"];
+  manifest.entries.push({ path: "AGENTS.md", kind: "block", hash: hash(body) });
+  write(manifestFile, JSON.stringify(manifest));
+
+  const result = box.run(["update", "--project"], repo);
+
+  assert.equal(result.status, 0, result.output);
+  assert.equal(read(agentsFile), userText);
+  assert.deepEqual(JSON.parse(read(manifestFile)).agents, ["claude"]);
+});
+
+test("install rejects the codex agent", () => {
+  const result = box.run(["install", "--agents", "codex"]);
+
+  assert.equal(result.status, 1);
+  assert.match(result.output, /Unknown agent "codex"/);
 });
 
 test("uninstall removes exactly what install wrote", () => {

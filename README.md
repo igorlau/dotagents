@@ -1,6 +1,6 @@
 # dotagents
 
-dotagents gives Claude Code, OpenAI Codex, and GitHub Copilot one AI workflow
+dotagents gives Claude Code and GitHub Copilot one AI workflow
 for every project. The workflow plans a change, writes code and tests in small
 steps, verifies each step, reviews the result, and asks for your decision.
 
@@ -8,8 +8,8 @@ dotagents has two parts:
 
 - A plugin with skills, agents, and hooks. Claude Code, the
   Copilot CLI, and VS Code load the plugin.
-- A CLI that installs the always-on rules for all three coding agents, and the
-  skills for Codex and Copilot.
+- A CLI that installs the always-on rules for both coding agents, and the
+  skills for Copilot.
 
 ## Install
 
@@ -86,7 +86,6 @@ task. The agent stops for your decision at each "approve", "fix", or "accept":
 sequenceDiagram
     actor User
     participant Main as Main session
-    participant Agents as Step agents
     User->>Main: dot-grilling with an idea
     Main-->>User: Questions in rounds, with recommended answers
     User->>Main: Answers until the plan is clear
@@ -101,27 +100,13 @@ sequenceDiagram
     Main-->>User: Phases and task files with test cases
     User->>Main: Approve the roadmap
     loop Each task
-        User->>Main: dot-flow with the task file
-        Main->>Agents: 1. Production code (dot-implementer)
-        Agents-->>Main: Reply
-        Main->>Main: Run the checks of the reply
-        Main->>Agents: 2. Tests (dot-tester)
-        Agents-->>Main: Reply
-        Main->>Main: Run the tests of the reply
-        Main->>Agents: 3. Review (dot-reviewer)
-        Agents-->>Main: Findings
-        loop At most 2 automatic rounds, until a stop rule fires
-            Main->>Agents: Steps 1 to 3 again for the high and medium findings
-            Agents-->>Main: Status of each finding, and new findings
-        end
-        Main-->>User: Round history and findings
-        break A blocker, or a check that differs from the reply
-            Main-->>User: Stop. The files stay as they are.
-        end
+        User->>Main: dot-implement with the task file
+        Main-->>User: Production code and tests
+        User->>Main: dot-code-review
+        Main-->>User: Findings
         opt Fix
             User->>Main: Fix these findings
-            Main->>Agents: Steps 1 to 3 again, or only step 1 on the light path
-            Main-->>User: Round history and findings
+            Main-->>User: Changed code and tests
         end
         User->>Main: Accept
         User->>Main: dot-commit
@@ -130,9 +115,6 @@ sequenceDiagram
         Main-->>User: Commits, and a tick in the roadmap
     end
 ```
-
-`dot-flow` never commits. In Codex and Copilot, `dot-flow` runs the three steps
-in the main session, with the same verification and stops.
 
 To learn the workflow step by step, read the [guide](docs/guide/README.md).
 
@@ -163,7 +145,7 @@ agreements, the smallest complete change from
 [ponytail](https://github.com/DietrichGebert/ponytail), code comments, code
 style, and writing.
 
-The 15 skills in [`plugin/skills/`](plugin/skills/) load when a task needs
+The 14 skills in [`plugin/skills/`](plugin/skills/) load when a task needs
 them:
 
 | Skill | Purpose |
@@ -171,7 +153,6 @@ them:
 | `dot-grilling` | Run an interview, in rounds of questions, that makes a plan clear. |
 | `dot-plan` | Plan a change as small, verifiable steps, with requirements and entity schemas. |
 | `dot-roadmap` | Split a plan into phases and tasks that each stand alone. |
-| `dot-flow` | Take a roadmap task through code, tests, and review, verify each step, fix the `high` and `medium` findings in automatic rounds, and stop for your decision. |
 | `dot-testing` | Write tests with a makeSut factory, alone or after `dot-implement`. |
 | `dot-implement` | Write the code of a change or roadmap task to the standards of the repository and the language. |
 | `dot-code-review` | Review a diff for correctness bugs and maintainability problems. |
@@ -184,15 +165,13 @@ them:
 | `dot-docs-writing` | Give docs the structure and format of the Google developer documentation style. |
 | `dot-writing-for-agents` | Write skills, `AGENTS.md`, and `CLAUDE.md` files. |
 
-The plugin also has 3 agents in [`plugin/agents/`](plugin/agents/).
-`dot-flow` starts a new agent for each step, so each step starts with a clean
-context:
+The plugin also has 2 agents in [`plugin/agents/`](plugin/agents/). Each
+agent runs one step of a task in a clean context:
 
 | Agent | Purpose |
 | ----- | ------- |
 | `dot-tester` | Write the tests of a task after the code exists. |
 | `dot-implementer` | Write the production code of a task. |
-| `dot-reviewer` | Review the changes of a task. |
 
 ## More information
 

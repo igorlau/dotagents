@@ -65,4 +65,4 @@ End with this handoff. The `dot-testing` skill reads its last two fields:
 
 Write "none" under a field that has no items.
 
-When `dot-flow` or an agent prompt gave you only the implementation step, stop after the handoff. Otherwise, use the `dot-testing` skill with this handoff now, then suggest the `dot-code-review` skill and the `dot-commit` skill. Leave the commit to the user.
+When an agent prompt gave you only the implementation step, stop after the handoff. Otherwise, use the `dot-testing` skill with this handoff now, then suggest the `dot-code-review` skill and the `dot-commit` skill. Leave the commit to the user.

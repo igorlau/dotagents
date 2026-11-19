@@ -4,72 +4,10 @@ Build each roadmap task in three steps: production code, tests, then review.
 The test names come from the task, so the tests check the behavior that you
 approved, not the code that the agent wrote.
 
-## Run a task with dot-flow
+## Run the steps
 
-To run the steps, with a check of each result and automatic fix rounds after the review, start
-[`dot-flow`](../../plugin/skills/dot-flow/SKILL.md) with a task file or a
-roadmap directory:
-
-```text
-/dotagents:dot-flow .tmp/roadmaps/invoice-export/01-core/01-csv-writer.md
-```
-
-With a roadmap directory, `dot-flow` picks the first unticked task whose
-blockers are all ticked. Commit or put aside your other changes first,
-because the review reads every uncommitted change.
-
-The following diagram shows one task. Each step starts a new agent, so each
-step starts with a clean context and one skill:
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant Main as Main session
-    participant Tester as dot-tester
-    participant Implementer as dot-implementer
-    participant Reviewer as dot-reviewer
-    User->>Main: /dotagents:dot-flow with a task file
-    Main->>Implementer: Task
-    Implementer-->>Main: Summary, Checks, Expected failures
-    Main->>Main: Run the checks. Only expected failures can fail.
-    Main->>Tester: Task, Handoff of step 1
-    Tester-->>Main: Summary, Tests, Files, Blockers
-    Main->>Main: Run the tests. All tests must pass.
-    Main->>Reviewer: Task, Handoffs of steps 1 and 2
-    Reviewer-->>Main: Highest severity and findings
-    loop At most 2 automatic rounds, until a stop rule fires
-        Main->>Implementer: Task, Findings: the high and medium findings
-        Note over Main,Reviewer: Steps 2 and 3 run again. The review grades the findings, and reports only new high and medium findings.
-    end
-    Main-->>User: Round history, findings, each high finding with its fix
-    alt Fix
-        User->>Main: Fix these findings
-        Main->>Implementer: Task, Findings
-        Note over Main,Reviewer: Steps 2 and 3 run again, except on the light path. The review reads the changes since the last review, and grades the findings.
-    else Accept
-        User->>Main: dot-commit
-    end
-    Note over User,Main: A blocker, or a check that differs from the reply, stops the flow.
-```
-
-The agents are `dotagents:dot-tester`, `dotagents:dot-implementer`, and
-`dotagents:dot-reviewer`. Each agent preloads one skill and receives the
-always-on rules. No agent can start another agent.
-
-`dot-flow` does not take the word of an agent. After the code and after the
-tests, it runs the commands of the reply again, and stops when a result
-differs.
-
-A fix of only `low` findings with no behavior change can take a light path.
-It takes the light path when it stays in the files that the findings name,
-and passes the checks and the tests. On the light path, `dot-flow` skips the
-test and review steps.
-
-After a stop, fix the problem, and ask for the same step again.
-
-## Run the steps by hand
-
-You can run each step yourself, in one conversation:
+Commit or put aside your other changes first, because the review reads every
+uncommitted change. Run each step yourself, in one conversation:
 
 1. Start [`dot-implement`](../../plugin/skills/dot-implement/SKILL.md) for
    the task. It writes the production code. It runs the type checker, the
@@ -82,16 +20,22 @@ You can run each step yourself, in one conversation:
    [reference for tests after `dot-implement`](../../plugin/skills/dot-testing/references/after-implement.md)
    gives the details.
 1. Start [`dot-code-review`](../../plugin/skills/dot-code-review/SKILL.md).
+   Fix the findings that you accept, then review again.
 
-## Run a task in Codex and Copilot
+## Run a step in an agent
 
-Codex and Copilot do not start the dotagents agents, so `dot-flow` runs the
-three steps in the main session, with the same verification and stops:
+In Claude Code, the plugin has two agents that run one step each in a clean
+context: `dotagents:dot-implementer` for the production code, and
+`dotagents:dot-tester` for the tests. Each agent preloads one skill and
+receives the always-on rules. No agent can start another agent. Copilot does
+not start the dotagents agents, so run the steps in the main session.
 
-```text
-/dot-flow .tmp/roadmaps/invoice-export/01-core/01-csv-writer.md
-```
+Ask Claude Code to run the agent. Give
+`dot-implementer` the **Task** field, the path of the task file. Give
+`dot-tester` the **Task** field and the **Handoff** field, the handoff of
+`dot-implementer`.
 
-The steps share one context, so the context grows with each step.
+After an agent replies, run the type checker, the linter, and the tests
+yourself. The reply is not proof.
 
 Next: [Review and commit](05-review-and-commit.md).

@@ -1,8 +1,8 @@
 # Install dotagents
 
 dotagents has two parts. The plugin has the skills, the agents, and the
-`check` hook. The CLI installs the always-on rules for all coding agents, and
-the skills for Codex and Copilot. Plugins cannot ship always-on rules, so
+`check` hook. The CLI installs the always-on rules for both coding agents, and
+the skills for Copilot. Plugins cannot ship always-on rules, so
 every coding agent needs the CLI.
 
 ## Install with the wizard
@@ -15,7 +15,7 @@ npx --yes @igorlau/dotagents
 
 The wizard asks these questions, in this order:
 
-1. Which coding agents you use. All three are checked.
+1. Which coding agents you use. Both are checked.
 1. Where to install. Global is the default. The option for the repository
    appears only inside a Git repository.
 1. Whether to install the Claude Code plugin. This question appears only for
@@ -62,22 +62,22 @@ The plugin skills have the `dotagents:` namespace, such as
 `/dotagents:dot-plan`. Each commit is a new plugin version, because
 `plugin.json` has no version.
 
-### Install for Codex and Copilot
+### Install for Copilot
 
 To install the rules and the skills, run the following command:
 
 ```bash
-npx --yes @igorlau/dotagents install --agents codex,copilot
+npx --yes @igorlau/dotagents install --agents copilot
 ```
 
-In Codex and Copilot, the skills have no namespace, such as `/dot-plan`.
-`dot-flow` runs its steps in the main session, because these coding agents
-do not start the dotagents agents.
+In Copilot, the skills have no namespace, such as `/dot-plan`.
+Copilot does not start the dotagents agents, so it runs each step in the main
+session.
 
 The Copilot CLI and VS Code can also load the plugin. If you install both
 the plugin and the CLI skills, Copilot can list each skill twice.
 
-To install for all three coding agents at the same time, leave out
+To install for both coding agents at the same time, leave out
 `--agents`.
 
 ## Enable the check hook

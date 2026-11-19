@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import type { Agent, Mode } from "./targets.ts";
+import { AGENTS, type Agent, type Mode } from "./targets.ts";
 import { configDir } from "./paths.ts";
 
 export interface Entry {
@@ -37,9 +37,19 @@ export function projectManifestPath(root: string): string {
   return path.join(root, PROJECT_MANIFEST);
 }
 
-export function readManifest(file: string): Manifest | undefined {
+export interface StoredManifest extends Manifest {
+  removedAgents: string[];
+}
+
+export function readManifest(file: string): StoredManifest | undefined {
   if (!fs.existsSync(file)) return undefined;
-  return JSON.parse(fs.readFileSync(file, "utf8")) as Manifest;
+  const manifest = JSON.parse(fs.readFileSync(file, "utf8")) as Omit<Manifest, "agents"> & { agents: string[] };
+  const isSupported = (agent: string): agent is Agent => (AGENTS as readonly string[]).includes(agent);
+  return {
+    ...manifest,
+    agents: manifest.agents.filter(isSupported),
+    removedAgents: manifest.agents.filter((agent) => !isSupported(agent)),
+  };
 }
 
 export function writeManifest(file: string, manifest: Manifest): void {

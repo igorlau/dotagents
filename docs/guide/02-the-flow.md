@@ -15,8 +15,8 @@ The flow has these steps, in this order:
    verifiable steps.
 1. [`dot-roadmap`](../../plugin/skills/dot-roadmap/SKILL.md) splits the plan
    into phases and task files. Each task lists its test cases.
-1. For each task, [`dot-flow`](../../plugin/skills/dot-flow/SKILL.md) runs
-   three steps:
+1. Run these three steps for each task. `dot-implement` starts `dot-testing`
+   itself, unless an agent prompt limits it.
     1. [`dot-implement`](../../plugin/skills/dot-implement/SKILL.md) writes
        the production code, and lists the tests that must change.
     1. [`dot-testing`](../../plugin/skills/dot-testing/SKILL.md) writes the
@@ -27,7 +27,7 @@ The flow has these steps, in this order:
    in small commits, and ticks the task in the roadmap.
 
 The [README](../../README.md#the-flow) shows the steps as a sequence
-diagram. [Build a task](04-build.md) shows one task in `dot-flow`.
+diagram. [Build a task](04-build.md) shows the steps of one task.
 
 ## Approval points
 
@@ -39,40 +39,11 @@ The agent stops and waits for you at these points:
 | The entity schemas of `dot-plan` | The data model, before the steps |
 | The plan | The steps |
 | The roadmap | The phases, the tasks, and the test cases |
-| A stop of the review loop of `dot-flow` | The findings to fix, or the change as it is |
+| The review of `dot-code-review` | The findings to fix, or the change as it is |
 | Each commit group of `dot-commit` | The files and the message |
 
-`dot-flow` does not stop after the code or the tests. A reply of an agent is
-a claim, so `dot-flow` runs the type checker, the linter, and the tests
-again itself, and continues only when the results agree with the reply.
-
-After a review, `dot-flow` fixes the `high` and `medium` findings itself, in
-at most 2 automatic rounds for the task. Only the first review reports `low`
-findings. To fix findings at a stop, name them. `dot-flow` runs the three
-steps again with those findings. The new review reads only the changes since
-the last review, and gives each named finding a status: fixed, open, or
-regressed. When the fix changed a file that no finding names, other than the
-test files of the test step, the new review reads the full change of the task
-again. You can fix
-only `low` findings with no behavior change. When that fix stays in the files
-that the findings name, and passes the checks and the tests, `dot-flow`
-skips the test and review steps.
-
-## Where the flow stops
-
-`dot-flow` stops, and keeps the files as they are, in these cases:
-
-- A step reports a blocker.
-- A check that `dot-flow` runs gives a result that differs from the reply.
-- Only `low` findings remain, or no findings remain.
-- 2 automatic rounds ran.
-- A finding that a round sent to fix is still open, or regressed.
-- The count of `high` and `medium` findings did not go down after a round.
-
-At a stop of the review loop, `dot-flow` shows a table with one row for each
-round, then the findings that remain.
-
-`dot-flow` never commits, and never ticks the roadmap. You run `dot-commit`
-when you accept the change.
+`dot-implement` and `dot-testing` report their checks, so read the results
+before you start the next step. They never commit and never tick the roadmap.
+You run `dot-commit` when you accept the change.
 
 Next: [Plan the change](03-plan.md).

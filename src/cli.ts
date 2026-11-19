@@ -19,7 +19,7 @@ Usage:
   dotagents check enable|disable    Let the plugin's check hook run in the current repository, or stop it
 
 Options:
-  --agents <list>   Comma-separated: claude,codex,copilot (default: all)
+  --agents <list>   Comma-separated: claude,copilot (default: all)
   --dry-run         Print changes without writing them
   --force           Overwrite files that were modified or not written by dotagents
   --source <spec>   With install: where self-update fetches dotagents from

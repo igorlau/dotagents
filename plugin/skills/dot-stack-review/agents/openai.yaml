@@ -1,5 +1,0 @@
-interface:
-  display_name: "Stack Review"
-  short_description: "Review a branch as an ordered stack of layers"
-policy:
-  allow_implicit_invocation: false

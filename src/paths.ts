@@ -10,10 +10,6 @@ export function claudeHome(): string {
   return process.env.CLAUDE_CONFIG_DIR ?? path.join(homeDir(), ".claude");
 }
 
-export function codexHome(): string {
-  return process.env.CODEX_HOME ?? path.join(homeDir(), ".codex");
-}
-
 export function copilotHome(): string {
   return process.env.COPILOT_HOME ?? path.join(homeDir(), ".copilot");
 }

@@ -1,4 +1,4 @@
-// Hook for Claude Code, Copilot, and Codex. With `snapshot`, it runs when a
+// Hook for Claude Code and Copilot. With `snapshot`, it runs when a
 // prompt arrives or a subagent starts, and records the working tree. Without
 // it, it runs when the agent or the subagent stops: when that agent changed
 // the tree, it runs the repository's `check` script and, when that fails,
@@ -19,7 +19,6 @@ const cwd = input.cwd ?? process.cwd();
 // A subagent has its own snapshot, so each agent answers only for the changes that it made.
 const snapshotFile = path.join(os.tmpdir(), "dotagents-check", `${hash(input.agent_id ?? input.session_id ?? cwd)}.txt`);
 
-// Codex needs JSON on stdout when the hook exits 0.
 let decision = {};
 if (checkEnabled()) {
   if (process.argv[2] === "snapshot") saveSnapshot();
