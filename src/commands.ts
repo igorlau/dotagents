@@ -40,12 +40,11 @@ export const NOTHING_TO_UNINSTALL = "Nothing to uninstall.";
 export const PLUGIN_HINT =
   "Claude Code gets the dotagents skills from the plugin. To install it, run `/plugin marketplace add igorlau/dotagents` and `/plugin install dotagents@dotagents` in Claude Code.";
 
-// Release tags carry a real version. Builds from a branch carry X.Y.0-dev,
-// so the commit tells them apart.
+// A build from a branch carries the last release plus its commit, such as 2.0.0+30d0533.
 export function version(): string {
   const base: string = JSON.parse(fs.readFileSync(path.join(packageRoot, "package.json"), "utf8")).version;
   const buildInfo = path.join(packageRoot, "dist", "build-info.json");
-  if (!base.endsWith("-dev") || !fs.existsSync(buildInfo)) return base;
+  if (!fs.existsSync(buildInfo)) return base;
   const { commit } = JSON.parse(fs.readFileSync(buildInfo, "utf8"));
   return commit ? `${base}+${commit}` : base;
 }

@@ -324,8 +324,8 @@ test("a release older than the installed release is older, and a build from a br
   assert.equal(isOlderRelease("1.0.9", "1.0.10"), true);
   assert.equal(isOlderRelease("1.0.20", "1.0.20"), false);
   assert.equal(isOlderRelease("2.0.0", "1.9.9"), false);
-  assert.equal(isOlderRelease("1.0.0-dev+abc1234", "1.0.20"), false);
-  assert.equal(isOlderRelease("1.0.20", "1.1.0-dev+abc1234"), false);
+  assert.equal(isOlderRelease("1.0.19+abc1234", "1.0.20"), false);
+  assert.equal(isOlderRelease("1.0.20", "1.0.21+abc1234"), false);
 });
 
 test("self-update refuses an argument that cmd.exe would change on Windows", () => {
