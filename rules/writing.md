@@ -20,7 +20,7 @@ Apply these rules to all text that you write for a person to read: chat replies,
 - Use the plain word where a showy one comes to mind: "use", "show", "important", "examine", "is", and "has".
 - State the point directly, not as "not just X, but Y".
 - Use the real number of items, not a forced group of three.
-- Name the mechanism or the number, such as "a column rename fails the build", not the feeling.
+- Name the mechanism or the number, such as "a column rename fails the build", not the feeling. Cut a sentence that could stand unchanged in the docs of another project.
 - Use the concrete word, not a metaphor noun such as "surface", "north star", or "substrate".
 - Remove filler, such as "in order to" and "it is important to note". Use one hedge at most.
 - Write whole sentences with their articles and verbs. Write words instead of arrows and abbreviations.
