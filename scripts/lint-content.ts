@@ -33,6 +33,7 @@ const PROSE_PATTERNS: [RegExp, string][] = [
   [/→|->|=>/g, "arrow"],
   [/\b\w+(?:n['’]t|['’](?:re|ve|ll))\b|\b(?:it|that|there|what|let)['’]s\b/gi, "contraction"],
   [/\b(?:leverag\w*|utiliz\w*|delv\w*|pivotal|crucial|showcas\w*|serves? as|stands? as|boasts?)\b/gi, "word that writing.md replaces with a plain word"],
+  [/\b(?:paradigms?|ratchet\w*|flywheels?)\b/gi, "metaphor noun that writing.md replaces with a concrete word"],
 ];
 // The word list of dot-docs-writing names the words to avoid.
 const PROSE_EXEMPT = new Set(["word-list.md"]);
