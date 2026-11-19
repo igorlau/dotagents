@@ -8,22 +8,22 @@ step alone.
 
 The flow has these steps, in this order:
 
-1. [`dot-grilling`](../../plugin/skills/dot-grilling/SKILL.md) asks
+1. [`dot-grilling`](../../skills/dot-grilling/SKILL.md) asks
    questions in rounds until the plan is clear.
-1. [`dot-plan`](../../plugin/skills/dot-plan/SKILL.md) lists the
+1. [`dot-plan`](../../skills/dot-plan/SKILL.md) lists the
    requirements, shows the entity schemas, then writes the plan as small,
    verifiable steps.
-1. [`dot-roadmap`](../../plugin/skills/dot-roadmap/SKILL.md) splits the plan
+1. [`dot-roadmap`](../../skills/dot-roadmap/SKILL.md) splits the plan
    into phases and task files. Each task lists its test cases.
 1. Run these three steps for each task. `dot-implement` starts `dot-testing`
    itself, unless an agent prompt limits it.
-    1. [`dot-implement`](../../plugin/skills/dot-implement/SKILL.md) writes
+    1. [`dot-implement`](../../skills/dot-implement/SKILL.md) writes
        the production code, and lists the tests that must change.
-    1. [`dot-testing`](../../plugin/skills/dot-testing/SKILL.md) writes the
+    1. [`dot-testing`](../../skills/dot-testing/SKILL.md) writes the
        test cases of the task as tests.
-    1. [`dot-code-review`](../../plugin/skills/dot-code-review/SKILL.md)
+    1. [`dot-code-review`](../../skills/dot-code-review/SKILL.md)
        reviews the change.
-1. [`dot-commit`](../../plugin/skills/dot-commit/SKILL.md) commits the task
+1. [`dot-commit`](../../skills/dot-commit/SKILL.md) commits the task
    in small commits, and ticks the task in the roadmap.
 
 The [README](../../README.md#the-flow) shows the steps as a sequence

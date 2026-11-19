@@ -6,7 +6,7 @@ cannot skip it: in the code, the types, the checks, or a skill.
 ## Stop a repeated mistake with dot-correct
 
 When an agent makes the same mistake again, start
-[`dot-correct`](../../plugin/skills/dot-correct/SKILL.md) with the mistake:
+[`dot-correct`](../../skills/dot-correct/SKILL.md) with the mistake:
 
 ```text
 /dotagents:dot-correct The agents add `as` casts to API responses again and again.
@@ -48,7 +48,7 @@ come first in the always-on rules, so your skills and your `AGENTS.md`
 change how the dotagents skills work there.
 
 To write a skill or an `AGENTS.md`, start
-[`dot-writing-for-agents`](../../plugin/skills/dot-writing-for-agents/SKILL.md).
+[`dot-writing-for-agents`](../../skills/dot-writing-for-agents/SKILL.md).
 To add a skill to dotagents itself, see
 [Add a skill](../../CONTRIBUTING.md#add-a-skill).
 

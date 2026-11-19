@@ -9,17 +9,17 @@ approved, not the code that the agent wrote.
 Commit or put aside your other changes first, because the review reads every
 uncommitted change. Run each step yourself, in one conversation:
 
-1. Start [`dot-implement`](../../plugin/skills/dot-implement/SKILL.md) for
+1. Start [`dot-implement`](../../skills/dot-implement/SKILL.md) for
    the task. It writes the production code. It runs the type checker, the
    linter, and the tests, and fixes each regression. It lists the expected
    failures: tests of behavior that the task changes on purpose.
 1. `dot-implement` then starts
-   [`dot-testing`](../../plugin/skills/dot-testing/SKILL.md) with that list.
+   [`dot-testing`](../../skills/dot-testing/SKILL.md) with that list.
    `dot-testing` writes each test case of the task as a test, and changes
    the expected failures to the new behavior. The
-   [reference for tests after `dot-implement`](../../plugin/skills/dot-testing/references/after-implement.md)
+   [reference for tests after `dot-implement`](../../skills/dot-testing/references/after-implement.md)
    gives the details.
-1. Start [`dot-code-review`](../../plugin/skills/dot-code-review/SKILL.md).
+1. Start [`dot-code-review`](../../skills/dot-code-review/SKILL.md).
    Fix the findings that you accept, then review again.
 
 ## Run a step in an agent

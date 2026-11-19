@@ -7,8 +7,8 @@ import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, test } from "node:test";
 import { git, sandbox, write, type Sandbox } from "./helpers.ts";
 
-const HOOK = fileURLToPath(new URL("../plugin/hooks/check.mjs", import.meta.url));
-const RULES_HOOK = fileURLToPath(new URL("../plugin/hooks/rules.mjs", import.meta.url));
+const HOOK = fileURLToPath(new URL("../claude/hooks/check.mjs", import.meta.url));
+const RULES_HOOK = fileURLToPath(new URL("../claude/hooks/rules.mjs", import.meta.url));
 const FAILING_CHECK = "node -e \"console.error('type error in a.ts'); process.exit(1)\"";
 
 let box: Sandbox;

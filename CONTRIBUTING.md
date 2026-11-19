@@ -43,33 +43,34 @@ the hook in a repository, run `node src/cli.ts check enable` there.
 
 ## Layout
 
-The catalog and the plugin are the same directory, `plugin/`:
+The repository root is the plugin root, and the catalog is in the same
+directories. The Used by column shows who reads each directory:
 
 | Path | Content | Used by |
 | ---- | ------- | ------- |
-| `plugin/.claude-plugin/plugin.json` | The plugin manifest | The plugin |
-| `plugin/skills/` | Skills | The plugin and the CLI |
-| `plugin/agents/` | Agents | The plugin |
-| `plugin/hooks/` | `hooks.json` and the hook scripts | The plugin |
-| `plugin/rules/` | Always-on rules | The CLI |
-| `plugin/scaffold/` | Templates for `dotagents scaffold` | The CLI |
+| `.claude-plugin/plugin.json` | The plugin manifest | The plugin |
+| `skills/` | Skills | The plugin and the CLI |
+| `claude/agents/` | Agents | The plugin |
+| `claude/hooks/` | `hooks.json` and the hook scripts | The plugin |
+| `rules/` | Always-on rules | The CLI |
+| `scaffold/` | Templates for `dotagents scaffold` | The CLI |
 
 The marketplace file, `.claude-plugin/marketplace.json`, is at the
-repository root and points to `./plugin`.
+repository root, next to `plugin.json`, and points to `./`.
 
 ## Add a skill
 
 To add a skill, do these steps:
 
 1. Read the `dot-writing-for-agents` skill.
-1. Create `plugin/skills/SKILL_NAME/SKILL.md`. Replace `SKILL_NAME` with a
+1. Create `skills/SKILL_NAME/SKILL.md`. Replace `SKILL_NAME` with a
    name in lowercase words joined by hyphens, with the `dot-` prefix. The
    `name` field in the frontmatter must be the same name.
 1. Keep `SKILL.md` within 8,000 characters. Keep only what applies on every
    run. Move conditional content, such as a language, a mode, or a rare
    case, to `references/TOPIC.md`, behind a line that says when to read it.
 1. State a convention of the repository only when the skill needs more than
-   the first working agreement in `plugin/rules/core.md`.
+   the first working agreement in `rules/core.md`.
 1. Add the skill to the skills table in the `README.md`, and to the skills
    table in the [design specification](SPEC.md#skills).
 1. Run `npm run lint:content`.
@@ -78,10 +79,12 @@ To add a skill, do these steps:
 
 Only the plugin ships agents. To add an agent, do these steps:
 
-1. Create `plugin/agents/AGENT_NAME.md`. Replace `AGENT_NAME` with a name
+1. Create `claude/agents/AGENT_NAME.md`. Replace `AGENT_NAME` with a name
    with the `dot-` prefix. The `name` field in the frontmatter must be the
    same name.
 1. Give the agent a `description` that says when to use it.
+1. Add `./claude/agents/AGENT_NAME.md` to `agents` in
+   `.claude-plugin/plugin.json`.
 1. To preload skills, list them in the `skills` field with the plugin
    namespace, such as `dotagents:dot-testing`. Claude Code loads a bare name
    from `~/.claude/skills/` first. A skill that sets
@@ -97,12 +100,12 @@ agent does not need to load them.
 
 ## Add a hook
 
-The plugin hooks are in `plugin/hooks/hooks.json`. Claude Code and Copilot
+The plugin hooks are in `claude/hooks/hooks.json`. Claude Code and Copilot
 load this file. To add a hook, do these steps:
 
-1. Put the script in `plugin/hooks/`, and start it from `hooks.json` with
-   `node "${CLAUDE_PLUGIN_ROOT}/hooks/SCRIPT_NAME"`. Replace `SCRIPT_NAME`
-   with the file name of the script.
+1. Put the script in `claude/hooks/`, and start it from `hooks.json` with
+   `node "${CLAUDE_PLUGIN_ROOT}/claude/hooks/SCRIPT_NAME"`. Replace
+   `SCRIPT_NAME` with the file name of the script.
 1. Make the script do nothing in a repository that did not opt in. A hook
    runs in every repository of the user, and code of the repository is
    untrusted.
@@ -125,7 +128,7 @@ fixed version, Claude Code skips updates until the version changes.
 Rules load into every conversation, so every word costs tokens on every
 turn. State a rule as the behavior to follow. A list of words or patterns to
 avoid belongs in `PROSE_PATTERNS` in `scripts/lint-content.ts`, where no
-agent reads it. Each file in `plugin/rules/` covers one topic, and each piece of
+agent reads it. Each file in `rules/` covers one topic, and each piece of
 guidance lives in one file. `npm run lint:content` fails when the rules are
 more than the character budget.
 
@@ -141,8 +144,8 @@ and that the `README.md` lists every skill and agent. When you add a page to
 
 To copy a skill or a rule from another repository, do these steps:
 
-1. Copy the skill directory to `plugin/skills/`, or the rules file to
-   `plugin/rules/`.
+1. Copy the skill directory to `skills/`, or the rules file to
+   `rules/`.
 1. Record the origin. For a skill, create `UPSTREAM.json` in the skill
    directory. For a rule, create `NAME.upstream.json` next to the rules file.
    Include the following fields:

@@ -6,5 +6,13 @@
   },
   "homepage": "https://github.com/igorlau/dotagents#readme",
   "repository": "https://github.com/igorlau/dotagents",
-  "license": "MIT"
+  "license": "MIT",
+  "skills": [
+    "./skills/"
+  ],
+  "agents": [
+    "./claude/agents/dot-implementer.md",
+    "./claude/agents/dot-tester.md"
+  ],
+  "hooks": "./claude/hooks/hooks.json"
 }

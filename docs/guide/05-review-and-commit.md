@@ -5,7 +5,7 @@ roadmap task and for any other change.
 
 ## Review the diff with dot-code-review
 
-Start [`dot-code-review`](../../plugin/skills/dot-code-review/SKILL.md) with
+Start [`dot-code-review`](../../skills/dot-code-review/SKILL.md) with
 a target, such as the uncommitted changes, a branch, or a pull request:
 
 ```text
@@ -17,7 +17,7 @@ maintainability pass finds code that is harder to read or change than it
 must be, and its tone is direct. Each finding gives its severity, its
 `file:line`, and the smallest fix.
 
-The [report](../../plugin/skills/dot-code-review/SKILL.md#5-report) ends
+The [report](../../skills/dot-code-review/SKILL.md#5-report) ends
 with a "Make it impossible" section: a lint rule or a type that would prevent
 each class of finding. To add one, use `dot-correct`. See [Make it yours](07-make-it-yours.md).
 
@@ -25,7 +25,7 @@ Ask the agent to fix the findings that you accept, then review again.
 
 ## Review a branch as a stack with dot-stack-review
 
-Start [`dot-stack-review`](../../plugin/skills/dot-stack-review/SKILL.md)
+Start [`dot-stack-review`](../../skills/dot-stack-review/SKILL.md)
 with a head branch and a base branch, or with no arguments for the current
 branch against the default branch:
 
@@ -52,7 +52,7 @@ or the agent stops before it writes the page.
 
 The always-on comments rule deletes comments by default. To check the
 comments in a diff, start
-[`dot-comments`](../../plugin/skills/dot-comments/SKILL.md):
+[`dot-comments`](../../skills/dot-comments/SKILL.md):
 
 ```text
 /dotagents:dot-comments
@@ -63,7 +63,7 @@ and deletes the comments after you agree.
 
 ## Commit with dot-commit
 
-Start [`dot-commit`](../../plugin/skills/dot-commit/SKILL.md):
+Start [`dot-commit`](../../skills/dot-commit/SKILL.md):
 
 ```text
 /dotagents:dot-commit

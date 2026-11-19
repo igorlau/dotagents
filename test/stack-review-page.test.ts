@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { after, before, test } from "node:test";
 import { git, sandbox, write, type Sandbox } from "./helpers.ts";
 
-const SCRIPT = fileURLToPath(new URL("../plugin/skills/dot-stack-review/scripts/page.mjs", import.meta.url));
+const SCRIPT = fileURLToPath(new URL("../skills/dot-stack-review/scripts/page.mjs", import.meta.url));
 const ODD_FILE = "src/<b>.txt";
 
 const validStack = () => ({

@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const rulesDir = fileURLToPath(new URL("../rules", import.meta.url));
+const rulesDir = fileURLToPath(new URL("../../rules", import.meta.url));
 const claudeHome = process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), ".claude");
 const installedFile = path.join(claudeHome, "rules", "dotagents.md");
 

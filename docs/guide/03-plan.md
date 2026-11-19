@@ -5,7 +5,7 @@ costs a rewrite later.
 
 ## Make the idea clear with dot-grilling
 
-Start [`dot-grilling`](../../plugin/skills/dot-grilling/SKILL.md) with the
+Start [`dot-grilling`](../../skills/dot-grilling/SKILL.md) with the
 idea, in your own words. Give the goal and how you will know that it works:
 
 ```text
@@ -19,7 +19,7 @@ Stop when the answers no longer change the plan.
 
 ## Plan the steps with dot-plan
 
-Start [`dot-plan`](../../plugin/skills/dot-plan/SKILL.md) in the same
+Start [`dot-plan`](../../skills/dot-plan/SKILL.md) in the same
 conversation:
 
 ```text
@@ -51,7 +51,7 @@ for changes. After your approval, the agent writes the plan file.
 ## Split the plan with dot-roadmap
 
 For a plan with more than a few steps, start
-[`dot-roadmap`](../../plugin/skills/dot-roadmap/SKILL.md):
+[`dot-roadmap`](../../skills/dot-roadmap/SKILL.md):
 
 ```text
 /dotagents:dot-roadmap
