@@ -29,17 +29,17 @@ When **Range**, **Spec**, **Lenses**, or **Output** is missing, stop and report 
 
 ## 1. Pick the layers
 
-Count the changed lines with `git diff --shortstat <old-tree> <new-tree>`. Above about 1,500 lines, use the `dotagents:dot-walkthrough-changes` skill with the two trees, `layers only`, and the output path `layers.json` in the directory of **Output**, to get the layers, and run step 2 one layer at a time, in layer order. Otherwise, review the whole diff at once.
+Count the changed lines with `git diff --shortstat <old-tree> <new-tree>`. Above about 1,500 lines, call the `Skill` tool with `dotagents:dot-walkthrough-changes`, and give it the two trees, `layers only`, and the output path `layers.json` in the directory of **Output**, to get the layers, and run step 2 one layer at a time, in layer order. Otherwise, review the whole diff at once.
 
 ## 2. Run the lenses
 
-Run each lens of **Lenses** with its skill. Give each finding a class and a severity from [`finding-classes.md`](../../skills/dot-code-review/references/finding-classes.md), and the line on the new side.
+Run each lens of **Lenses** with its skill. To load a skill, call the `Skill` tool with its name. Do not run a lens from memory, and do not read a `SKILL.md` file in its place. Give each finding a class and a severity from [`finding-classes.md`](../../skills/dot-code-review/references/finding-classes.md), and the line on the new side.
 
 - `requirements`: map each `UN`, `FR`, `BR`, and `NN` of the spec, and each acceptance criterion of the tasks, to the `file:line` that meets it and to a test. A requirement with no code or no test is a `high` `requirement-gap`. A breached `NN` is a `high` `nn-breach`. Put the ID in `requirement`, such as `FR8` or `4.3/AC2`.
-- `code`: run both passes of the `dotagents:dot-code-review` skill, then step 1 of the `dotagents:dot-comments` skill.
-- `security`: use the `dotagents:dot-security-changes` skill with the two trees.
-- `ux`: use the `dotagents:dot-ux-review` skill on the code only. Do not start a browser.
-- `docs`: use the `dotagents:dot-docs-writing` skill on each changed `*.md` file.
+- `code`: run both passes of the `dotagents:dot-code-review` skill, which is already loaded. Then call the `Skill` tool with `dotagents:dot-comments`, and run its step 1.
+- `security`: call the `Skill` tool with `dotagents:dot-security-changes`, and give it the two trees.
+- `ux`: call the `Skill` tool with `dotagents:dot-ux-review`, for the code only. Do not start a browser.
+- `docs`: call the `Skill` tool with `dotagents:dot-docs-writing`, and apply it to each changed `*.md` file.
 
 When a lens cannot run, such as when its skill is missing, add the lens and the reason to `skipped`, and continue.
 
