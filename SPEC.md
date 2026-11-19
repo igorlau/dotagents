@@ -1,7 +1,7 @@
 # dotagents specification
 
 dotagents is a personal CLI and plugin that installs a curated set of agent
-skills, agents, and rules into Claude Code, OpenAI Codex, and GitHub Copilot.
+skills, agents, and rules into Claude Code and GitHub Copilot.
 It makes one AI workflow available in every project, and also in projects
 that belong to teams with their own conventions.
 
@@ -32,9 +32,9 @@ The following table gives each decision and its reason:
 
 | # | Decision | Reason |
 | --- | ---------- | -------- |
-| 1 | Support Claude Code, Codex, and GitHub Copilot. | These are the coding agents in use in personal and team projects. |
+| 1 | Support Claude Code and GitHub Copilot. Codex support ended: the CLI no longer installs for Codex, and `update` removes an earlier Codex install. | These are the coding agents in use in personal and team projects. Codex is not in use. |
 | 2 | Support two install modes: global (default) and project. Team repositories use only the global install. | The default must never change a team repository. |
-| 3 | Manage only skills and rules in the CLI. | Skills use the same `SKILL.md` format in all three coding agents. Rules compile from one source. |
+| 3 | Manage only skills and rules in the CLI. | Skills use the same `SKILL.md` format in both coding agents. Rules compile from one source. |
 | 4 | Drop the local-only mode, which wrote Git-excluded files into team repositories. | It installed the same content as the global install. Its files still had an effect on tools such as `git clean`, search, and Copilot, which listed skills twice. |
 | 5 | Write the CLI in TypeScript and run it with `npx`. | Node is on almost every development machine, and `npx` needs no install step. |
 | 6 | Bundle the content with the CLI, release on every merge, and track installs in a manifest. | One version describes both code and content. The manifest makes update and uninstall safe. |
@@ -46,15 +46,15 @@ The following table gives each decision and its reason:
 | 12 | Test the CLI against temporary Git repositories and lint the content in CI. | The main risk is a change to files in a team repository. |
 | 13 | Ship the ponytail ruleset as an always-on rule, not as a skill. | The smallest-change discipline must apply to every interaction, and it reduces generated code and tokens. |
 | 14 | Add an always-on rule that deletes code comments by default and keeps only named exceptions. | Agents write comments that restate code or describe changes. A surprise in the code gets a new name or a new function, and a constraint gets a type, a check, or a test. |
-| 15 | Prefix every skill name with `dot-`, such as `dot-plan`. | Codex, Copilot, and project installs for Claude Code load skills without a namespace, so a skill without the prefix can clash with a skill of the repository or of another source. The prefix also groups the skills in the `/` menu. Rules need no prefix: they live in files and blocks with the dotagents name. |
+| 15 | Prefix every skill name with `dot-`, such as `dot-plan`. | Copilot and project installs for Claude Code load skills without a namespace, so a skill without the prefix can clash with a skill of the repository or of another source. The prefix also groups the skills in the `/` menu. Rules need no prefix: they live in files and blocks with the dotagents name. |
 | 16 | Add a `scaffold` command that creates starter project instructions once, and keeps them out of the manifest. | A new repository needs instructions for its project, and those belong to the repository: `update` must never rewrite them. Files that dotagents writes only once also keep the command safe in a repository that has instructions. |
 | 17 | Keep the catalog in `plugin/`, which is also a Claude Code plugin, and list it in a marketplace at the repository root. Publish only this marketplace. | One source serves the CLI and the plugin. A marketplace in the repository needs no registry and costs nothing. |
-| 18 | Ship one hook script in the plugin that runs the `check` script of the repository (type check and lint, not tests) when an agent or a subagent stops, and makes that agent continue when it fails. | Claude Code, Copilot, and Codex all load `hooks/hooks.json` from the plugin, and Claude Code, Copilot CLI, and Codex document a `block` decision, so one script covers the three coding agents. Tests stay out because `dot-implement` can leave expected test failures for `dot-testing`. The hook allows the second stop, so it cannot loop, and it shows the user a warning when the check still fails there. It runs the check only when the working tree changed, compared with a snapshot from the start of the prompt. In Claude Code, the hook also takes a snapshot on `SubagentStart` and runs on `SubagentStop`, so each agent answers only for the changes that it made, and the subagent that broke the check fixes it. When the check still fails at the stop of the main agent, `dot-flow` stops and does not edit the code. The check is an npm script, or a `Makefile` target for a repository without `package.json`. A turn that changes nothing never makes the agent fix old problems or runs repository code. It acts only in repositories listed in `checkRepos` in the `config.json` of the user, which `dotagents check enable` sets: the `check` script is code of the repository, and an opt-in inside the repository would let an untrusted repository enable itself. |
-| 19 | The global CLI install writes rules for all three coding agents, and skills only for Codex and Copilot. Claude Code gets the skills, agents, and hooks from the plugin. | Plugins cannot ship always-on rules, and the CLI cannot install agents and hooks safely. `update` removes the Claude Code skills that earlier versions installed, and `doctor` warns about copies that stay. Project installs still write `.claude/skills/`, so collaborators do not need the plugin. |
+| 18 | Ship one hook script in the plugin that runs the `check` script of the repository (type check and lint, not tests) when an agent or a subagent stops, and makes that agent continue when it fails. | Claude Code and Copilot both load `hooks/hooks.json` from the plugin, and Claude Code and Copilot CLI document a `block` decision, so one script covers both coding agents. Tests stay out because `dot-implement` can leave expected test failures for `dot-testing`. The hook allows the second stop, so it cannot loop, and it shows the user a warning when the check still fails there. It runs the check only when the working tree changed, compared with a snapshot from the start of the prompt. In Claude Code, the hook also takes a snapshot on `SubagentStart` and runs on `SubagentStop`, so each agent answers only for the changes that it made, and the subagent that broke the check fixes it. The check is an npm script, or a `Makefile` target for a repository without `package.json`. A turn that changes nothing never makes the agent fix old problems or runs repository code. It acts only in repositories listed in `checkRepos` in the `config.json` of the user, which `dotagents check enable` sets: the `check` script is code of the repository, and an opt-in inside the repository would let an untrusted repository enable itself. |
+| 19 | The global CLI install writes rules for both coding agents, and skills only for Copilot. Claude Code gets the skills, agents, and hooks from the plugin. | Plugins cannot ship always-on rules, and the CLI cannot install agents and hooks safely. `update` removes the Claude Code skills that earlier versions installed, and `doctor` warns about copies that stay. Project installs still write `.claude/skills/`, so collaborators do not need the plugin. |
 | 20 | Add an always-on writing rule, based on ASD-STE100, for all text that agents write: chat, CLI output, plans and reports, commits, pull requests, and docs. It takes precedence over the Google style in `dot-docs-writing`. | Short sentences with a controlled vocabulary are easier to read for a reader in a second language and for translation tools. One rule for all text replaces the prose rules that `dot-docs-writing` kept only for docs. The rules are in our own words, because the ASD-STE100 dictionary is copyrighted. |
-| 21 | Ship three agents in the plugin only: `dot-implementer`, `dot-tester`, and `dot-reviewer`. Each one preloads one skill as `dotagents:<skill>`, and none of them can start another agent. | Each step of a roadmap task runs in a new context with only its skill. With a bare name, Claude Code preloads a skill with the same name from `~/.claude/skills/` first, such as an old copy from an earlier CLI install. A live run on 2026-11-12 showed that agents receive `~/.claude/rules/dotagents.md`, so the agents do not load the rules themselves. |
+| 21 | Ship two agents in the plugin only: `dot-implementer` and `dot-tester`. Each one preloads one skill as `dotagents:<skill>`, and none of them can start another agent. | The production step and the test step of a roadmap task can run in a new context with only their skill. With a bare name, Claude Code preloads a skill with the same name from `~/.claude/skills/` first, such as an old copy from an earlier CLI install. A live run on 2026-11-12 showed that agents receive `~/.claude/rules/dotagents.md`, so the agents do not load the rules themselves. |
 | 22 | Keep each `SKILL.md` within 8,000 characters, with only the workflow and the rules that apply on every run. Move conditional content, such as a language, a mode, or a rare case, to `references/TOPIC.md`, behind a line that says when to read it. | A `SKILL.md` loads in full each time its skill runs, so content for one language or mode costs tokens in every other run. `npm run lint:content` enforces the budget. |
-| 23 | Run each roadmap task in three steps: production code, tests, and review. `dot-implement` writes no tests. It runs the type checker, the linter, and the existing tests, and gives `dot-testing` the list of expected failures. `dot-testing` then writes the test cases of the task. Outside `dot-flow`, `dot-implement` starts `dot-testing` itself. `dot-flow` runs each step in a new agent, runs the commands of each reply again, and continues without a stop when the results agree. After a review, it fixes the `high` and `medium` findings in automatic rounds, at most 2 for the task. Rounds that the user picks do not count. It stops on a blocker, on a result that differs from the reply, and when a stop rule fires: only `low` findings remain, 2 automatic rounds ran, a finding sent to fix is `open` or `regressed`, or the count of `high` and `medium` findings did not go down. At the stop, it shows the round history, and the user fixes findings or accepts. Only the round 1 review reports `low` findings. On a fix run, the review reads only the changes since the last review, from 2 snapshot trees, and gives each fixed finding a status. When the fix changed a file that no finding names, other than the test files of the test step, the review reads the full change again. A fix of only `low` findings with no behavior change can skip the test and review steps. It must stay in the files that the findings name, and pass the checks and the tests. It never commits: `dot-commit` ticks the roadmap. In Codex and Copilot, `dot-flow` runs the steps in the main session. | The test names in the roadmap task fix the behavior before the code exists. An earlier step that wrote the names as pending tests cost an agent and an approval, and added nothing to the task file. A new context for each step keeps the step to its own skill. A reply is a claim of the agent that did the work, so a command that runs again is a better gate than an approval of a summary. The user decides where a decision exists: at a stop rule, not after each review, because a fix of a `high` or `medium` finding needs no decision until the loop stops making progress. Only the round 1 review reports `low` findings, because in the run of task 1.1 each fix round found a new `low` finding in the text that the round before wrote, for 4 rounds. A delta review keeps a fix round small, and accepts that it does not find an old defect that an earlier review missed. The light path exists because a one-line fix of a `low` finding cost a full round of 3 agents. |
+| 23 | Run each roadmap task in the steps `dot-implement`, `dot-testing`, `dot-code-review`, and `dot-commit`, by hand, in this order. `dot-implement` writes no tests. It runs the type checker, the linter, and the existing tests, and gives `dot-testing` the list of expected failures. `dot-testing` then writes the test cases of the task. When an agent prompt does not limit it to its own step, `dot-implement` starts `dot-testing` itself. `dot-commit` ticks the roadmap, and nothing else does. | The test names in the roadmap task fix the behavior before the code exists. An earlier step that wrote the names as pending tests cost an agent and an approval, and added nothing to the task file. The removed dot-flow skill added a verification loop and automatic fix rounds in the main session. The steps now run by hand. |
 | 24 | `dot-plan` shows a schema for each domain entity that it adds or changes, in the form that the repository uses for its entities, or in JSON Schema (draft 2020-12) when it has none. The user approves the schemas before the steps. The schemas stay in the plan and the roadmap, not in committed files. `dot-plan` and `dot-roadmap` put removal steps first. | A wrong data model costs the most when you find it late. A schema in the form of the repository is the code that lands, with no translation. Removal steps first make the later steps smaller. |
 | 25 | `dot-code-review` has two passes: correctness, and maintainability. Each finding gives `file:line` and the smallest fix, and the report ends with a check that would prevent each class of finding. `dot-correct` changes a repeated mistake into architecture, a type, a lint rule, a test, or docs, in that order. | A check that prevents a class of mistakes does more than a fix of one instance. The maintainability pass is vendored, and keeps its direct tone. |
 | 26 | Test with `npm test` and `npm run lint:content` only, with no paid model evaluations, now or later. `lint:content` also checks the docs: links and anchors, skill and agent names, the README lists, the counts, and the mechanical part of the writing rule. | Model evaluations cost money on every run, and their results change from run to run. The structural checks find the most frequent drift: a renamed skill, a broken link, or a wrong count. |
@@ -105,33 +105,31 @@ Agents change these locations often. When they change, update
 
 The following table gives the skill locations:
 
-| Mode | Claude Code | Codex | Copilot |
-|------|-------------|-------|---------|
-| Global | The dotagents plugin | `~/.agents/skills/` | `~/.agents/skills/` |
-| Project | `.claude/skills/` | `.agents/skills/` | `.agents/skills/` |
+| Mode | Claude Code | Copilot |
+|------|-------------|---------|
+| Global | The dotagents plugin | `~/.agents/skills/` |
+| Project | `.claude/skills/` | `.agents/skills/` |
 
 ### Rules locations
 
 The following table gives the rules locations:
 
-| Mode | Claude Code | Codex | Copilot |
-| ------ | ------------- | ------- | --------- |
-| Global | `~/.claude/rules/dotagents.md` | Block in `~/.codex/AGENTS.md` | Block in `~/.copilot/copilot-instructions.md` |
-| Project | `.claude/rules/dotagents.md` | Block in `AGENTS.md` | Block in `AGENTS.md` |
+| Mode | Claude Code | Copilot |
+| ------ | ------------- | --------- |
+| Global | `~/.claude/rules/dotagents.md` | Block in `~/.copilot/copilot-instructions.md` |
+| Project | `.claude/rules/dotagents.md` | Block in `AGENTS.md` |
 
 The reasons for these locations are the following:
 
 - Claude Code rules go to `.claude/rules/`, not `CLAUDE.local.md`. When a
   `CLAUDE.local.md` exists, Claude Code stops and does not read the
   `AGENTS.md` of the project. Files in `.claude/rules/` load with both.
-- Codex reads at most one instruction file per directory, and
-  `AGENTS.override.md` replaces `AGENTS.md`, so Codex rules go in a block.
 - A block is the content between `<!-- dotagents:start -->` and
   `<!-- dotagents:end -->`. dotagents never changes text outside the block.
 - Copilot rules go in `~/.copilot/copilot-instructions.md`, which VS Code and
   the Copilot CLI load in every session. Files in `~/.copilot/instructions/`
   load only when their `applyTo` pattern matches a file that the agent edits.
-- `CODEX_HOME`, `COPILOT_HOME`, `CLAUDE_CONFIG_DIR`, and `XDG_CONFIG_HOME`
+- `COPILOT_HOME`, `CLAUDE_CONFIG_DIR`, and `XDG_CONFIG_HOME`
   override the default directories.
 
 ### Known limitations
@@ -141,21 +139,16 @@ The reasons for these locations are the following:
   The `SubagentStop` run, the warning on the retry, and the rules warning at
   the start of a session have tests, but a live run is not verified.
   The hook runs only an npm script or a `Makefile` target. It is not verified
-  that Copilot and Codex load a `hooks.json` that names `SessionStart`,
-  `SubagentStart`, and `SubagentStop`.
-  Codex 0.160 installs the plugin in the Claude format with no change and
-  copies `hooks/`, but a live run in Codex is not verified. A live run in
-  Copilot in VS Code, where hooks are in preview, is also not verified.
-- On 2026-11-12, `dot-flow` ran live in Claude Code with four steps and an
-  approval after each one. A live run of the three steps with verification
-  is not verified. The inline mode in Codex
-  and Copilot is not verified. It is also not verified that Copilot reads the
+  that Copilot loads a `hooks.json` that names `SessionStart`,
+  `SubagentStart`, and `SubagentStop`. A live run in Copilot in VS Code,
+  where hooks are in preview, is not verified.
+- On 2026-11-12, a roadmap task ran live in Claude Code with four steps and an
+  approval after each one. It is not verified that Copilot reads the
   `skills` field of an agent.
 - In project mode, Copilot in VS Code reads skills from both `.claude/skills/`
   and `.agents/skills/`, so it can list each skill twice. Claude Code reads
-  only the first location and Codex only the second, so dotagents writes
-  both. When Copilot also has the dotagents plugin, it can list the skills
-  twice in global mode too.
+  only the first location, so dotagents writes both. When Copilot also has
+  the dotagents plugin, it can list the skills twice in global mode too.
 - In project mode without a `CLAUDE.md`, the rules for Claude Code are only in
   the `AGENTS.md` block. Claude Code reads that block only in version 2.1.277
   or later. If you add a `CLAUDE.md` without `@AGENTS.md` later, Claude Code
@@ -186,7 +179,7 @@ The following table gives the commands:
 
 The common options are the following:
 
-- `--agents claude,codex,copilot`: limit the install to some coding agents.
+- `--agents claude,copilot`: limit the install to some coding agents.
 - `--dry-run`: print the changes and write nothing.
 - `--force`: overwrite files that you changed or that dotagents does not own.
 
@@ -245,7 +238,6 @@ The following table gives the origin of each skill:
 | `dot-code-review` | Original, with a maintainability pass adapted from `cursor-team-kit/skills/thermo-nuclear-code-quality-review` and principles from `pstack` in `cursor/plugins` (MIT) |
 | `dot-stack-review` | Original |
 | `dot-commit` | Original |
-| `dot-flow` | Original |
 | `dot-docs-writing` | Original, based on the Google developer documentation style guide (CC BY 4.0) |
 | `dot-roadmap` | Original, based on `to-tickets` from `mattpocock/skills` (MIT), with a principle from `pstack` in `cursor/plugins` (MIT) |
 | `dot-grilling` | Vendored from `mattpocock/skills` (MIT), adapted |
@@ -265,11 +257,10 @@ the recorded commit.
 The agents are in `plugin/agents/`, and only the plugin ships them. Each
 agent preloads one skill, as the following table shows. See decision 21.
 
-| Agent | Skill | Step of `dot-flow` |
-| ----- | ----- | ------------------ |
+| Agent | Skill | Step of a task |
+| ----- | ----- | -------------- |
 | `dot-tester` | `dot-testing` | Tests |
 | `dot-implementer` | `dot-implement` | Production code |
-| `dot-reviewer` | `dot-code-review` | Review |
 
 ### Scaffold
 
@@ -344,8 +335,7 @@ builds report versions such as `1.0.0-dev+30d0533`.
   change repositories, conflicts, local changes, removal of old skills,
   uninstall, dry runs, and the `check` and rules hooks.
 - `npm run lint:content` checks the following:
-  - Skill and agent frontmatter, the skills that each agent preloads, and
-    that `agents/openai.yaml` agrees with `disable-model-invocation`.
+  - Skill and agent frontmatter, and the skills that each agent preloads.
   - The rules and `SKILL.md` character budgets, and upstream metadata files.
   - The plugin and marketplace manifests.
   - Relative links and their anchors in `plugin/` and in the docs.
@@ -361,4 +351,4 @@ builds report versions such as `1.0.0-dev+30d0533`.
 - Profiles, such as `core`, `frontend`, and `backend`, when the catalog grows.
 - Rules injection through a SessionStart hook in the plugin, when hooks in
   VS Code leave preview. The plugin could then ship the rules, and the CLI
-  would only install skills for Codex and Copilot.
+  would only install skills for Copilot.

@@ -15,7 +15,7 @@ import {
   writeManifest,
   type Manifest,
 } from "./manifest.ts";
-import { claudeHome, codexHome, configDir, packageRoot } from "./paths.ts";
+import { claudeHome, configDir, packageRoot } from "./paths.ts";
 import { planInstall, planScaffold, projectClaudeRulesFile, type Agent, type Mode, type Op } from "./targets.ts";
 
 export interface Options {
@@ -217,7 +217,11 @@ export function update(cwd: string, which: "global" | "project" | undefined, opt
       ok = false;
       continue;
     }
-    log(`Updating ${describe(scope)} to dotagents ${version()}:`);
+    if (manifest.agents.length === 0 && manifest.removedAgents.length > 0) {
+      log(`${manifest.removedAgents.join(", ")} is no longer supported. Removing ${describe(scope)}.`);
+    } else {
+      log(`Updating ${describe(scope)} to dotagents ${version()}:`);
+    }
     ok = run(scope, manifest.agents, { ...options, agents: manifest.agents }) && ok;
     if (scope.mode === "global") logPluginHint(manifest.agents);
   }
@@ -267,9 +271,6 @@ export function doctor(cwd: string): boolean {
       const owned = entry.kind === "file" ? content : readBlock(content);
       if (owned === undefined) issues.push(`${entry.path}: dotagents block missing. Run \`dotagents update\`.`);
       else if (hash(entry.kind === "file" ? owned : owned.trim()) !== entry.hash) issues.push(`${entry.path}: modified since dotagents wrote it.`);
-    }
-    if (scope.mode === "global" && manifest.agents.includes("codex") && fs.existsSync(path.join(codexHome(), "AGENTS.override.md"))) {
-      issues.push(`${path.join(codexHome(), "AGENTS.override.md")} exists, so Codex ignores the rules in AGENTS.md.`);
     }
     if (scope.mode === "global" && manifest.agents.includes("claude")) {
       issues.push(...(dotagentsPluginInstalled() ? duplicateClaudeSkills() : [PLUGIN_HINT]));

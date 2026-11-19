@@ -1,7 +1,7 @@
 # Review and commit
 
-Review every change before you commit it. `dot-flow` runs the review for a
-roadmap task. For other changes, start the review yourself.
+Review every change before you commit it. Start the review yourself, for a
+roadmap task and for any other change.
 
 ## Review the diff with dot-code-review
 
@@ -74,6 +74,7 @@ group and its message before it commits. It uses the commit convention of
 the repository, or Conventional Commits.
 
 When the commits finish a roadmap task, `dot-commit` ticks the task in the
-roadmap `README.md`. The next `dot-flow` run then picks the next task.
+roadmap `README.md`. The next `dot-implement` run with the roadmap directory
+then picks the next task.
 
 Next: [Rules and principles](06-rules-and-principles.md).

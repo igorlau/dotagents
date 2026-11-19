@@ -81,10 +81,6 @@ for (const name of fs.readdirSync(skillsDir)) {
   else if (data.description.length > DESCRIPTION_MAX) fail(skillFile, `description exceeds ${DESCRIPTION_MAX} characters`);
   const userInvoked = data["disable-model-invocation"] === "true";
   if (!userInvoked) preloadableSkills.add(name);
-  // Codex reads the invocation policy from agents/openai.yaml, not from the frontmatter.
-  const codexFile = path.join(dir, "agents", "openai.yaml");
-  const codexExplicitOnly = fs.existsSync(codexFile) && /^\s*allow_implicit_invocation:\s*false\s*$/m.test(fs.readFileSync(codexFile, "utf8"));
-  if (userInvoked !== codexExplicitOnly) fail(skillFile, "disable-model-invocation must agree with allow_implicit_invocation in agents/openai.yaml");
 
   for (const file of markdownFiles(dir)) {
     checkLinks(file);

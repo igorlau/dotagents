@@ -89,7 +89,7 @@ export function opensWizard({ command, interactive, values }: { command?: string
   return !values["dry-run"] && !values.force && !values.global && !values.project && values.source === undefined;
 }
 
-const AGENT_LABELS: Record<Agent, string> = { claude: "Claude Code", codex: "Codex", copilot: "GitHub Copilot" };
+const AGENT_LABELS: Record<Agent, string> = { claude: "Claude Code", copilot: "GitHub Copilot" };
 
 async function askAgents(prompts: Prompts, agents?: Agent[]): Promise<Agent[] | Cancel> {
   return (

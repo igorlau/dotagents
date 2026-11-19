@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { Catalog, ScaffoldFile } from "./catalog.ts";
-import { agentsHome, claudeHome, codexHome, copilotHome } from "./paths.ts";
+import { agentsHome, claudeHome, copilotHome } from "./paths.ts";
 
-export const AGENTS = ["claude", "codex", "copilot"] as const;
+export const AGENTS = ["claude", "copilot"] as const;
 export type Agent = (typeof AGENTS)[number];
 
 // global: user-level directories. project: committed to the repository.
@@ -21,7 +21,6 @@ interface Layout {
   skillDirs: Record<Agent, string>;
   claudeRules: string;
   claudeRulesInAgentsMd: boolean;
-  codexRules: string;
   copilotRules: string;
 }
 
@@ -30,29 +29,25 @@ function layout(mode: Mode, root: string, pending: Op[]): Layout {
     return {
       skillDirs: {
         claude: path.join(claudeHome(), "skills"),
-        codex: path.join(agentsHome(), "skills"),
         copilot: path.join(agentsHome(), "skills"),
       },
       claudeRules: path.join(claudeHome(), "rules", RULES_FILE),
       claudeRulesInAgentsMd: false,
-      codexRules: path.join(codexHome(), "AGENTS.md"),
       // Copilot loads this file in every session; files in ~/.copilot/instructions/
       // load only when their applyTo pattern matches a file being edited.
       copilotRules: path.join(copilotHome(), "copilot-instructions.md"),
     };
   }
-  // Copilot reads AGENTS.md too, so both agents share one block.
+  // Copilot reads AGENTS.md too, so Claude Code and Copilot share one block.
   const agentsMd = path.join(root, "AGENTS.md");
   const claudeRulesInAgentsMd = claudeReadsAgentsMd(root, pending);
   return {
     skillDirs: {
       claude: path.join(root, ".claude", "skills"),
-      codex: path.join(root, ".agents", "skills"),
       copilot: path.join(root, ".agents", "skills"),
     },
     claudeRules: claudeRulesInAgentsMd ? agentsMd : projectClaudeRulesFile(root),
     claudeRulesInAgentsMd,
-    codexRules: agentsMd,
     copilotRules: agentsMd,
   };
 }
@@ -86,7 +81,6 @@ export function planInstall(catalog: Catalog, mode: Mode, agents: Agent[], root 
         : { kind: "file", path: target.claudeRules, content: `${HEADER}\n\n${rules}\n` },
     );
   }
-  if (agents.includes("codex")) add({ kind: "block", path: target.codexRules, content: rules });
   if (agents.includes("copilot")) add({ kind: "block", path: target.copilotRules, content: rules });
 
   return [...ops.values()];

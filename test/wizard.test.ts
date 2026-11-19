@@ -8,7 +8,7 @@ import { CANCEL, installWizard, opensWizard, scaffoldWizard, summaryLines, unins
 import type { Mode } from "../src/targets.ts";
 import { exists, git, read, sandbox, tree, write, type Sandbox } from "./helpers.ts";
 
-const HOME_VARIABLES = ["HOME", "CLAUDE_CONFIG_DIR", "CODEX_HOME", "COPILOT_HOME", "XDG_CONFIG_HOME"] as const;
+const HOME_VARIABLES = ["HOME", "CLAUDE_CONFIG_DIR", "COPILOT_HOME", "XDG_CONFIG_HOME"] as const;
 
 let box: Sandbox;
 let savedEnv: Partial<Record<(typeof HOME_VARIABLES)[number], string>>;
@@ -77,16 +77,19 @@ function makeClaudePlugin(log: string[], result: PluginInstall = { kind: "instal
   };
 }
 
+const AGENTS_QUESTION = "Which agents do you use?";
 const SETUP_QUESTION = "Set up this repository?";
 const FILES_QUESTION = "Which files do you want to create?";
 const REMOVE_QUESTION = "Which install do you want to remove?";
 
-function makePrompts(answers: Answers): Prompts & { asked: string[]; fileOptions: FileOption[]; notes: string[]; setupQuestions: SetupQuestion[] } {
+function makePrompts(answers: Answers): Prompts & { agentOptions: string[]; asked: string[]; fileOptions: FileOption[]; notes: string[]; setupQuestions: SetupQuestion[] } {
+  const agentOptions: string[] = [];
   const asked: string[] = [];
   const fileOptions: FileOption[] = [];
   const notes: string[] = [];
   const setupQuestions: SetupQuestion[] = [];
   return {
+    agentOptions,
     asked,
     fileOptions,
     notes,
@@ -102,7 +105,10 @@ function makePrompts(answers: Answers): Prompts & { asked: string[]; fileOptions
         for (const { disabled = false, hint, label, value } of options) fileOptions.push({ checked: initialValues.includes(value), disabled, hint, label });
         return (answers.files?.(initialValues as string[]) ?? initialValues) as Value[];
       }
-      if (message !== SETUP_QUESTION) return (answers.agents ?? initialValues) as Value[] | Cancel;
+      if (message !== SETUP_QUESTION) {
+        if (message === AGENTS_QUESTION) agentOptions.push(...options.map((option) => option.label ?? String(option.value)));
+        return (answers.agents ?? initialValues) as Value[] | Cancel;
+      }
       setupQuestions.push({ initialValues, offered: options.map((option) => option.value) });
       return (answers.setup ?? initialValues) as Value[] | Cancel;
     },
@@ -118,17 +124,24 @@ function makePrompts(answers: Answers): Prompts & { asked: string[]; fileOptions
 }
 
 test("the install wizard installs for the checked agents after the confirmation", async () => {
-  const prompts = makePrompts({ agents: ["codex", "copilot"], proceed: true });
+  const prompts = makePrompts({ agents: ["copilot"], proceed: true });
 
   const ok = await installWizard(prompts, NO_CLAUDE, { cwd: box.home });
 
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(prompts.asked, ["Which agents do you use?", "Proceed with installation?"]);
   assert.ok(exists(p(".agents", "skills", "dot-plan", "SKILL.md")));
-  assert.match(read(p(".codex", "AGENTS.md")), /<!-- dotagents:start -->/);
   assert.match(read(p(".copilot", "copilot-instructions.md")), /<!-- dotagents:start -->/);
   assert.ok(!exists(p(".claude")), "Claude Code was not checked");
-  assert.deepEqual(JSON.parse(read(p(".config", "dotagents", "manifest.json"))).agents, ["codex", "copilot"]);
+  assert.deepEqual(JSON.parse(read(p(".config", "dotagents", "manifest.json"))).agents, ["copilot"]);
+});
+
+test("the install wizard offers only Claude Code and GitHub Copilot", async () => {
+  const prompts = makePrompts({ proceed: false });
+
+  await installWizard(prompts, NO_CLAUDE, { cwd: box.home });
+
+  assert.deepEqual(prompts.agentOptions, ["Claude Code", "GitHub Copilot"]);
 });
 
 test("the install wizard writes nothing when the user answers No", async () => {
@@ -168,11 +181,11 @@ test("the install wizard reports a conflict and does not overwrite a file that d
 test("the install wizard skips the agents step when the agents are given", async () => {
   const prompts = makePrompts({});
 
-  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: box.home });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["copilot"], cwd: box.home });
 
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(prompts.asked, ["Proceed with installation?"]);
-  assert.deepEqual(JSON.parse(read(p(".config", "dotagents", "manifest.json"))).agents, ["codex"]);
+  assert.deepEqual(JSON.parse(read(p(".config", "dotagents", "manifest.json"))).agents, ["copilot"]);
 });
 
 const NO_CHANGES: ApplyResult = { changes: [], entries: [], problems: [] };
@@ -184,7 +197,7 @@ test("the summary groups the skill files by target directory with a count for ea
     { action: "update", path: p(".agents", "skills", "dot-commit", "SKILL.md") },
     { action: "remove", path: p(".agents", "skills", "dot-old", "SKILL.md") },
     { action: "create", path: p(".claude", "rules", "dotagents.md") },
-    { action: "add block to", path: p(".codex", "AGENTS.md") },
+    { action: "add block to", path: p(".other", "AGENTS.md") },
     { action: "update block in", path: p(".copilot", "copilot-instructions.md") },
     { action: "remove block from", path: p("elsewhere", "AGENTS.md") },
   ];
@@ -194,7 +207,7 @@ test("the summary groups the skill files by target directory with a count for ea
   assert.deepEqual(lines, [
     `~${path.sep}${path.join(".agents", "skills")}: create 2 files, update 1 file, remove 1 file`,
     `~${path.sep}${path.join(".claude", "rules", "dotagents.md")}: create 1 file`,
-    `~${path.sep}${path.join(".codex", "AGENTS.md")}: add block to 1 file`,
+    `~${path.sep}${path.join(".other", "AGENTS.md")}: add block to 1 file`,
     `~${path.sep}${path.join(".copilot", "copilot-instructions.md")}: update block in 1 file`,
     `~${path.sep}${path.join("elsewhere", "AGENTS.md")}: remove block from 1 file`,
   ]);
@@ -203,7 +216,7 @@ test("the summary groups the skill files by target directory with a count for ea
 test("the summary lists each problem", () => {
   const problems = ["/repo/a.md: modified locally, skipped (use --force to overwrite)", "/repo/b.md: exists and wasn't written by dotagents (use --force to overwrite)"];
 
-  const lines = summaryLines({ ...NO_CHANGES, changes: [{ action: "create", path: p(".codex", "AGENTS.md") }], problems });
+  const lines = summaryLines({ ...NO_CHANGES, changes: [{ action: "create", path: p(".copilot", "copilot-instructions.md") }], problems });
 
   assert.deepEqual(lines.slice(1), problems);
 });
@@ -234,7 +247,7 @@ test("the install wizard installs into the repository when the user picks the re
 test("the install wizard asks no scope question outside a Git repository", async () => {
   const prompts = makePrompts({});
 
-  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: box.home });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["copilot"], cwd: box.home });
 
   assert.equal(ok, true, output.join("\n"));
   assert.ok(!prompts.asked.includes(SCOPE_QUESTION));
@@ -247,7 +260,7 @@ test("the install wizard installs globally when Git is not installed", async () 
   const savedPath = process.env.PATH;
   process.env.PATH = box.home;
 
-  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo }).finally(() => {
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["copilot"], cwd: repo }).finally(() => {
     process.env.PATH = savedPath;
   });
 
@@ -260,7 +273,7 @@ test("the scope step offers the global scope as the default", async () => {
   const repo = box.repo();
   const prompts = makePrompts({});
 
-  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["copilot"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
   assert.ok(prompts.asked.includes(SCOPE_QUESTION));
@@ -327,7 +340,7 @@ test("the install continues and shows the /plugin commands when the plugin insta
   const prompts = makePrompts({ plugin: true });
   const plugin = makeClaudePlugin(prompts.asked, { kind: "failed", output: "marketplace unreachable" });
 
-  const ok = await installWizard(prompts, plugin, { agents: ["claude", "codex"], cwd: box.home });
+  const ok = await installWizard(prompts, plugin, { agents: ["claude", "copilot"], cwd: box.home });
 
   assert.equal(ok, true, output.join("\n"));
   assert.ok(output.includes("marketplace unreachable"));
@@ -343,7 +356,7 @@ test("the install wizard enables the check hook when the user accepts it", async
   const repo = box.repo({ ...CHECK_SCRIPT, "AGENTS.md": "# Team\n" });
   const prompts = makePrompts({ setup: ["check"] });
 
-  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["copilot"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(JSON.parse(read(configFile())).checkRepos, [fs.realpathSync(repo)]);
@@ -356,7 +369,7 @@ test("the summary shows the repository of the check hook under the home director
   git(repo, ["init", "-q"]);
   const prompts = makePrompts({ setup: ["check"] });
 
-  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["copilot"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
   assert.ok((prompts.notes[0] ?? "").includes(`Enable the check hook in ~${path.sep}repo`));
@@ -366,7 +379,7 @@ test("the install wizard does not offer the check hook without a check script", 
   const repo = box.repo({ "AGENTS.md": "# Team\n" });
   const prompts = makePrompts({});
 
-  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["copilot"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
   assert.ok(!prompts.asked.includes(SETUP_QUESTION));
@@ -377,7 +390,7 @@ test("the install wizard does not offer the check hook when it is enabled", asyn
   write(configFile(), JSON.stringify({ checkRepos: [fs.realpathSync(repo)] }));
   const prompts = makePrompts({});
 
-  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["copilot"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
   assert.ok(!prompts.asked.includes(SETUP_QUESTION));
@@ -387,7 +400,7 @@ test("the install wizard does not offer scaffold when AGENTS.md exists", async (
   const repo = box.repo({ ...CHECK_SCRIPT, "AGENTS.md": "# Team\n" });
   const prompts = makePrompts({});
 
-  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["copilot"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(prompts.setupQuestions.map((question) => question.offered), [["check"]]);
@@ -409,7 +422,7 @@ test("the check and scaffold steps come unchecked", async () => {
   const repo = box.repo(CHECK_SCRIPT);
   const prompts = makePrompts({});
 
-  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["codex"], cwd: repo });
+  const ok = await installWizard(prompts, NO_CLAUDE, { agents: ["copilot"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(prompts.setupQuestions, [{ initialValues: [], offered: ["check", "scaffold"] }]);
@@ -442,11 +455,11 @@ test("scaffold in the wizard keeps a team CLAUDE.md and reports no problem", asy
 const SCAFFOLD_FILES = [".claude/settings.json", ".editorconfig", ".gitattributes", "AGENTS.md", "CLAUDE.md"];
 const scaffolded = (repo: string) => SCAFFOLD_FILES.filter((file) => exists(path.join(repo, file)));
 
-test("the scaffold wizard offers only AGENTS.md, .editorconfig, and .gitattributes for Codex and Copilot", async () => {
+test("the scaffold wizard offers only AGENTS.md, .editorconfig, and .gitattributes for Copilot", async () => {
   const repo = box.repo();
   const prompts = makePrompts({});
 
-  const ok = await scaffoldWizard(prompts, { agents: ["codex", "copilot"], cwd: repo });
+  const ok = await scaffoldWizard(prompts, { agents: ["copilot"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(prompts.fileOptions.map((option) => option.label), [".editorconfig", ".gitattributes", "AGENTS.md"]);
@@ -468,7 +481,7 @@ test("the scaffold wizard marks existing files as skipped and leaves them unchan
   const repo = box.repo({ ".editorconfig": "root = true\n" });
   const prompts = makePrompts({});
 
-  const ok = await scaffoldWizard(prompts, { agents: ["codex"], cwd: repo });
+  const ok = await scaffoldWizard(prompts, { agents: ["copilot"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(prompts.fileOptions[0], { checked: false, disabled: true, hint: "exists, skip", label: ".editorconfig" });
@@ -481,7 +494,7 @@ test("the scaffold wizard creates only the files that the user keeps checked", a
   const repo = box.repo();
   const prompts = makePrompts({ files: (checked) => checked.filter((file) => !file.endsWith(".gitattributes")) });
 
-  const ok = await scaffoldWizard(prompts, { agents: ["codex"], cwd: repo });
+  const ok = await scaffoldWizard(prompts, { agents: ["copilot"], cwd: repo });
 
   assert.equal(ok, true, output.join("\n"));
   assert.deepEqual(scaffolded(repo), [".editorconfig", "AGENTS.md"]);
@@ -491,7 +504,7 @@ test("the scaffold wizard stops before the files step when every file exists", a
   const repo = box.repo({ ".editorconfig": "root = true\n", ".gitattributes": "* text=auto\n", "AGENTS.md": "# Team\n" });
   const prompts = makePrompts({});
 
-  const ok = await scaffoldWizard(prompts, { agents: ["codex"], cwd: repo });
+  const ok = await scaffoldWizard(prompts, { agents: ["copilot"], cwd: repo });
 
   assert.equal(ok, true);
   assert.deepEqual(prompts.asked, []);
@@ -552,7 +565,7 @@ test("the wizards show no import hint when CLAUDE.md imports AGENTS.md or Claude
   const withoutClaudePrompts = makePrompts({});
 
   await scaffoldWizard(importingPrompts, { agents: ["claude"], cwd: importing });
-  await scaffoldWizard(withoutClaudePrompts, { agents: ["codex"], cwd: withoutClaude });
+  await scaffoldWizard(withoutClaudePrompts, { agents: ["copilot"], cwd: withoutClaude });
 
   assert.ok(!(importingPrompts.notes[0] ?? "").includes(IMPORT_HINT));
   assert.ok(!(withoutClaudePrompts.notes[0] ?? "").includes(IMPORT_HINT));
@@ -561,8 +574,8 @@ test("the wizards show no import hint when CLAUDE.md imports AGENTS.md or Claude
 
 function installBoth(): string {
   const repo = box.repo();
-  install({ agents: ["codex"], dryRun: false, force: false });
-  init(repo, { agents: ["codex"], dryRun: false, force: false });
+  install({ agents: ["copilot"], dryRun: false, force: false });
+  init(repo, { agents: ["copilot"], dryRun: false, force: false });
   output.length = 0;
   return repo;
 }
@@ -583,7 +596,7 @@ test("the uninstall wizard removes only the install that the user picks", async 
 
 test("the uninstall wizard asks no install question when only one install exists", async () => {
   const repo = box.repo();
-  init(repo, { agents: ["codex"], dryRun: false, force: false });
+  init(repo, { agents: ["copilot"], dryRun: false, force: false });
   const prompts = makePrompts({});
 
   const ok = await uninstallWizard(prompts, { cwd: repo });
@@ -607,7 +620,7 @@ test("the uninstall wizard writes nothing when the user answers No", async () =>
 
 test("the uninstall wizard says that only the manifest is deleted when the files are gone", async () => {
   const repo = box.repo();
-  init(repo, { agents: ["codex"], dryRun: false, force: false });
+  init(repo, { agents: ["copilot"], dryRun: false, force: false });
   fs.rmSync(path.join(repo, ".agents"), { recursive: true });
   fs.rmSync(path.join(repo, "AGENTS.md"));
   const prompts = makePrompts({});

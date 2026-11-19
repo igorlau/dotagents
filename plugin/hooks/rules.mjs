@@ -1,7 +1,7 @@
 // Hook for the start of a session. The plugin updates on every commit, but the
 // rules reach Claude Code only when the user runs `dotagents update`. This
 // hook warns the user when the installed rules differ from the plugin's rules.
-// shortcut: checks only Claude Code's rules file, add the Codex and Copilot blocks when their plugins update apart from the CLI.
+// shortcut: checks only Claude Code's rules file, add the Copilot block when their plugins update apart from the CLI.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

@@ -8,7 +8,7 @@ describe("headingSlug", () => {
   });
 
   test("removes punctuation and backticks but keeps hyphens and underscores", () => {
-    assert.equal(headingSlug("The `dot-flow` skill: make_sut, v1.0!"), "the-dot-flow-skill-make_sut-v10");
+    assert.equal(headingSlug("The `dot-plan` skill: make_sut, v1.0!"), "the-dot-plan-skill-make_sut-v10");
   });
 
   test("keeps the text of a link and drops its target", () => {

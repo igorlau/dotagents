@@ -35,7 +35,7 @@ test("scaffold leaves existing files alone, and update and uninstall ignore its 
 test("scaffold --force overwrites, and --agents skips Claude Code files", () => {
   const repo = box.repo();
   write(path.join(repo, ".editorconfig"), "root = false\n");
-  box.run(["scaffold", "--force", "--agents", "codex"], repo);
+  box.run(["scaffold", "--force", "--agents", "copilot"], repo);
   assert.match(read(path.join(repo, ".editorconfig")), /^root = true$/m);
   assert.deepEqual(tree(repo), [".editorconfig", ".gitattributes", "AGENTS.md"]);
 });
