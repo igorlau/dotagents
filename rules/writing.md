@@ -32,7 +32,6 @@ Apply these rules to all text that you write for a person to read: chat replies,
 - Use bold only for a UI label or a label that a template asks for.
 - A user reply is a chat reply, or a file that Git ignores and that you write for the user.
 - In a user reply, write one fact per line in a short list. Use prose only for reasoning that needs linked sentences.
-- In a user reply, list failures, results, skipped checks or risks, and neutral facts under a heading line of 🔴, 🟢, 🟡, or 🔵 and a short label. Put the groups in that order, with a blank line between them.
 - Do not use emoji in tracked files, commit messages, pull requests, or the output of code.
 - Use sentence case for headings.
 - Answer directly. Do not write chatbot phrases, such as "I hope this helps", or flattery.
