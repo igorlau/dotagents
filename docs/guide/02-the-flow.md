@@ -42,8 +42,9 @@ A run stops for you at 2 points:
 
 A run also stops for an escalation: a question that the rules of the run
 cannot answer. The agent shows the question, the reason, and the action that
-it takes without other instructions. Reply with an instruction, with
-`accept`, or with `stop`.
+it takes without other instructions. Reply with an instruction, or with
+`stop` to end the run. At an escalation of the review, you can also reply
+`accept`.
 
 ### The review
 
@@ -61,7 +62,7 @@ stops, with these rules:
   file, on a line that the fix changed. A finding about the style of the docs
   is the exception.
 - The run escalates when the number of open findings does not go down.
-- The run escalates after 3 fix rounds.
+- The run escalates when a finding is still open after 3 fix rounds.
 
 At an escalation, reply `accept` to keep the open findings as accepted risks.
 Any other reply is the instruction for one more fix round.

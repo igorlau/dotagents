@@ -1,6 +1,3 @@
-// Usage: node gate.mjs --task <id> --roadmap <dir> --log <file>, from the repository root.
-// Runs the repository's check and test commands, writes their output to the log file,
-// and prints one result line. On a pass, it ticks the task in <dir>/README.md.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -8,6 +5,7 @@ import { parseArgs } from "node:util";
 import { checkCommand, testCommand, treeHash } from "../../../hooks/repo-commands.mjs";
 
 const USAGE = "Usage: node gate.mjs --task <id> --roadmap <dir> --log <file>";
+const MAX_OUTPUT = 64 * 1024 * 1024;
 
 const { task, roadmap, log } = readArgs();
 const cwd = process.cwd();
@@ -28,7 +26,7 @@ for (const [name, command] of commands) {
     continue;
   }
   const [program, ...args] = command;
-  const result = spawnSync(program, args, { cwd, encoding: "utf8", shell: process.platform === "win32" });
+  const result = spawnSync(program, args, { cwd, encoding: "utf8", maxBuffer: MAX_OUTPUT, shell: process.platform === "win32" });
   output.push(`$ ${command.join(" ")}\n${result.stdout ?? ""}${result.stderr ?? ""}${result.error?.message ?? ""}\nExit code: ${result.status}\n`);
   if (result.status !== 0) reason ??= name;
 }

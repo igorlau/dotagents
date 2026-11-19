@@ -54,7 +54,7 @@ The following table gives each decision and its reason:
 | 20 | Add an always-on writing rule, based on ASD-STE100, for all text that agents write: chat, CLI output, plans and reports, commits, pull requests, and docs. It takes precedence over the Google style in `dot-docs-writing`. | Short sentences with a controlled vocabulary are easier to read for a reader in a second language and for translation tools. One rule for all text replaces the prose rules that `dot-docs-writing` kept only for docs. The rules are in our own words, because the ASD-STE100 dictionary is copyrighted. |
 | 21 | Ship 3 agents in the plugin only: `dot-implementer`, `dot-tester`, and `dot-reviewer`. Each one preloads one skill as `dotagents:<skill>`, and none of them can start another agent. Each one pins `model`, `effort`, and `tools` in its frontmatter. The model is `sonnet` or `opus`, never `haiku`, and `npm run lint:content` enforces the 3 fields. `dot-factory` starts only `dot-reviewer`. `dot-implementer` and `dot-tester` stay for a task that you run by hand. | The production step, the test step, and the review of a roadmap task can run in a new context with only their skill. An agent costs about 35,000 tokens before it does any work, so a pinned model and effort keep each run at a known cost, and a short tool list keeps the tool definitions out of its context. `dot-reviewer` gets no `Edit` or `Write`, so it cannot change the code that it reviews. With a bare name, Claude Code preloads a skill with the same name from `~/.claude/skills/` first, such as an old copy from an earlier CLI install. A live run on 2026-11-12 showed that agents receive `~/.claude/rules/dotagents.md`, so the agents do not load the rules themselves. |
 | 22 | Keep each `SKILL.md` within 8,000 characters, with only the steps and the rules that apply on every run. Move conditional content, such as a language, a mode, or a rare case, to `references/TOPIC.md`, behind a line that says when to read it. | A `SKILL.md` loads in full each time its skill runs, so content for one language or mode costs tokens in every other run. `npm run lint:content` enforces the budget. |
-| 23 | `/dot-factory <description>` takes a problem to a staged change in one Claude Code session. The intake picks a track, `spike`, `bug`, `small`, or `feature`, and the user can correct it in one word. A `spike` builds a prototype, writes `spike.md`, and stashes the prototype, with no Gate and no review. The other tracks write `research.md`, grill the open decisions, and write the spec with `dot-roadmap`. The `bug` and `small` tracks have one task, and the `bug` track writes a failing test first with `dot-debug`. The run stops for the user twice, at the spec approval and at the final report, and also at each escalation. The main session does every step except the review. It writes the code and the tests of each task with `dot-implement` and `dot-testing`. After each task, `gate.mjs` runs the check and the tests, prints one line with the tree hash, and ticks the task on a pass. The third failure of one task escalates. One `dot-reviewer` runs after the last task, or when the user asks, over the trees since the last closed review. Each review has its own folder `review-<k>/` with `ledger.json` and the `review-<round>.json` and `apply-<round>.json` files of each round. `review-loop.mjs` picks the lenses from file patterns, adds each review to the ledger, and returns the action `fix`, `escalate`, or `done`. The main session fixes every finding at every severity, runs the Gate, and starts a delta review of the lines that the fix changed. The delta review gets a **History**: the `findings` and the `history` of the earlier `apply-<round>.json`, one entry for each id. The script drops a new finding outside the changed lines. It escalates when a fine key `file:line:class` that a fix closed comes back. It also escalates when a coarse key `file:class` comes back on a changed line, except for the class `docs-style`. It escalates when the open count does not go down, and after 3 fix rounds. An escalation is a question in the session. The answer `accept` records the open findings as accepted risks, and `stop` ends the run. Any other answer is the instruction of one more fix round. A run needs a clean tree at the start, never commits, and stages all changes with `report.md` at the end. Without the factory, run `dot-implement`, `dot-testing`, `dot-code-review`, and `dot-commit` by hand. `dot-implement` writes no tests, and gives `dot-testing` the list of expected failures. The user or the Gate ticks the roadmap, and `dot-commit` does not. | A subagent costs about 35,000 tokens before it does any work. A probe agent used 35,313 tokens to reply "pong", and a delta review agent used 80,693. With a subagent for each step, the close of one phase used about 40% of the session limit of the user. So one session does the work. Only the review starts a new context, so that it does not share the assumptions of the session that wrote the code. Scripts make the loop decisions, because the review loop of the removed dot-flow skill did not converge on its own. `low` findings came back on the lines that a fix changed, and one line changed back and forth between two wordings. A `docs-style` finding only moves the wording, so its coarse key never escalates. `apply-<round>.json` stays on disk because `apply` changes the ledger and cannot run twice, so a resumed run reads the file. The Gate ticks the roadmap, so a new session resumes from the checkboxes and `state.md`. The test names in the roadmap task fix the behavior before the code exists. A staged change with a report lets the user read the whole change before `dot-commit`. |
+| 23 | Take a problem to a staged change with `dot-factory`, in one Claude Code session. See [Factory](#factory). Without the factory, run `dot-implement`, `dot-testing`, `dot-code-review`, and `dot-commit` by hand. `dot-implement` writes no tests, and gives `dot-testing` the list of expected failures. The user or the Gate ticks the roadmap, and `dot-commit` does not. | One description and one spec approval replace an approval at each step of each task. The test names in the roadmap task fix the behavior before the code exists. The [Factory](#factory) section gives the reasons for its rules. |
 | 24 | `dot-plan` shows a schema for each domain entity that it adds or changes, in the form that the repository uses for its entities, or in JSON Schema (draft 2020-12) when it has none. The user approves the schemas before the steps. The schemas stay in the plan and the roadmap, not in committed files. `dot-plan` and `dot-roadmap` put removal steps first. | A wrong data model costs the most when you find it late. A schema in the form of the repository is the code that lands, with no translation. Removal steps first make the later steps smaller. |
 | 25 | `dot-code-review` has two passes: correctness, and maintainability. Each finding gives `file:line` and the smallest fix, and the report ends with a check that would prevent each class of finding. `dot-correct` changes a repeated mistake into architecture, a type, a lint rule, a test, or docs, in that order. | A check that prevents a class of mistakes does more than a fix of one instance. The maintainability pass is vendored, and keeps its direct tone. |
 | 26 | Test with `npm test` and `npm run lint:content` only, with no paid model evaluations, now or later. `lint:content` also checks the docs: links and anchors, skill and agent names, the README lists, the counts, and the mechanical part of the writing rule. | Model evaluations cost money on every run, and their results change from run to run. The structural checks find the most frequent drift: a renamed skill, a broken link, or a wrong count. |
@@ -67,6 +67,84 @@ The following table gives each decision and its reason:
 | 33 | When an agent calls `dot-plan`, it does not wait for the user, does not run `dot-grilling`, and does not write the plan file. It returns the plan with open questions. When an agent calls `dot-roadmap`, it skips the review with the user and writes the roadmap to the path that the caller gives. The model can start `dot-roadmap`. | An agent has no user to wait for, so each step that waits would stall the run. The caller owns the file path and the questions. The skills keep their steps, so a user call works as before. |
 | 34 | Lay out the repository by audience. `skills/` and `rules/` are portable, and the CLI installs them for Claude Code and Copilot. `claude/` holds the content for Claude Code only: `agents/`, `hooks/`, and `skills/`, such as `dot-factory`. `scaffold/` holds the templates, `src/` and `test/` hold the CLI, and `docs/` holds the guide. A skill name must not be in both `skills/` and `claude/skills/`. | The path of a file tells a contributor which coding agent reads it. The factory, the agents, and the hooks need features of Claude Code, so they stay out of the Copilot install. The repository root stays the plugin root. On 2026-11-18, `claude plugin validate` in Claude Code 2.1.327 rejected a path with `..`, so `plugin.json` cannot move into `claude/`. |
 | 35 | Add a review skill for each review lens: `dot-security-audit` for a whole codebase or a path, `dot-security-changes` for the changes of the working tree, `dot-ux-review` for UI code, and `dot-ui-review` for a visual review in a browser. The model can start each one. | `dot-reviewer` runs one skill for each lens, and each skill also works on its own. The Cloudflare security skill had 21,990 characters, so `dot-security-audit` keeps a smaller set of phases within the budget of decision 22. `dot-security-changes` reads the references of `dot-security-audit` only when the diff touches their topic. The Vercel guidelines are vendored as a reference, without the wrapper skill, which has no license file. The OneRedOak design review was an agent and a command for the Playwright MCP. `dot-ui-review` rewrites it as a skill that uses the browser tool of the session. The UI review runs in the main session, because the tools of `dot-reviewer` include no browser tool. |
+
+## Factory
+
+`/dotagents:dot-factory <description>` takes a problem to a staged change in
+one Claude Code session. See decision 23.
+
+### Run
+
+- The intake picks a track: `spike`, `bug`, `small`, or `feature`. The user
+  can correct it in one word.
+- A `spike` builds a prototype, writes `spike.md`, and stashes the prototype.
+  It has no Gate and no review.
+- The other tracks write `research.md`, grill the open decisions, and write
+  the spec with `dot-roadmap`. The `bug` and `small` tracks have one task.
+  The `bug` track writes a failing test first with `dot-debug`.
+- The run stops for the user at the spec approval and at the final report,
+  and also at each escalation.
+- The main session does every step except the review. It writes the code and
+  the tests of each task with `dot-implement` and `dot-testing`.
+- After each task, `gate.mjs` runs the check and the tests, and prints one
+  line with the tree hash. On a pass, it ticks the task. The third failure of
+  one task escalates.
+- A run needs a clean tree at the start, and never commits. At the end, it
+  stages all changes and writes `report.md`.
+
+### Review
+
+- One `dot-reviewer` runs after the last task, or when the user asks, over
+  the trees since the last closed review.
+- Each review has its own folder, `review-<k>/`, with `ledger.json` and the
+  `review-<round>.json` and `apply-<round>.json` files of each round.
+- `review-loop.mjs` picks the lenses from file patterns, adds each review to
+  the ledger, and returns the action `fix`, `escalate`, or `done`.
+- The main session fixes every finding at every severity, and runs the Gate.
+  A delta review then reads only the lines that the fix changed.
+- The delta review gets a **History**: the `findings` of the earlier
+  `apply-<round>.json`, and the ledger entries on the changed lines, which
+  the `history` command prints. It has one entry for each id.
+
+### Loop rules
+
+`review-loop.mjs` applies these rules:
+
+- It drops a new finding of a delta review outside the changed lines.
+- It escalates when a fine key `file:line:class` that a fix closed comes
+  back, or when the reviewer reports a closed finding as `regressed`.
+- It escalates when a coarse key `file:class` comes back on a changed line,
+  except for the class `docs-style`.
+- It escalates when the open count does not go down.
+- It escalates at the review of fix round 3, the review-only round, when a
+  finding is open.
+
+The answer `accept` to an escalation of the review records the open findings
+as accepted risks. The answer `stop` ends the run. Any other answer is the
+instruction of one more fix round, or of one more fix attempt after a Gate
+escalation.
+
+### Reasons
+
+- A subagent costs about 35,000 tokens before it does any work. A probe
+  agent used 35,313 tokens to reply "pong", and a delta review agent used
+  80,693.
+- With a subagent for each step, the close of one phase used about 40% of
+  the session limit of the user. So one session does the work.
+- Only the review starts a new context, so that it does not share the
+  assumptions of the session that wrote the code.
+- Scripts make the loop decisions, because the review loop of the removed
+  dot-flow skill did not converge on its own. `low` findings came back on
+  the lines that a fix changed, and one line changed back and forth between
+  two wordings.
+- A `docs-style` finding only moves the wording, so its coarse key never
+  escalates.
+- `apply-<round>.json` stays on disk, because `apply` changes the ledger and
+  cannot run twice. A resumed run reads the file.
+- The Gate ticks the roadmap, so a new session resumes from the checkboxes
+  and `state.md`.
+- A staged change with a report lets the user read the whole change before
+  `dot-commit`.
 
 ## Install modes
 

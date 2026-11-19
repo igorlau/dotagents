@@ -1,4 +1,3 @@
-// The rules of the dot-factory review loop. Run it from the repository root; each command prints one JSON object.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { parseArgs } from "node:util";
@@ -6,6 +5,7 @@ import { parseArgs } from "node:util";
 const USAGE = `Usage:
   node review-loop.mjs scope <old-tree> <new-tree>
   node review-loop.mjs apply --ledger <file> --review <file> --round <n> [--old <tree> --new <tree>]
+  node review-loop.mjs history --ledger <file> --old <tree> --new <tree>
   node review-loop.mjs accept --ledger <file>`;
 const CLASSES = ["requirement-gap", "nn-breach", "logic", "edge-case", "error-handling", "concurrency", "type-safety", "api-contract", "performance", "security", "test-gap", "duplication", "naming", "complexity", "dead-code", "comment", "docs-accuracy", "docs-style", "accessibility", "ux", "visual"];
 const SEVERITIES = ["high", "medium", "low"];
@@ -19,10 +19,10 @@ const { positionals, values } = readArgs();
 const [command, ...rest] = positionals;
 if (command === "scope" && rest.length === 2) print(scope(rest[0], rest[1]));
 else if (command === "apply" && rest.length === 0) print(apply(values));
+else if (command === "history" && rest.length === 0 && values.ledger && values.old && values.new) print(history(values));
 else if (command === "accept" && rest.length === 0 && values.ledger) print(accept(values.ledger));
 else usage(USAGE);
 
-/** Returns the changed files, the changed line count, the new-side line ranges, and the lenses of a tree range. */
 function scope(oldId, newId) {
   const [oldTree, newTree] = [oldId, newId].map((id) => git(["rev-parse", "--verify", "--end-of-options", `${id}^{tree}`]).trim());
   const entries = git(["diff", "--name-status", "-z", "--no-renames", oldTree, newTree]).split("\0").filter(Boolean);
@@ -48,7 +48,6 @@ function scope(oldId, newId) {
   return { files, lines, changedLines, lenses, ui: lenses.includes("ux") };
 }
 
-/** Adds a review to the ledger, and decides the next step of the loop: fix, escalate, or done. */
 function apply({ ledger: ledgerFile, review: reviewFile, round: roundText, old: oldTree, new: newTree }) {
   const round = Number(roundText);
   if (!ledgerFile || !reviewFile || !Number.isInteger(round) || round < 0) usage(USAGE);
@@ -57,13 +56,15 @@ function apply({ ledger: ledgerFile, review: reviewFile, round: roundText, old: 
   const ledger = round === 0 ? { entries: [], rounds: [] } : readJson(ledgerFile);
   const changedLines = round === 0 ? undefined : scope(oldTree, newTree).changedLines;
 
+  const escalations = [];
   for (const { id, status } of review.previous ?? []) {
     const entry = ledger.entries.find((candidate) => candidate.id === id);
-    if (entry && STATUSES.includes(status)) entry.status = status;
+    if (!entry || !STATUSES.includes(status)) continue;
+    if (entry.status === "fixed" && status === "regressed") escalations.push(`${id} regressed after a fix closed it`);
+    entry.status = status;
   }
 
   const earlier = [...ledger.entries];
-  const escalations = [];
   for (const finding of review.findings) {
     if (changedLines && !onLines(changedLines, finding)) continue;
     const fine = `${finding.file}:${finding.line}:${finding.class}`;
@@ -82,16 +83,19 @@ function apply({ ledger: ledgerFile, review: reviewFile, round: roundText, old: 
   ledger.rounds.push({ round, open: open.length });
   fs.writeFileSync(ledgerFile, `${JSON.stringify(ledger, null, 2)}\n`);
 
-  const history = changedLines ? earlier.filter((entry) => onLines(changedLines, entry)) : [];
-  const result = (action, reason) => ({ action, reason, findings: open, history });
+  const result = (action, reason) => ({ action, reason, findings: open });
   if (open.length === 0) return result("done", "no open findings");
-  if (round > LAST_FIX_ROUND) return result("escalate", "cap");
+  if (round >= LAST_FIX_ROUND) return result("escalate", "cap");
   if (escalations.length > 0) return result("escalate", escalations.join("; "));
   if (before !== undefined && open.length >= before) return result("escalate", `the open count ${open.length} is not lower than ${before}`);
   return result("fix", `${open.length} open findings`);
 }
 
-/** Marks every open finding of the ledger as an accepted risk, and returns those findings. */
+function history({ ledger: ledgerFile, old: oldTree, new: newTree }) {
+  const { changedLines } = scope(oldTree, newTree);
+  return { history: readJson(ledgerFile).entries.filter((entry) => onLines(changedLines, entry)) };
+}
+
 function accept(ledgerFile) {
   const ledger = readJson(ledgerFile);
   const accepted = ledger.entries.filter(isOpen);
@@ -108,7 +112,6 @@ function onLines(changedLines, { file, line }) {
   return (changedLines[file] ?? []).some(([start, end]) => line >= start && line <= end);
 }
 
-/** Reads the reviewer output, and exits with code 1 before any ledger change when it is not valid. */
 function readReview(file) {
   const review = readJson(file);
   const valid =

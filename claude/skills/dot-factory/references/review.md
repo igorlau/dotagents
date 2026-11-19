@@ -33,7 +33,13 @@ Changed lines: <the changedLines of scope, as JSON>
 History: <JSON list>
 ```
 
-**History** is the `findings` and the `history` of `apply-<round - 1>.json`, one entry for each `id`, each as `{"id", "file", "line", "class", "summary", "fix"}`. The `findings` are what the fix addressed, and the `history` holds the earlier fixes near the changed lines.
+**History** is the `findings` of `apply-<round - 1>.json` and the `history` that this command prints for the range of this round:
+
+```text
+node <skill dir>/scripts/review-loop.mjs history --ledger <review dir>/ledger.json --old <old> --new <new>
+```
+
+Give one entry for each `id`, each as `{"id", "file", "line", "class", "summary", "fix"}`. The `findings` are what the fix addressed, and the `history` holds the earlier findings on the lines that the fix changed.
 
 Run the **UI review** when all 3 conditions are true: `ui` is `true`, `package.json` has a `dev` or a `start` script, and this session has a browser tool. Use the `dot-ui-review` skill in this session, and add each finding to the `findings` of `review-<round>.json`, with `lens` set to `ui`. When a condition is false, add `UI review: skipped: <the false condition>` to the build log.
 

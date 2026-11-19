@@ -116,3 +116,12 @@ test("the gate prints a tree hash that changes with an untracked file", () => {
   assert.ok(before && after);
   assert.notEqual(after, before);
 });
+
+test("the gate passes when a command prints more than 1 MiB", () => {
+  const repo = repoWithScripts({ check: PASS, test: "node -e \"process.stdout.write('x'.repeat(2 * 1024 * 1024))\"" });
+
+  const result = runGate(repo);
+
+  assert.equal(result.status, 0, result.stdout);
+  assert.match(result.stdout, /^gate pass/);
+});
