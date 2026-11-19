@@ -1,8 +1,9 @@
 # Install dotagents
 
-dotagents has two parts. The plugin has the skills, the agents, and the
-`check` hook. The CLI installs the always-on rules for both coding agents, and
-the skills for Copilot. Plugins cannot ship always-on rules, so
+dotagents has two parts. The plugin has the skills, `dot-factory`, the
+agents, and the `check` hook. Claude Code gets `dot-factory` and the agents
+only through the plugin. The CLI installs the always-on rules for both coding
+agents, and the skills for Copilot. Plugins cannot ship always-on rules, so
 every coding agent needs the CLI.
 
 ## Install with the wizard
@@ -70,9 +71,9 @@ To install the rules and the skills, run the following command:
 npx --yes @igorlau/dotagents install --agents copilot
 ```
 
-In Copilot, the skills have no namespace, such as `/dot-plan`.
-Copilot does not start the dotagents agents, so it runs each step in the main
-session.
+In Copilot, the skills have no namespace, such as `/dot-plan`. The CLI does
+not install `dot-factory`, and Copilot does not start the dotagents agents.
+In Copilot, run each step of the flow yourself, in the main session.
 
 The Copilot CLI and VS Code can also load the plugin. If you install both
 the plugin and the CLI skills, Copilot can list each skill twice.
@@ -100,7 +101,7 @@ target in a `Makefile`, that
 runs the type checker and the linter but not the tests. To stop the hook,
 run `npx --yes @igorlau/dotagents check disable`.
 
-## Share the workflow with collaborators
+## Share dotagents with collaborators
 
 The global install writes nothing to your repositories. To commit the skills
 and rules to a repository that you own, run the following command in the
