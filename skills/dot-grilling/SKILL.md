@@ -1,6 +1,6 @@
 ---
 name: dot-grilling
-description: Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test their ideas, or uses any 'grill' trigger phrases.
+description: Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test an idea, or says "grill me".
 ---
 
 Interview the user relentlessly until you reach a shared understanding. Map the interview as a **design tree**: every decision branches into the decisions that depend on it.
@@ -25,7 +25,7 @@ Word each question so that "yes" accepts your recommended answer.
 
 Each round of answers changes the tree: settled decisions move the frontier out and unblock the questions that depend on them. Compute the frontier again and ask the next round. A question whose answer depends on another open question in this round belongs to a _later_ round.
 
-Facts are your job, never the user's. When a frontier question needs a fact from the environment (the filesystem, tools, and so on), send a subagent to find it. Do not ask the user for anything that you can look up. Do not block on the search: a search that still runs is an unsettled prerequisite, so only the questions that depend on it wait for the subagent. Ask the rest of the frontier now. The _decisions_ belong to the user: ask the user each one, and wait.
+Facts are your job, never the user's. When a frontier question needs a fact from the environment (the filesystem, tools, and so on), look it up yourself before you ask the round. Do not ask the user for anything that you can look up. The _decisions_ belong to the user: ask the user each one, and wait.
 
 The session is done when the frontier is empty: you visited every branch of the design tree, and you assumed nothing in silence. Do not act on the result until the user confirms that you reached a shared understanding.
 
