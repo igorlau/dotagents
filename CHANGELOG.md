@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/igorlau/dotagents/compare/v2.0.1...v2.1.0) (2026-11-19)
+
+
+### Features
+
+* **plugin:** shorten Bash output with a compress hook ([c64a3a7](https://github.com/igorlau/dotagents/commit/c64a3a7da5cbfd4ddc20c98d0be82eb791262cea))
+
 ## [2.0.1](https://github.com/igorlau/dotagents/compare/v2.0.0...v2.0.1) (2026-11-19)
 
 
