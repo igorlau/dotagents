@@ -15,7 +15,7 @@ import {
   writeManifest,
   type Manifest,
 } from "./manifest.ts";
-import { claudeHome, configDir, packageRoot } from "./paths.ts";
+import { claudeHome, configDir, packageRoot, stateDir } from "./paths.ts";
 import { planInstall, planScaffold, projectClaudeRulesFile, type Agent, type Mode, type Op } from "./targets.ts";
 
 export interface Options {
@@ -315,6 +315,7 @@ export function list(): void {
 /** The user's settings. The plugin's `claude/hooks/check.mjs` reads `checkRepos` from the same file. */
 interface Config {
   checkRepos?: string[];
+  compress?: boolean;
   source?: string;
 }
 
@@ -364,6 +365,35 @@ export function setCheckHook(cwd: string, enabled: boolean, dryRun: boolean): vo
   }
   writeConfig({ checkRepos: enabled ? [...others, repo].sort() : others });
   log(`The check hook is ${state} in ${repo}.`);
+}
+
+export function setCompressHook(enabled: boolean, dryRun: boolean): void {
+  const state = enabled ? "enabled" : "disabled";
+  if (dryRun) {
+    log(`The compress hook would be ${state}.`);
+    return;
+  }
+  writeConfig({ compress: enabled });
+  log(`The compress hook is ${state}.`);
+}
+
+export function compressStatus(): void {
+  log(`The compress hook is ${readConfig().compress === false ? "disabled" : "enabled"}.`);
+  const file = path.join(stateDir(), "compress.jsonl");
+  if (!fs.existsSync(file)) {
+    log("It has not shortened any output yet.");
+    return;
+  }
+  const totals = new Map<string, { after: number; before: number; calls: number }>();
+  for (const line of fs.readFileSync(file, "utf8").split("\n").filter(Boolean)) {
+    const { after, before, kind } = JSON.parse(line);
+    const total = totals.get(kind) ?? { after: 0, before: 0, calls: 0 };
+    totals.set(kind, { after: total.after + after, before: total.before + before, calls: total.calls + 1 });
+  }
+  for (const [kind, { after, before, calls }] of [...totals].sort(([a], [b]) => a.localeCompare(b))) {
+    const saving = Math.round((100 * (before - after)) / before);
+    log(`${kind}: ${calls} calls, ${before} characters shortened to ${after}, ${saving}% saved.`);
+  }
 }
 
 export function selfUpdate(args: string[]): boolean {

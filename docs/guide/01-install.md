@@ -108,6 +108,20 @@ target in a `Makefile`, that
 runs the type checker and the linter but not the tests. To stop the hook,
 run `npx --yes @igorlau/dotagents check disable`.
 
+## Shorten the Bash output
+
+In Claude Code, the plugin `compress` hook shortens the Bash output of test,
+build, install, and Git commands before Claude reads it. It removes color
+codes, old progress lines, runs of similar lines, and the passing tests of a
+failing run. It keeps every line that reports an error, a failure, or a
+warning. The hook saves the full output in a temporary file and gives Claude
+the path. The hook also asks Claude to read the page text before it takes a
+browser screenshot.
+
+The hook is on by default. To see how many characters it saved, run
+`npx --yes @igorlau/dotagents compress`. To turn it off, run
+`npx --yes @igorlau/dotagents compress disable`.
+
 ## Share dotagents with collaborators
 
 The global install writes nothing to your repositories. To commit the skills

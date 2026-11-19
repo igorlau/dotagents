@@ -23,5 +23,10 @@ export function configDir(): string {
   return xdg ? path.join(xdg, "dotagents") : path.join(homeDir(), ".config", "dotagents");
 }
 
+export function stateDir(): string {
+  const xdg = process.env.XDG_STATE_HOME;
+  return xdg ? path.join(xdg, "dotagents") : path.join(homeDir(), ".local", "state", "dotagents");
+}
+
 // Works from both src/ (tests, scripts) and dist/ (installed package).
 export const packageRoot = fileURLToPath(new URL("..", import.meta.url));

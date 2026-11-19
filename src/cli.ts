@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
-import { doctor, init, install, list, saveSource, scaffold, selfUpdate, setCheckHook, uninstall, update, version } from "./commands.ts";
+import { compressStatus, doctor, init, install, list, saveSource, scaffold, selfUpdate, setCheckHook, setCompressHook, uninstall, update, version } from "./commands.ts";
 import { parseAgents } from "./targets.ts";
 import { claudePlugin, clackPrompts, installWizard, opensWizard, scaffoldWizard, uninstallWizard } from "./wizard.ts";
 
@@ -17,6 +17,8 @@ Usage:
   dotagents list                    List the skills in the catalog
   dotagents self-update             Run \`update\` with the latest release
   dotagents check enable|disable    Let the plugin's check hook run in the current repository, or stop it
+  dotagents compress [enable|disable]
+                                    Show the savings of the plugin's compress hook, or turn it on or off
 
 Options:
   --agents <list>   Comma-separated: claude,copilot (default: all)
@@ -94,6 +96,14 @@ async function main(argv: string[]): Promise<number> {
     case "check":
       if (subcommand !== "enable" && subcommand !== "disable") throw new Error("Usage: dotagents check enable|disable");
       setCheckHook(cwd, subcommand === "enable", options.dryRun);
+      return 0;
+    case "compress":
+      if (!subcommand) {
+        compressStatus();
+        return 0;
+      }
+      if (subcommand !== "enable" && subcommand !== "disable") throw new Error("Usage: dotagents compress [enable|disable]");
+      setCompressHook(subcommand === "enable", options.dryRun);
       return 0;
     case "self-update":
       return selfUpdate(argv.slice(1)) ? 0 : 1;

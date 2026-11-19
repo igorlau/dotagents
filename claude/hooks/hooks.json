@@ -49,6 +49,17 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|mcp__.*([Bb]rowser|[Cc]hrome|[Pp]laywright|[Pp]uppeteer).*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/claude/hooks/compress.mjs\""
+          }
+        ]
+      }
     ]
   }
 }

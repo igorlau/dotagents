@@ -162,6 +162,7 @@ run `dotagents --help`:
 | `init` | Install into the current repository. |
 | `scaffold` | Create starter agent instructions in the current repository. |
 | `check enable`, `check disable` | Start or stop the plugin `check` hook in the current repository. |
+| `compress`, `compress enable`, `compress disable` | Show the savings of the plugin `compress` hook, or turn it on or off. |
 | `update` | Apply the catalog of this CLI version to the installs. |
 | `self-update` | Run `update` with the latest release. A CLI installed with `npm install --global` updates itself first. |
 | `doctor` | Find missing or changed files in the installs, and Claude Code skills that the plugin also provides. |
