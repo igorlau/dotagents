@@ -46,18 +46,25 @@ coding agents. `--dry-run` and `--force` skip the wizard.
 
 ### Install for Claude Code
 
-To install the plugin, run the following commands in Claude Code:
+To install for Claude Code, run these commands in a terminal:
 
-```text
-/plugin marketplace add igorlau/dotagents
-/plugin install dotagents@dotagents
-```
+1. Add the marketplace:
 
-To install the rules, run the following command:
+   ```bash
+   claude plugin marketplace add igorlau/dotagents
+   ```
 
-```bash
-npx --yes @igorlau/dotagents install --agents claude
-```
+1. Install the plugin:
+
+   ```bash
+   claude plugin install dotagents@dotagents
+   ```
+
+1. Install the always-on rules:
+
+   ```bash
+   npx --yes @igorlau/dotagents install --agents claude
+   ```
 
 The plugin skills have the `dotagents:` namespace, such as
 `/dotagents:dot-plan`. Each commit is a new plugin version, because
@@ -116,8 +123,7 @@ files. In a team repository, use only the global install.
 
 To create the starter files, such as `AGENTS.md` and `CLAUDE.md`, run
 `npx --yes @igorlau/dotagents scaffold`. In a terminal, it asks which files to
-create. To remove an install, run `npx --yes @igorlau/dotagents uninstall`.
-In a terminal, it shows the files to remove and asks for confirmation.
+create.
 
 ## Check the install
 
@@ -127,5 +133,31 @@ also provides, run the following command:
 ```bash
 npx --yes @igorlau/dotagents doctor
 ```
+
+## Remove dotagents
+
+To remove dotagents, run these commands in a terminal:
+
+1. Uninstall the Claude Code plugin:
+
+   ```bash
+   claude plugin uninstall dotagents@dotagents
+   ```
+
+1. Remove the marketplace:
+
+   ```bash
+   claude plugin marketplace remove dotagents
+   ```
+
+1. Remove the rules, and the skills for Copilot:
+
+   ```bash
+   npx --yes @igorlau/dotagents uninstall
+   ```
+
+   In a terminal, the command shows the files to remove and asks for
+   confirmation. To remove a repository install, run the command in that
+   repository.
 
 Next: [The flow](02-the-flow.md).
