@@ -37,7 +37,7 @@ Done when you have the app command and a browser tool, or you reported the skip 
 2. Read the diff. List the components, the routes, and the states that it changes. If the files render no UI, report the skip line with the reason `no UI changes`.
 3. Start the app command in the background. Do not install dependencies. Read its output for the local URL, and wait until the URL answers. If the app does not answer within 60 seconds, stop it, and report the skip line with the reason `the app did not start`.
 4. Open the URL in the browser. Set the desktop viewport to 1440 by 900.
-5. Run `git check-ignore -q .tmp`. When Git ignores `.tmp`, save each screenshot in `.tmp/ui-review/`. Otherwise take no screenshot to disk, and report each visual finding without a path.
+5. Run `git check-ignore -q .tmp/`. When Git ignores `.tmp`, save each screenshot in `.tmp/ui-review/`. Otherwise take no screenshot to disk, and report each visual finding without a path.
 
 Use only the local app. Use dummy data in each form, and do not open a link to a deployed or shared service.
 

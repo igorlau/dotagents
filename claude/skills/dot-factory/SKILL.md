@@ -55,7 +55,7 @@ Start every reply with the **phase line**: `**Phase:** <phase> | **Track:** <tra
 
 ## 1. Start
 
-1. Run `git check-ignore -q .tmp`. When Git does not ignore `.tmp`, stop and tell the user. Do not edit `.gitignore`.
+1. Run `git check-ignore -q .tmp/`. When Git does not ignore `.tmp`, stop and tell the user. Do not edit `.gitignore`.
 2. Look for a `.tmp/factory/*/state.md` with a **Phase** other than `Done`. When one exists, ask the user whether to resume it. To resume, read its `state.md`, and continue at its phase. In the `Build` phase, continue with the first unticked task. A resumed run skips the rest of this step.
 3. For a new run, ask for the problem when the user gave no description.
 4. Run `git status --porcelain`. When it prints anything, stop, and ask the user to commit or stash the changes first. A run starts from a clean tree.

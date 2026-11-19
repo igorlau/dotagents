@@ -83,6 +83,6 @@ Show the plan in this shape:
 
 Ask the user where to write the plan, and offer `.tmp/plans/<plan-slug>/plan.md` at the repository root as the default. Wait for the user's approval before you change any file.
 
-After the approval, write the plan to that path in the same shape. For a path under `.tmp`, first run `git check-ignore -q .tmp`: if Git does not ignore `.tmp`, stop and tell the user. Do not edit `.gitignore`. Write any other path that the user picks.
+After the approval, write the plan to that path in the same shape. For a path under `.tmp`, first run `git check-ignore -q .tmp/`: if Git does not ignore `.tmp`, stop and tell the user. Do not edit `.gitignore`. Write any other path that the user picks.
 
 When the plan changes during the work, update the plan file and say what changed.

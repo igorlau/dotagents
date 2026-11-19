@@ -65,7 +65,7 @@ Iterate until the user approves. Write no files before approval.
 
 ## 6. Write the roadmap
 
-Write to `.tmp/roadmaps/<roadmap-slug>/` at the repository root. First run `git check-ignore -q .tmp`: if Git does not ignore `.tmp`, stop and tell the user. Do not edit `.gitignore`.
+Write to `.tmp/roadmaps/<roadmap-slug>/` at the repository root. First run `git check-ignore -q .tmp/`: if Git does not ignore `.tmp`, stop and tell the user. Do not edit `.gitignore`.
 
 ```
 .tmp/roadmaps/<roadmap-slug>/

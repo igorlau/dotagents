@@ -45,7 +45,7 @@ Done when the report has every layer of step 2, and every finding of step 3 when
 
 ## 5. Page
 
-1. Run `git check-ignore -q .tmp` at the repository root. When it exits with a non-zero code, stop, and tell the caller that Git does not ignore `.tmp`, so the page could reach a commit.
+1. Run `git check-ignore -q .tmp/` at the repository root. When it exits with a non-zero code, stop, and tell the caller that Git does not ignore `.tmp`, so the page could reach a commit.
 2. Write the layers to the output path of the caller, or to `.tmp/walkthrough/working-tree.json`. Sort the keys. Leave out `base` and `head`. For a tree range, add `oldTree` and `newTree` as full tree ids.
 
    ```json
