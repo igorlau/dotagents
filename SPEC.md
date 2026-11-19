@@ -48,8 +48,8 @@ The following table gives each decision and its reason:
 | 14 | Add an always-on rule that deletes code comments by default and keeps only named exceptions. | Agents write comments that restate code or describe changes. A surprise in the code gets a new name or a new function, and a constraint gets a type, a check, or a test. |
 | 15 | Prefix every skill name with `dot-`, such as `dot-plan`. | Copilot and project installs for Claude Code load skills without a namespace, so a skill without the prefix can clash with a skill of the repository or of another source. The prefix also groups the skills in the `/` menu. Rules need no prefix: they live in files and blocks with the dotagents name. |
 | 16 | Add a `scaffold` command that creates starter project instructions once, and keeps them out of the manifest. | A new repository needs instructions for its project, and those belong to the repository: `update` must never rewrite them. Files that dotagents writes only once also keep the command safe in a repository that has instructions. |
-| 17 | Keep the catalog in `plugin/`, which is also a Claude Code plugin, and list it in a marketplace at the repository root. Publish only this marketplace. | One source serves the CLI and the plugin. A marketplace in the repository needs no registry and costs nothing. |
-| 18 | Ship one hook script in the plugin that runs the `check` script of the repository (type check and lint, not tests) when an agent or a subagent stops, and makes that agent continue when it fails. | Claude Code and Copilot both load `hooks/hooks.json` from the plugin, and Claude Code and Copilot CLI document a `block` decision, so one script covers both coding agents. Tests stay out because `dot-implement` can leave expected test failures for `dot-testing`. The hook allows the second stop, so it cannot loop, and it shows the user a warning when the check still fails there. It runs the check only when the working tree changed, compared with a snapshot from the start of the prompt. In Claude Code, the hook also takes a snapshot on `SubagentStart` and runs on `SubagentStop`, so each agent answers only for the changes that it made, and the subagent that broke the check fixes it. The check is an npm script, or a `Makefile` target for a repository without `package.json`. A turn that changes nothing never makes the agent fix old problems or runs repository code. It acts only in repositories listed in `checkRepos` in the `config.json` of the user, which `dotagents check enable` sets: the `check` script is code of the repository, and an opt-in inside the repository would let an untrusted repository enable itself. |
+| 17 | Keep the catalog at the repository root, which is also the root of the Claude Code plugin, and list the plugin in a marketplace at the same root. Publish only this marketplace. | One source serves the CLI and the plugin. A marketplace in the repository needs no registry and costs nothing. |
+| 18 | Ship one hook script in the plugin that runs the `check` script of the repository (type check and lint, not tests) when an agent or a subagent stops, and makes that agent continue when it fails. | Claude Code and Copilot both load `claude/hooks/hooks.json`, which `plugin.json` names, and Claude Code and Copilot CLI document a `block` decision, so one script covers both coding agents. Tests stay out because `dot-implement` can leave expected test failures for `dot-testing`. The hook allows the second stop, so it cannot loop, and it shows the user a warning when the check still fails there. It runs the check only when the working tree changed, compared with a snapshot from the start of the prompt. In Claude Code, the hook also takes a snapshot on `SubagentStart` and runs on `SubagentStop`, so each agent answers only for the changes that it made, and the subagent that broke the check fixes it. The check is an npm script, or a `Makefile` target for a repository without `package.json`. A turn that changes nothing never makes the agent fix old problems or runs repository code. It acts only in repositories listed in `checkRepos` in the `config.json` of the user, which `dotagents check enable` sets: the `check` script is code of the repository, and an opt-in inside the repository would let an untrusted repository enable itself. |
 | 19 | The global CLI install writes rules for both coding agents, and skills only for Copilot. Claude Code gets the skills, agents, and hooks from the plugin. | Plugins cannot ship always-on rules, and the CLI cannot install agents and hooks safely. `update` removes the Claude Code skills that earlier versions installed, and `doctor` warns about copies that stay. Project installs still write `.claude/skills/`, so collaborators do not need the plugin. |
 | 20 | Add an always-on writing rule, based on ASD-STE100, for all text that agents write: chat, CLI output, plans and reports, commits, pull requests, and docs. It takes precedence over the Google style in `dot-docs-writing`. | Short sentences with a controlled vocabulary are easier to read for a reader in a second language and for translation tools. One rule for all text replaces the prose rules that `dot-docs-writing` kept only for docs. The rules are in our own words, because the ASD-STE100 dictionary is copyrighted. |
 | 21 | Ship two agents in the plugin only: `dot-implementer` and `dot-tester`. Each one preloads one skill as `dotagents:<skill>`, and none of them can start another agent. | The production step and the test step of a roadmap task can run in a new context with only their skill. With a bare name, Claude Code preloads a skill with the same name from `~/.claude/skills/` first, such as an old copy from an earlier CLI install. A live run on 2026-11-12 showed that agents receive `~/.claude/rules/dotagents.md`, so the agents do not load the rules themselves. |
@@ -145,6 +145,8 @@ The reasons for these locations are the following:
 - On 2026-11-12, a roadmap task ran live in Claude Code with four steps and an
   approval after each one. It is not verified that Copilot reads the
   `skills` field of an agent.
+- It is not verified that Copilot reads the `skills`, `agents`, and `hooks`
+  fields of `plugin.json`, or the files at their new paths.
 - In project mode, Copilot in VS Code reads skills from both `.claude/skills/`
   and `.agents/skills/`, so it can list each skill twice. Claude Code reads
   only the first location, so dotagents writes both. When Copilot also has
@@ -209,7 +211,7 @@ With the hashes, dotagents can tell its own files from your edits:
 ### Rules
 
 Rules load into every conversation. dotagents joins every file in
-`plugin/rules/` into one rules document, with `core.md` first:
+`rules/` into one rules document, with `core.md` first:
 
 | File | Content | Origin |
 | ---- | ------- | ------ |
@@ -254,7 +256,7 @@ the recorded commit.
 
 ### Agents
 
-The agents are in `plugin/agents/`, and only the plugin ships them. Each
+The agents are in `claude/agents/`, and only the plugin ships them. Each
 agent preloads one skill, as the following table shows. See decision 21.
 
 | Agent | Skill | Step of a task |
@@ -264,7 +266,7 @@ agent preloads one skill, as the following table shows. See decision 21.
 
 ### Scaffold
 
-`plugin/scaffold/` has the files that `dotagents scaffold` copies to the
+`scaffold/` has the files that `dotagents scaffold` copies to the
 repository root. Each template ends in `.tmpl`, which the command removes.
 Thus agents and Git in the dotagents repository do not load them as its own
 `AGENTS.md`, `CLAUDE.md`, or `.gitattributes`.
@@ -285,11 +287,15 @@ Thus agents and Git in the dotagents repository do not load them as its own
 
 ### Plugin
 
-`plugin/.claude-plugin/plugin.json` makes `plugin/` a Claude Code plugin, and
-`.claude-plugin/marketplace.json` lists it. Claude Code finds `skills/`,
-`agents/`, and `hooks/hooks.json` by default, so `plugin.json` names none of
-them. The CLI reads only `rules/`, `skills/`, and `scaffold/` from `plugin/`,
-so the agents reach users only through the plugin.
+`.claude-plugin/plugin.json` makes the repository root a Claude Code plugin,
+and `.claude-plugin/marketplace.json` lists it with the source `./`. The
+plugin must be at the root because `claude plugin validate` rejects a path
+with `..`, so `plugin.json` cannot sit in `claude/` and point at
+`../skills/`. `plugin.json` names `skills/`, `claude/hooks/hooks.json`, and
+each file of `claude/agents/`.
+`npm run lint:content` fails when the agent list differs from the files. The
+CLI reads only `rules/`, `skills/`, and `scaffold/` from the root, so the
+agents reach users only through the plugin.
 
 `plugin.json` has no `version`. With a fixed version, Claude Code skips
 updates. Without one, it versions the plugin by commit, so every push reaches
@@ -338,7 +344,7 @@ builds report versions such as `1.0.0-dev+30d0533`.
   - Skill and agent frontmatter, and the skills that each agent preloads.
   - The rules and `SKILL.md` character budgets, and upstream metadata files.
   - The plugin and marketplace manifests.
-  - Relative links and their anchors in `plugin/` and in the docs.
+  - Relative links and their anchors in the catalog and in the docs.
   - In `README.md`, `SPEC.md`, `CONTRIBUTING.md`, and `docs/`: each `dot-*`
     name is a skill or an agent, and each count of skills or agents is
     correct.

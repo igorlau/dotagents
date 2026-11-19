@@ -1,11 +1,11 @@
-// Checks the structure of plugin/: skill and agent frontmatter, relative links and
+// Checks the structure of the catalog and the plugin: skill and agent frontmatter, relative links and
 // anchors, the rules and skill size budgets, upstream metadata, scaffold templates, and
 // the plugin and marketplace manifests. Also checks that the top-level docs and docs/
 // name only real skills and agents, with the right counts, and that the prose follows
-// the mechanical part of plugin/rules/writing.md. Exits 1 on any problem.
+// the mechanical part of rules/writing.md. Exits 1 on any problem.
 import fs from "node:fs";
 import path from "node:path";
-import { packageRoot, pluginRoot } from "../src/paths.ts";
+import { packageRoot } from "../src/paths.ts";
 import { parseFrontmatter } from "../src/frontmatter.ts";
 import { headingAnchors, withoutFences } from "./markdown.ts";
 
@@ -24,7 +24,7 @@ const DESCRIPTION_MAX = 1024;
 const UPSTREAM_FIELDS = ["repository", "path", "commit", "license", "modified"];
 const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"];
 
-// The part of plugin/rules/writing.md that a pattern can check. The rule names the words
+// The part of rules/writing.md that a pattern can check. The rule names the words
 // to use; the words to avoid are here, so that no agent reads them on every turn.
 const PROSE_PATTERNS: [RegExp, string][] = [
   [/—/g, "em dash"],
@@ -38,7 +38,7 @@ const PROSE_EXEMPT = new Set(["word-list.md"]);
 const problems: string[] = [];
 const fail = (file: string, message: string, line?: number) => problems.push(`${path.relative(packageRoot, file)}${line ? `:${line}` : ""}: ${message}`);
 
-const rulesDir = path.join(pluginRoot, "rules");
+const rulesDir = path.join(packageRoot, "rules");
 let ruleChars = 0;
 for (const name of fs.readdirSync(rulesDir)) {
   const file = path.join(rulesDir, name);
@@ -55,7 +55,7 @@ for (const name of fs.readdirSync(rulesDir)) {
 }
 if (ruleChars > RULES_CHAR_BUDGET) fail(rulesDir, `${ruleChars} characters exceeds the budget of ${RULES_CHAR_BUDGET}`);
 
-const skillsDir = path.join(pluginRoot, "skills");
+const skillsDir = path.join(packageRoot, "skills");
 // Claude Code can't preload a skill that sets disable-model-invocation into an agent.
 const preloadableSkills = new Set<string>();
 const skillNames = new Set<string>();
@@ -92,7 +92,7 @@ for (const name of fs.readdirSync(skillsDir)) {
 }
 
 // Scaffold templates need the .tmpl suffix; see loadScaffold in src/catalog.ts.
-const scaffoldDir = path.join(pluginRoot, "scaffold");
+const scaffoldDir = path.join(packageRoot, "scaffold");
 for (const file of allFiles(scaffoldDir)) {
   if (!file.endsWith(".tmpl")) fail(file, "scaffold templates must end in .tmpl");
   else if (file.endsWith(".json.tmpl")) {
@@ -104,7 +104,7 @@ for (const file of allFiles(scaffoldDir)) {
   }
 }
 
-const agentsDir = path.join(pluginRoot, "agents");
+const agentsDir = path.join(packageRoot, "claude", "agents");
 const pluginName = checkManifests();
 if (pluginName) checkAgents(pluginName);
 
@@ -173,22 +173,42 @@ function checkAgents(pluginName: string): void {
 }
 
 /**
- * Checks that the marketplace lists this plugin by name, and that the plugin has no fixed version.
+ * Checks that the marketplace lists this plugin by name, that the plugin has no fixed version,
+ * that plugin.json lists every agent file of claude/agents/ and names existing skills and hooks paths,
+ * and that each file that hooks.json runs exists.
  * Returns the plugin name, or undefined when plugin.json can't be read.
  */
 function checkManifests(): string | undefined {
-  const pluginFile = path.join(pluginRoot, ".claude-plugin", "plugin.json");
+  const pluginFile = path.join(packageRoot, ".claude-plugin", "plugin.json");
   const marketplaceFile = path.join(packageRoot, ".claude-plugin", "marketplace.json");
   const plugin = readJson(pluginFile);
   const marketplace = readJson(marketplaceFile);
   if (!plugin || !marketplace) return plugin?.name;
 
-  const entry = marketplace.plugins?.find((candidate: { source?: string }) => path.resolve(packageRoot, candidate.source ?? "") === path.resolve(pluginRoot));
-  if (!entry) fail(marketplaceFile, "no plugin entry whose source is plugin/");
+  const entry = marketplace.plugins?.find((candidate: { source?: string }) => candidate.source === "./");
+  if (!entry) fail(marketplaceFile, "no plugin entry whose source is ./");
   else if (entry.name !== plugin.name) fail(marketplaceFile, `plugin name "${entry.name}" must match plugin.json name "${plugin.name}"`);
   // Claude Code skips updates while the version stays the same; without one, it versions by commit.
   if ("version" in plugin) fail(pluginFile, "remove \"version\", so Claude Code updates the plugin on every commit");
+  const listed = [...(Array.isArray(plugin.agents) ? plugin.agents : [])].sort();
+  const expected = fs.readdirSync(agentsDir).filter((name) => name.endsWith(".md")).sort().map((name) => `./${path.relative(packageRoot, path.join(agentsDir, name))}`);
+  if (JSON.stringify(listed) !== JSON.stringify(expected)) fail(pluginFile, `"agents" must list exactly ${JSON.stringify(expected)}`);
+  checkPluginPaths(pluginFile, plugin);
   return plugin.name;
+}
+
+/** Fails when plugin.json names a skills or hooks path that does not exist, or hooks.json runs a missing file. */
+function checkPluginPaths(pluginFile: string, plugin: { hooks?: string; skills?: string[] }): void {
+  for (const skills of plugin.skills ?? []) if (!fs.existsSync(path.join(packageRoot, skills))) fail(pluginFile, `"skills" path ${skills} does not exist`);
+  if (!plugin.hooks) return;
+  const hooksFile = path.join(packageRoot, plugin.hooks);
+  if (!fs.existsSync(hooksFile)) {
+    fail(pluginFile, `"hooks" path ${plugin.hooks} does not exist`);
+    return;
+  }
+  for (const [, script] of fs.readFileSync(hooksFile, "utf8").matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/([^"\\\s]+)/g)) {
+    if (!fs.existsSync(path.join(packageRoot, script))) fail(hooksFile, `command runs missing file ${script}`);
+  }
 }
 
 /** Returns the frontmatter fields of a file, or reports why it has none and returns undefined. */
@@ -243,7 +263,7 @@ function checkProse(file: string): void {
   const blank = (match: string) => match.replace(/[^\n]/g, " ");
   const text = withoutFences(fs.readFileSync(file, "utf8")).replace(/`[^`\n]*`/g, blank).replace(/"[^"\n]*"|“[^”\n]*”/g, blank);
   for (const [pattern, label] of PROSE_PATTERNS) {
-    for (const match of text.matchAll(pattern)) fail(file, `${label} "${match[0]}"; see plugin/rules/writing.md`, lineOf(text, match.index));
+    for (const match of text.matchAll(pattern)) fail(file, `${label} "${match[0]}"; see rules/writing.md`, lineOf(text, match.index));
   }
 }
 

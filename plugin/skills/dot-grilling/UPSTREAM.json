@@ -1,8 +1,0 @@
-{
-  "repository": "https://github.com/mattpocock/skills",
-  "path": "skills/productivity/grilling",
-  "commit": "49dd158d1076134a641b33efb035946536778336",
-  "license": "MIT",
-  "modified": true,
-  "notes": "Added a sentence about the conventions of the repository. Renamed with the dot- prefix. Rewrote the text under plugin/rules/writing.md, and replaced the emoji in the round format with text labels."
-}

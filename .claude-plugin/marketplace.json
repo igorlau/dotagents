@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "dotagents",
-      "source": "./plugin",
+      "source": "./",
       "description": "Skills, agents, and hooks for a planned, tested, and reviewed coding workflow."
     }
   ]

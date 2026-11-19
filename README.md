@@ -140,12 +140,12 @@ write. To overwrite the file, add `--force`.
 
 ## What is included
 
-The always-on rules in [`plugin/rules/`](plugin/rules/) cover working
+The always-on rules in [`rules/`](rules/) cover working
 agreements, the smallest complete change from
 [ponytail](https://github.com/DietrichGebert/ponytail), code comments, code
 style, and writing.
 
-The 14 skills in [`plugin/skills/`](plugin/skills/) load when a task needs
+The 14 skills in [`skills/`](skills/) load when a task needs
 them:
 
 | Skill | Purpose |
@@ -165,7 +165,7 @@ them:
 | `dot-docs-writing` | Give docs the structure and format of the Google developer documentation style. |
 | `dot-writing-for-agents` | Write skills, `AGENTS.md`, and `CLAUDE.md` files. |
 
-The plugin also has 2 agents in [`plugin/agents/`](plugin/agents/). Each
+The plugin also has 2 agents in [`claude/agents/`](claude/agents/). Each
 agent runs one step of a task in a clean context:
 
 | Agent | Purpose |

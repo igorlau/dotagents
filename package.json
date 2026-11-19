@@ -17,7 +17,9 @@
   },
   "files": [
     "dist",
-    "plugin",
+    "skills",
+    "rules",
+    "scaffold",
     "THIRD_PARTY_NOTICES.md"
   ],
   "engines": {
