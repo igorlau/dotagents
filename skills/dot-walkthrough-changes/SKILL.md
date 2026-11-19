@@ -39,7 +39,7 @@ Done when each layer has its findings, is clean, or was skipped.
 
 Run this step only when the caller gave no output path. Fill the template of step 4 of [`dot-walkthrough-branch`](../dot-walkthrough-branch/SKILL.md#4-report), with the target line of step 1 in place of the branch line. When step 3 ran, add the "Make it impossible" section. Then offer the page of step 5.
 
-With an output path, skip the report. Go to step 5.
+With an output path, skip the report. When the caller also said "layers only", write the layers JSON of step 5 to the output path, return that path as the last line of the answer, and stop. Otherwise, go to step 5.
 
 Done when the report has every layer of step 2, and every finding of step 3 when it ran.
 
