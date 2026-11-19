@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/cloudflare/security-audit-skill",
+  "path": "skills/security-audit",
+  "commit": "c1c8a8c1471069fb0e188eeaff69b8e8db6564a8",
+  "license": "MIT",
+  "modified": true,
+  "notes": "Rewrote SKILL.md under rules/writing.md and renamed the skill with the dot- prefix. Kept guidance mode and the severity anchors, and reduced the full audit to a single-agent pass in 5 steps (map, choose references, hunt, validate, report) that writes one REPORT.md. Dropped the six-phase workflow with subagents, the run directory and write isolation, the promotion procedure, the run profiles and the cost budget, the prior-run ledger, report-schema.json, the Node validators and their tests, and the diff-scoped run. Dropped RECONNAISSANCE.md, HUNTING.md, and VALIDATION-AND-REPORTING.md, which only serve those phases. Moved ATTACK-CLASSES.md and the 10 domain companion files to references/ with their upstream names. In the references, replaced the em dashes and arrows, removed the subagent_type labels, and changed \"Phase 1\" to \"the map step\"."
+}

@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/OneRedOak/claude-code-workflows",
+  "path": "design-review",
+  "commit": "29a34c725313c7621f426f838ed31cf482473fb4",
+  "license": "MIT",
+  "modified": true,
+  "notes": "Rewrote design-review-agent.md and design-review-slash-command.md as one SKILL.md under rules/writing.md, and renamed the skill with the dot- prefix. Kept the review phases 1 to 7 and the Live Environment First principle, and folded Phase 0 into a prepare step. Replaced the Playwright tool names with the browser tool of the session (Playwright MCP or Claude in Chrome). Added a precondition step that stops with the line \"UI review: skipped\" and a reason when the app command or the browser tool is missing. Replaced the triage matrix and the report structure with the dot-code-review finding format, with file:line and a screenshot path. Dropped the pull request diff injection, the tool list, the model and color settings, the context7 tools, design-principles-example.md, design-review-claude-md-snippet.md, and README.md."
+}

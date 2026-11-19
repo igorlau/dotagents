@@ -1,13 +1,14 @@
 ---
 name: dot-roadmap
-description: Turn a grilled plan into a roadmap of phases, each split into self-contained tasks.
+description: Split an existing plan into a roadmap of phases, each split into self-contained tasks. Use when the user asks to split a plan into a roadmap or to break a plan into tasks. Do not use it to write the plan.
 argument-hint: "Path to the plan, if it is not in this conversation"
-disable-model-invocation: true
 ---
 
 # Roadmap
 
 A roadmap splits a plan into **phases**, and each phase into **tasks**. A phase ends on a **milestone**: an observable state where the system works and could ship. A task is **self-contained**: a fresh agent session can build it from its file alone, and a reviewer can judge its diff in one session.
+
+**Agent call:** when an agent calls this skill, skip step 5, write the roadmap to the path that the caller gives (the default of step 6 when it gives none), and return the compact breakdown of step 5.
 
 ## 1. Load the plan
 
@@ -40,13 +41,15 @@ Split each phase into tasks. Each task:
 
 - Is a **vertical slice**: a narrow but complete path through every layer it needs, verifiable on its own.
 - Keeps a refactor separate from a behavior change.
-- Fits one fresh agent session and one reviewable diff, roughly a few hundred changed lines.
+- Fits one fresh agent session and one reviewable diff of about 300 changed lines or fewer.
 - Lists its **test cases**: the test names, each with the test file where it belongs, in the order and with the names that the `dot-testing` skill gives. For controller, integration, and end-to-end tests, use `references/http.md` of `dot-testing`. `dot-testing` writes them after `dot-implement`. Write "none" when the task changes no tested behavior.
 - Declares its **blockers**: the tasks that must be done first, by id (`2.3` is phase 2, task 3). A task without blockers can start now.
 
 When one mechanical change breaks many call sites at once, read [`references/wide-refactor.md`](references/wide-refactor.md).
 
 When a bullet of a task's requirements implements a functional requirement (`FR`) or a business rule (`BR`), start the bullet with its ID. User needs (`UN`) and non-negotiables (`NN`) apply to the whole roadmap: they stay in `README.md`, and no task claims them.
+
+When the plan is one task of about 300 changed lines or fewer, write a one-task roadmap. Otherwise, split it.
 
 Done when every `FR` and `BR` belongs to at least one task or to the roadmap's out-of-scope list, every decision belongs to exactly one task or to that list, and every task has acceptance criteria that can fail.
 

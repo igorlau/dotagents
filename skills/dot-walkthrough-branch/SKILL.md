@@ -1,10 +1,10 @@
 ---
-name: dot-stack-review
+name: dot-walkthrough-branch
 description: Review the commits of a branch as an ordered stack of dependency layers, and report each layer with its findings.
 disable-model-invocation: true
 ---
 
-# Stack review
+# Branch walkthrough
 
 Review the committed changes of a branch as a **stack**: layers of files in dependency order. A reader understands layer 1 on its own, and each later layer from the layers above it. The `dot-code-review` skill gives the review. This skill gives the layers and the report.
 
@@ -24,13 +24,7 @@ Done when you have the merge base and the list of changed files.
 
 ## 2. Group the layers
 
-Group the changed files into layers by dependency, such as types and contracts, core logic, callers, tests, then docs and config.
-
-- Derive each dependency from the imports and the diff. File A depends on file B when A imports, calls, links, or names something that the diff adds or changes in B. A folder name is a hint only.
-- A layer holds whole files. Split a file into hunks only when it holds changes for 2 layers. List the file in both layers, each with its own hunks.
-- Order the layers in the order that a reader must understand them. Each layer depends only on layers with a lower number. Merge 2 layers that depend on each other.
-
-Show the layer map, one line per layer: the number, the name, and the files. Then continue to step 3. The user can ask for new layers after the report.
+Group the changed files of step 1 into layers with the rules of [`references/layers.md`](references/layers.md). Then continue to step 3. The user can ask for new layers after the report.
 
 Done when each changed hunk is in exactly one layer, and no layer depends on a layer below it.
 
@@ -83,34 +77,19 @@ Done when the report has every layer of step 2 and every finding of step 3.
 Write a self-contained HTML page of the stack, with the diff of each file and its findings.
 
 1. Run `git check-ignore -q .tmp` at the repository root. When it exits with a non-zero code, stop, and tell the user that Git does not ignore `.tmp`, so the page could reach a commit.
-2. Write the layers of step 2 and the findings of step 3 to `.tmp/stack-review/<branch-slug>.json`. `<branch-slug>` is head with each character other than a letter, a digit, `.`, `_`, or `-` replaced by `-`, such as `feat-flow-fix-loop`. Sort the keys. `dependsOn` has the 1-based numbers of the layers that a layer needs.
+2. Write the layers of step 2 and the findings of step 3 to `.tmp/walkthrough/<branch-slug>.json`. `<branch-slug>` is head with each character other than a letter, a digit, `.`, `_`, or `-` replaced by `-`, such as `feat-flow-fix-loop`. Sort the keys.
 
    ```json
    {
      "base": "main",
      "head": "feat/my-change",
-     "layers": [
-       {
-         "dependsOn": [],
-         "files": ["src/types.ts"],
-         "findings": [
-           {
-             "body": "**Scenario:** ...\n**Fix:** ...",
-             "file": "src/types.ts",
-             "kind": "correctness",
-             "line": 42,
-             "severity": "high",
-             "summary": "One-line summary"
-           }
-         ],
-         "name": "Contracts",
-         "purpose": "One line"
-       }
-     ]
+     "layers": []
    }
    ```
 
-3. Run the script of this skill directory from the repository root: `node <skill directory>/scripts/page.mjs .tmp/stack-review/<branch-slug>.json`. It runs `git merge-base` and `git diff` itself, and prints the path of the page.
+   `layers` has the layer objects of the layers JSON in [`references/layers.md`](references/layers.md).
+
+3. Run the script of this skill directory from the repository root: `node <skill directory>/scripts/page.mjs .tmp/walkthrough/<branch-slug>.json`. It runs `git merge-base` and `git diff` itself, and prints the path of the page.
 4. When the script exits with a non-zero code, fix the field that its message names, and run it again.
 
 Done when the user has the path of the page.

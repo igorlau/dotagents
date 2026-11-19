@@ -7,6 +7,8 @@ description: Plan a change as small, verifiable steps before writing code. Use w
 
 A plan turns a request into a sequence of **vertical slices**: each slice is a small change that leaves the system in a state that works and ends on a check you can run.
 
+**Agent call:** when an agent calls this skill, do not wait for the user in steps 3, 5, and 7, but still produce their content, skip `dot-grilling`, and skip the file write. Mark each unsettled decision as an open question, and return the plan in the shape of step 7.
+
 ## 1. Pin the goal
 
 Restate the goal in one or two sentences, and name the **done criterion**: the observable result that tells the user the work is finished (a test that passes, a command's output, a behavior in the UI).
