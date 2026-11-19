@@ -86,7 +86,8 @@ Use these tools, in this order of preference:
 
 1. A debugger or REPL, if the environment supports it. One breakpoint is better than ten logs.
 2. Targeted logs at the boundaries that tell the hypotheses apart.
-3. Never log everything and grep the output.
+
+**Never log everything and grep the output.** Add a log only where it tests one prediction from Phase 3.
 
 **Tag every debug log** with a unique prefix, such as `[DEBUG-a4f2]`. At the end, one grep finds them all for cleanup.
 
