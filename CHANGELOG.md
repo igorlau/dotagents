@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.1](https://github.com/igorlau/dotagents/compare/v2.0.0...v2.0.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* **skills:** look up facts inline in dot-grilling ([4a701ed](https://github.com/igorlau/dotagents/commit/4a701ed027c0c7e6902581684b5fc0a9d2b37f7a))
+* **skills:** make the dot-debug log ban a guardrail ([711e53c](https://github.com/igorlau/dotagents/commit/711e53cf2ff112918f41b0972ed7c2421a5d603f))
+* **skills:** return only the layers file on a layers call ([cd22a0b](https://github.com/igorlau/dotagents/commit/cd22a0b021eb096fea4caec2875bb22520a19e82))
+
 ## [2.0.0](https://github.com/igorlau/dotagents/compare/v1.0.22...v2.0.0) (2026-11-19)
 
 
