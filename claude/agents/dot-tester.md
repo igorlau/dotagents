@@ -2,7 +2,9 @@
 name: dot-tester
 description: Write the tests of one roadmap task with the dot-testing skill, after the code exists. Use for the test step of a roadmap task.
 skills: dotagents:dot-testing
-disallowedTools: Agent
+model: sonnet
+effort: medium
+tools: Read, Grep, Glob, Bash, Edit, Write
 ---
 
 # Tester

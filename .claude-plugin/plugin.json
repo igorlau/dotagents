@@ -8,10 +8,12 @@
   "repository": "https://github.com/igorlau/dotagents",
   "license": "MIT",
   "skills": [
-    "./skills/"
+    "./skills/",
+    "./claude/skills/"
   ],
   "agents": [
     "./claude/agents/dot-implementer.md",
+    "./claude/agents/dot-reviewer.md",
     "./claude/agents/dot-tester.md"
   ],
   "hooks": "./claude/hooks/hooks.json"

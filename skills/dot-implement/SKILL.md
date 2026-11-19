@@ -42,7 +42,7 @@ Check every acceptance criterion one by one. When only an expected failure or a 
 
 When a hard check or an unexpected failure stays red, or the task or plan turns out wrong (a fact contradicts it, or it needs work outside its scope), stop. Report the check that failed or the fact that conflicts, and propose a change to the task or plan. Keep the task file, the roadmap's requirements and decisions, and the plan as they are until the user agrees, and keep the change inside its scope.
 
-Do not tick the roadmap checkbox. The `dot-commit` skill ticks it after the review step.
+Do not tick the roadmap checkbox. The Gate script of `dot-factory` ticks it, or the user ticks it by hand.
 
 Done when the hard checks pass and no unexpected failure remains.
 

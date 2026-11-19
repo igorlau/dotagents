@@ -24,7 +24,7 @@ The flow has these steps, in this order:
     1. [`dot-code-review`](../../skills/dot-code-review/SKILL.md)
        reviews the change.
 1. [`dot-commit`](../../skills/dot-commit/SKILL.md) commits the task
-   in small commits, and ticks the task in the roadmap.
+   in small commits. Then you tick the task in the roadmap.
 
 The [README](../../README.md#the-flow) shows the steps as a sequence
 diagram. [Build a task](04-build.md) shows the steps of one task.

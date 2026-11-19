@@ -58,6 +58,8 @@ Give one report for both passes, from most to least severe. Give a correctness f
 **Fix:** <smallest change that removes the problem>
 ```
 
+When the caller asks for finding classes, read [`references/finding-classes.md`](references/finding-classes.md), and give each finding a class and a severity from it.
+
 End the report with this section. Write one line for each class of finding in the report. Prefer a tool that the repository already runs:
 
 ```markdown

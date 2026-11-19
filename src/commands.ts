@@ -313,7 +313,7 @@ export function list(): void {
   for (const skill of loadCatalog().skills) log(`${skill.name}\n  ${skill.description}`);
 }
 
-/** The user's settings. The plugin's `hooks/check.mjs` reads `checkRepos` from the same file. */
+/** The user's settings. The plugin's `claude/hooks/check.mjs` reads `checkRepos` from the same file. */
 interface Config {
   checkRepos?: string[];
   source?: string;

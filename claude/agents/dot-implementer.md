@@ -2,7 +2,9 @@
 name: dot-implementer
 description: Write the production code of one roadmap task with the dot-implement skill, and hand off the test changes it needs. Use for the implementation step of a roadmap task.
 skills: dotagents:dot-implement
-disallowedTools: Agent
+model: sonnet
+effort: high
+tools: Read, Grep, Glob, Bash, Edit, Write
 ---
 
 # Implementer
