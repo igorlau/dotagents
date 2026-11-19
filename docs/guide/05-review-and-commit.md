@@ -1,7 +1,34 @@
 # Review and commit
 
-Review every change before you commit it. Start the review yourself, for a
-roadmap task and for any other change.
+Review every change before you commit it. A `dot-factory` run reviews its
+change for you. For any other change, start the review yourself.
+
+## Read the review of dot-factory
+
+After the last task, `dot-factory` starts one `dotagents:dot-reviewer` agent
+for the whole change. To get a review earlier, ask for it during the build.
+A script picks the lenses from the changed files:
+
+- Requirements and code: always. The code lens uses `dot-code-review` and
+  `dot-comments`.
+- Security: when a changed file is not Markdown. It uses
+  `dot-security-changes`.
+- UX: when a changed file is UI code, such as `*.tsx` or `*.css`. It uses
+  `dot-ux-review`.
+- Docs: when a changed file is Markdown. It uses `dot-docs-writing`.
+
+The UI review with `dot-ui-review` runs in the main session. It needs a `dev`
+or `start` script in the repository and a browser tool in the session.
+Otherwise, the report says why it skipped.
+
+Above about 1,500 changed lines, the reviewer splits the diff into layers,
+and the report links an HTML page of the layers.
+
+The agent fixes every finding, and the review loop runs until no finding is
+open, or until it escalates. See
+[The flow](02-the-flow.md#the-review). At the end, the agent stages all
+changes and writes `report.md` in the run directory. Read the report and the
+staged diff, then commit with `dot-commit`.
 
 ## Review the diff with dot-code-review
 
@@ -88,8 +115,9 @@ The agent splits the changes into small, logical commits, and shows each
 group and its message before it commits. It uses the commit convention of
 the repository, or Conventional Commits.
 
-When the commits finish a roadmap task, tick the task in the roadmap
-`README.md` by hand: change `- [ ]` to `- [x]`. The next `dot-implement` run
-with the roadmap directory then picks the next task.
+After a `dot-factory` run, the Gate already ticked each task. When you build
+a task by hand, tick the task in the roadmap `README.md` after the commits:
+change `- [ ]` to `- [x]`. The next `dot-implement` run with the roadmap
+directory then picks the next task.
 
 Next: [Rules and principles](06-rules-and-principles.md).

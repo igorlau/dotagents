@@ -1,13 +1,16 @@
 # dotagents
 
-dotagents gives Claude Code and GitHub Copilot one AI workflow
-for every project. The workflow plans a change, writes code and tests in small
-steps, verifies each step, reviews the result, and asks for your decision.
+dotagents gives Claude Code and GitHub Copilot the same skills and rules
+for every project. The skills plan a change, write code and tests in small
+steps, verify each step, review the result, and ask for your decision. In
+Claude Code, `dot-factory` runs these steps for you, from one description to
+a staged change.
 
 dotagents has two parts:
 
 - A plugin with skills, agents, and hooks. Claude Code, the
-  Copilot CLI, and VS Code load the plugin.
+  Copilot CLI, and VS Code load the plugin. `dot-factory` and the agents
+  work only in Claude Code.
 - A CLI that installs the always-on rules for both coding agents, and the
   skills for Copilot.
 
@@ -79,45 +82,53 @@ Run `scaffold` before `init`. `init` adds a block to `AGENTS.md`, and
 
 ## The flow
 
-The following diagram shows the full flow, from an idea to the commits of one
-task. The agent stops for your decision at each "approve", "fix", or "accept":
+In Claude Code, `dot-factory` takes a problem from one description to a
+staged change. To start a run, give it the problem:
+
+```text
+/dotagents:dot-factory Export the invoices as CSV, and do not write a row twice when a retry starts.
+```
+
+The following diagram shows a run of the `feature` track. The main session
+does all the work except the review, which runs in the `dot-reviewer` agent:
 
 ```mermaid
 sequenceDiagram
     actor User
     participant Main as Main session
-    User->>Main: dot-grilling with an idea
-    Main-->>User: Questions in rounds, with recommended answers
-    User->>Main: Answers until the plan is clear
-    User->>Main: dot-plan
-    Main-->>User: Requirements
-    User->>Main: Approve the requirements
-    Main-->>User: Entity schemas
-    User->>Main: Approve the schemas
-    Main-->>User: Plan as small, verifiable steps
-    User->>Main: Approve the plan
-    User->>Main: dot-roadmap
-    Main-->>User: Phases and task files with test cases
-    User->>Main: Approve the roadmap
+    participant Reviewer as dot-reviewer
+    User->>Main: dot-factory with a problem
+    Main-->>User: Intake and track
+    Main->>Main: Research
+    Main-->>User: Questions about the open decisions
+    User->>Main: Answers
+    Main-->>User: Spec: phases, tasks, and test cases
+    User->>Main: Approve the spec
     loop Each task
-        User->>Main: dot-implement with the task file
-        Main-->>User: Production code and tests
-        User->>Main: dot-code-review
-        Main-->>User: Findings
-        opt Fix
-            User->>Main: Fix these findings
-            Main-->>User: Changed code and tests
-        end
-        User->>Main: Accept
-        User->>Main: dot-commit
-        Main-->>User: Each commit for approval
-        User->>Main: Approve
-        Main-->>User: Commits
-        User->>User: Tick the task in the roadmap
+        Main->>Main: Code and tests
+        Main->>Main: Gate: check and tests, then tick the task
     end
+    Main->>Reviewer: Range, spec, and lenses
+    Reviewer-->>Main: Findings as JSON
+    loop Until the review script returns done
+        Main->>Main: Fix every finding, then run the Gate
+        Main->>Reviewer: Review the lines that the fix changed
+        Reviewer-->>Main: Findings as JSON
+    end
+    Main-->>User: Report, with all changes staged
+    User->>Main: dot-commit
 ```
 
-To learn the workflow step by step, read the [guide](docs/guide/README.md).
+The run stops for you at the spec approval, at the report, and at each
+escalation: a question that the rules of the run cannot answer. It never
+commits. Start Claude Code with `claude --effort medium` for a run. The main
+session does most of the work, and `dot-reviewer` has its own model and
+effort.
+
+Without `dot-factory`, and in Copilot, run each step yourself: `dot-grilling`,
+`dot-plan`, and `dot-roadmap`, then `dot-implement`, `dot-testing`,
+`dot-code-review`, and `dot-commit` for each task. To learn both ways, read
+the [guide](docs/guide/README.md).
 
 ## Commands
 
@@ -147,8 +158,8 @@ agreements, the smallest complete change from
 style, and writing.
 
 The 20 skills in [`skills/`](skills/) and
-[`claude/skills/`](claude/skills/) load when a task needs them. `dot-factory`
-works only in Claude Code:
+[`claude/skills/`](claude/skills/) load when a task needs them. You start
+`dot-factory` yourself, and it works only in Claude Code:
 
 | Skill | Purpose |
 | ----- | ------- |
@@ -175,7 +186,7 @@ works only in Claude Code:
 
 The plugin also has 3 agents in [`claude/agents/`](claude/agents/). Each
 agent runs one step of a task in a clean context, with a fixed model and
-effort:
+effort. `dot-factory` starts only `dot-reviewer`:
 
 | Agent | Purpose | Model | Effort |
 | ----- | ------- | ----- | ------ |
