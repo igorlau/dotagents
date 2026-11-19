@@ -3,6 +3,7 @@
   "bootstrap-sha": "56d328ec6312fbd40f5da29b7d0b0392aca62983",
   "packages": {
     ".": {
+      "include-component-in-tag": false,
       "package-name": "@igorlau/dotagents",
       "release-type": "node"
     }
