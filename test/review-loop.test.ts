@@ -170,14 +170,28 @@ describe("apply and accept", () => {
     assert.deepEqual(result.json().findings.map((finding: { id: string }) => finding.id), ["F3"]);
   });
 
-  test("returns the ledger history of the changed lines", () => {
+  test("escalates when the reviewer reports a fixed finding as regressed", () => {
     const { apply } = makeRun();
+    apply(0, [{ file: "a.txt", line: 2, class: "logic" }, { file: "a.txt", line: 3, class: "naming" }, { file: "a.txt", line: 4, class: "naming" }]);
+    apply(1, [], [{ id: "F1", status: "fixed" }, { id: "F2", status: "open" }, { id: "F3", status: "open" }]);
+
+    const result = apply(2, [], [{ id: "F1", status: "regressed" }, { id: "F2", status: "fixed" }, { id: "F3", status: "fixed" }]);
+
+    assert.equal(result.json().action, "escalate");
+    assert.match(result.json().reason, /F1 regressed after a fix closed it/);
+  });
+
+  test("prints the ledger entries on the changed lines of the next range as the history", () => {
+    const { apply, ledger, repo } = makeRun();
     apply(0, [{ file: "a.txt", line: 2, class: "logic" }, { file: "a.txt", line: 4, class: "naming" }]);
+    apply(1, [], [{ id: "F1", status: "fixed" }, { id: "F2", status: "open" }]);
+    const oldTree = git(repo, ["rev-parse", "HEAD^{tree}"]);
+    const newTree = commit(repo, { "a.txt": "1\ntwo\n3\n4\n5\n6\n7\n" });
 
-    const result = apply(1, [], [{ id: "F1", status: "fixed" }, { id: "F2", status: "open" }]);
+    const result = runLoop(repo, ["history", "--ledger", ledger, "--old", oldTree, "--new", newTree]);
 
+    assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(result.json().history.map((entry: { id: string; status: string }) => [entry.id, entry.status]), [["F1", "fixed"]]);
-    assert.deepEqual(result.json().findings.map((finding: { id: string }) => finding.id), ["F2"]);
   });
 
   test("escalates when the open count does not go down", () => {
@@ -190,11 +204,11 @@ describe("apply and accept", () => {
     assert.match(result.json().reason, /open count 1 is not lower than 1/);
   });
 
-  test("escalates the open findings after the review-only round", () => {
+  test("escalates the open findings at the review-only round after fix round 3", () => {
     const { apply } = makeRun();
     apply(0, [{ file: "a.txt", line: 2, class: "logic" }, { file: "a.txt", line: 3, class: "naming" }]);
 
-    const result = apply(4, [], [{ id: "F1", status: "fixed" }, { id: "F2", status: "open" }]);
+    const result = apply(3, [], [{ id: "F1", status: "fixed" }, { id: "F2", status: "open" }]);
 
     assert.equal(result.json().action, "escalate");
     assert.equal(result.json().reason, "cap");
@@ -209,6 +223,16 @@ describe("apply and accept", () => {
 
     assert.deepEqual(result.json().accepted.map((entry: { id: string }) => entry.id), ["F1", "F2"]);
     assert.deepEqual(JSON.parse(read(ledger)).entries.map((entry: { status: string }) => entry.status), ["accepted", "accepted"]);
+  });
+
+  test("accepts the same finding classes as the dot-code-review class table", () => {
+    const script = fs.readFileSync(SCRIPT, "utf8");
+    const table = fs.readFileSync(fileURLToPath(new URL("../skills/dot-code-review/references/finding-classes.md", import.meta.url)), "utf8");
+
+    const inScript = JSON.parse(/const CLASSES = (\[.*\]);/.exec(script)![1]);
+    const inTable = [...table.matchAll(/^\| `([a-z-]+)` \|/gm)].map((match) => match[1]);
+
+    assert.deepEqual(inScript, inTable);
   });
 
   test("keeps the ledger unchanged when the review file does not parse", () => {

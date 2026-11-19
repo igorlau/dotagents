@@ -21,7 +21,6 @@ const SKILL_PREFIX = "dot-";
 const NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const NAME_MAX = 64;
 const DESCRIPTION_MAX = 1024;
-// Pinned in each agent, so that a session model or effort does not change the cost of an agent run.
 const AGENT_MODELS = ["sonnet", "opus"];
 const AGENT_EFFORTS = ["low", "medium", "high", "xhigh", "max"];
 const UPSTREAM_FIELDS =["repository", "path", "commit", "license", "modified"];
