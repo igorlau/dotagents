@@ -18,6 +18,39 @@ The run keeps its files in `.tmp/factory/SLUG/`, and the spec in
 `.tmp/roadmaps/SLUG/`. `SLUG` is the problem in 2 to 5 words, joined by
 hyphens. Git must ignore `.tmp`, or the run stops before it starts.
 
+Start Claude Code with `claude --effort medium` for a run. The main session
+does most of the work, and `dot-reviewer` has its own model and effort.
+
+The following diagram shows a run of the `feature` track. The main session
+does all the work except the review, which runs in the `dot-reviewer` agent:
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Main as Main session
+    participant Reviewer as dot-reviewer
+    User->>Main: dot-factory with a problem
+    Main-->>User: Intake and track
+    Main->>Main: Research
+    Main-->>User: Questions about the open decisions
+    User->>Main: Answers
+    Main-->>User: Spec: phases, tasks, and test cases
+    User->>Main: Approve the spec
+    loop Each task
+        Main->>Main: Code and tests
+        Main->>Main: Gate: check and tests, then tick the task
+    end
+    Main->>Reviewer: Range, spec, and lenses
+    Reviewer-->>Main: Findings as JSON
+    loop Until the review script returns done
+        Main->>Main: Fix every finding, then run the Gate
+        Main->>Reviewer: Review the lines that the fix changed
+        Reviewer-->>Main: Findings as JSON
+    end
+    Main-->>User: Report, with all changes staged
+    User->>Main: dot-commit
+```
+
 ### Tracks
 
 The intake picks a track and shows it. To correct the track, reply with one
