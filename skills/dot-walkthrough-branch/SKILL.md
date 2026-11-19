@@ -76,7 +76,7 @@ Done when the report has every layer of step 2 and every finding of step 3.
 
 Write a self-contained HTML page of the stack, with the diff of each file and its findings.
 
-1. Run `git check-ignore -q .tmp` at the repository root. When it exits with a non-zero code, stop, and tell the user that Git does not ignore `.tmp`, so the page could reach a commit.
+1. Run `git check-ignore -q .tmp/` at the repository root. When it exits with a non-zero code, stop, and tell the user that Git does not ignore `.tmp`, so the page could reach a commit.
 2. Write the layers of step 2 and the findings of step 3 to `.tmp/walkthrough/<branch-slug>.json`. `<branch-slug>` is head with each character other than a letter, a digit, `.`, `_`, or `-` replaced by `-`, such as `feat-flow-fix-loop`. Sort the keys.
 
    ```json

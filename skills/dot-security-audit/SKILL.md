@@ -48,7 +48,7 @@ The target is the whole codebase of the current branch, or the path that the use
 2. **Choose references.** For each topic in the table below that the map shows, read the reference now.
 3. **Hunt.** For each component and each attack class that applies, trace untrusted input to the dangerous sink, and check that each control checks the right permission on the right resource. Write each candidate as a boundary hypothesis. Drop a candidate that fails the rules above.
 4. **Validate.** Re-read the source of each candidate, as if you did not write it. Search for a control that stops it. Run a bounded check when the sandbox allows. Set the status, and the severity for `confirmed`.
-5. **Report.** Write `.tmp/security-audit/REPORT.md` at the repository root. First run `git check-ignore -q .tmp`: if Git does not ignore `.tmp`, stop and tell the user. Do not edit `.gitignore`.
+5. **Report.** Write `.tmp/security-audit/REPORT.md` at the repository root. First run `git check-ignore -q .tmp/`: if Git does not ignore `.tmp`, stop and tell the user. Do not edit `.gitignore`.
 
 The report has these sections:
 
