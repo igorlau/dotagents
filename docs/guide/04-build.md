@@ -24,10 +24,12 @@ uncommitted change. Run each step yourself, in one conversation:
 
 ## Run a step in an agent
 
-In Claude Code, the plugin has two agents that run one step each in a clean
-context: `dotagents:dot-implementer` for the production code, and
-`dotagents:dot-tester` for the tests. Each agent preloads one skill and
-receives the always-on rules. No agent can start another agent. Copilot does
+In Claude Code, the plugin has 3 agents. Two of them run one step each in a
+clean context: `dotagents:dot-implementer` for the production code, and
+`dotagents:dot-tester` for the tests. The third, `dotagents:dot-reviewer`,
+reviews a range of two trees and writes the findings as JSON. Each agent
+preloads one skill, receives the always-on rules, and has a fixed model,
+effort, and tool list. No agent can start another agent. Copilot does
 not start the dotagents agents, so run the steps in the main session.
 
 Ask Claude Code to run the agent. Give

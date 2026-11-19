@@ -21,7 +21,10 @@ const SKILL_PREFIX = "dot-";
 const NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const NAME_MAX = 64;
 const DESCRIPTION_MAX = 1024;
-const UPSTREAM_FIELDS = ["repository", "path", "commit", "license", "modified"];
+// Pinned in each agent, so that a session model or effort does not change the cost of an agent run.
+const AGENT_MODELS = ["sonnet", "opus"];
+const AGENT_EFFORTS = ["low", "medium", "high", "xhigh", "max"];
+const UPSTREAM_FIELDS =["repository", "path", "commit", "license", "modified"];
 const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"];
 
 // The part of rules/writing.md that a pattern can check. The rule names the words
@@ -55,12 +58,12 @@ for (const name of fs.readdirSync(rulesDir)) {
 }
 if (ruleChars > RULES_CHAR_BUDGET) fail(rulesDir, `${ruleChars} characters exceeds the budget of ${RULES_CHAR_BUDGET}`);
 
-const skillsDir = path.join(packageRoot, "skills");
+const skillDirs = [path.join(packageRoot, "skills"), path.join(packageRoot, "claude", "skills")].flatMap((root) => fs.readdirSync(root).map((name) => path.join(root, name)));
 // Claude Code can't preload a skill that sets disable-model-invocation into an agent.
 const preloadableSkills = new Set<string>();
 const skillNames = new Set<string>();
-for (const name of fs.readdirSync(skillsDir)) {
-  const dir = path.join(skillsDir, name);
+for (const dir of skillDirs) {
+  const name = path.basename(dir);
   if (!fs.statSync(dir).isDirectory()) continue;
   const skillFile = path.join(dir, "SKILL.md");
   if (!fs.existsSync(skillFile)) {
@@ -71,6 +74,7 @@ for (const name of fs.readdirSync(skillsDir)) {
   const skillText = fs.readFileSync(skillFile, "utf8");
   if (skillText.length > SKILL_CHAR_BUDGET) fail(skillFile, `${skillText.length} characters exceeds the budget of ${SKILL_CHAR_BUDGET}; move conditional content to references/`);
 
+  if (skillNames.has(name)) fail(dir, `a skill named "${name}" already exists`);
   skillNames.add(name);
   const data = readFrontmatter(skillFile, skillText);
   if (!data) continue;
@@ -162,6 +166,9 @@ function checkAgents(pluginName: string): void {
     if (!data) continue;
     if (data.name !== path.basename(name, ".md")) fail(file, `name "${data.name}" must match the file name`);
     if (!data.description) fail(file, "missing description");
+    if (!data.tools) fail(file, "missing tools; list the tools that the agent needs");
+    if (!AGENT_MODELS.includes(data.model)) fail(file, `model must be one of ${AGENT_MODELS.join(", ")}`);
+    if (!AGENT_EFFORTS.includes(data.effort)) fail(file, `effort must be one of ${AGENT_EFFORTS.join(", ")}`);
     for (const entry of (data.skills ?? "").split(",").map((skill) => skill.trim()).filter(Boolean)) {
       const prefix = `${pluginName}:`;
       if (!entry.startsWith(prefix)) fail(file, `skill "${entry}" must start with "${prefix}"`);

@@ -112,7 +112,8 @@ sequenceDiagram
         User->>Main: dot-commit
         Main-->>User: Each commit for approval
         User->>Main: Approve
-        Main-->>User: Commits, and a tick in the roadmap
+        Main-->>User: Commits
+        User->>User: Tick the task in the roadmap
     end
 ```
 
@@ -145,11 +146,13 @@ agreements, the smallest complete change from
 [ponytail](https://github.com/DietrichGebert/ponytail), code comments, code
 style, and writing.
 
-The 19 skills in [`skills/`](skills/) load when a task needs
-them:
+The 20 skills in [`skills/`](skills/) and
+[`claude/skills/`](claude/skills/) load when a task needs them. `dot-factory`
+works only in Claude Code:
 
 | Skill | Purpose |
 | ----- | ------- |
+| `dot-factory` | Take a problem from one description to a staged change, with one spec approval and a Gate for each task. |
 | `dot-grilling` | Run an interview, in rounds of questions, that makes a plan clear. |
 | `dot-plan` | Plan a change as small, verifiable steps, with requirements and entity schemas. |
 | `dot-roadmap` | Split a plan into phases and tasks that each stand alone. |
@@ -170,13 +173,15 @@ them:
 | `dot-docs-writing` | Give docs the structure and format of the Google developer documentation style. |
 | `dot-writing-for-agents` | Write skills, `AGENTS.md`, and `CLAUDE.md` files. |
 
-The plugin also has 2 agents in [`claude/agents/`](claude/agents/). Each
-agent runs one step of a task in a clean context:
+The plugin also has 3 agents in [`claude/agents/`](claude/agents/). Each
+agent runs one step of a task in a clean context, with a fixed model and
+effort:
 
-| Agent | Purpose |
-| ----- | ------- |
-| `dot-tester` | Write the tests of a task after the code exists. |
-| `dot-implementer` | Write the production code of a task. |
+| Agent | Purpose | Model | Effort |
+| ----- | ------- | ----- | ------ |
+| `dot-tester` | Write the tests of a task after the code exists. | `sonnet` | `medium` |
+| `dot-implementer` | Write the production code of a task. | `sonnet` | `high` |
+| `dot-reviewer` | Review a range of two trees, and write the findings as JSON. | `sonnet` | `high` |
 
 ## More information
 

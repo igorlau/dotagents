@@ -49,11 +49,14 @@ directories. The Used by column shows who reads each directory:
 | Path | Content | Used by |
 | ---- | ------- | ------- |
 | `.claude-plugin/plugin.json` | The plugin manifest | The plugin |
-| `skills/` | Skills | The plugin and the CLI |
+| `skills/` | Portable skills, for Claude Code and Copilot | The plugin and the CLI |
+| `claude/skills/` | Skills for Claude Code only, such as `dot-factory` | The plugin |
 | `claude/agents/` | Agents | The plugin |
-| `claude/hooks/` | `hooks.json` and the hook scripts | The plugin |
+| `claude/hooks/` | `hooks.json`, the hook scripts, and `repo-commands.mjs` | The plugin |
 | `rules/` | Always-on rules | The CLI |
 | `scaffold/` | Templates for `dotagents scaffold` | The CLI |
+| `src/`, `test/` | The CLI and its tests | Contributors |
+| `docs/guide/` | The user guide | Users |
 
 The marketplace file, `.claude-plugin/marketplace.json`, is at the
 repository root, next to `plugin.json`, and points to `./`.
@@ -63,9 +66,14 @@ repository root, next to `plugin.json`, and points to `./`.
 To add a skill, do these steps:
 
 1. Read the `dot-writing-for-agents` skill.
-1. Create `skills/SKILL_NAME/SKILL.md`. Replace `SKILL_NAME` with a
-   name in lowercase words joined by hyphens, with the `dot-` prefix. The
-   `name` field in the frontmatter must be the same name.
+1. Pick the directory. Use `skills/` for a skill that works in Claude Code
+   and in Copilot. Use `claude/skills/` for a skill that needs Claude Code,
+   such as a skill that starts a plugin agent. The CLI installs only
+   `skills/`.
+1. Create `SKILL_NAME/SKILL.md` in that directory. Replace `SKILL_NAME` with
+   a name in lowercase words joined by hyphens, with the `dot-` prefix. The
+   `name` field in the frontmatter must be the same name, and the name must
+   not be in the other directory.
 1. Keep `SKILL.md` within 8,000 characters. Keep only what applies on every
    run. Move conditional content, such as a language, a mode, or a rare
    case, to `references/TOPIC.md`, behind a line that says when to read it.
@@ -89,8 +97,13 @@ Only the plugin ships agents. To add an agent, do these steps:
    namespace, such as `dotagents:dot-testing`. Claude Code loads a bare name
    from `~/.claude/skills/` first. A skill that sets
    `disable-model-invocation` cannot load into an agent.
-1. To block the `Agent` tool, so that the agent cannot start other agents,
-   set `disallowedTools: Agent`.
+1. Set these 3 fields. `npm run lint:content` fails an agent without them:
+   - `model`: `sonnet` or `opus`. Do not use `haiku`.
+   - `effort`: `low`, `medium`, `high`, `xhigh`, or `max`.
+   - `tools`: only the tools that the agent needs, such as
+     `Read, Grep, Glob, Bash, Edit, Write`. Leave out `Agent`, so that the
+     agent cannot start other agents. A review agent gets no `Edit` or
+     `Write`, and gets `Skill` to run the skill of each lens.
 1. Add the agent to the agents tables in the `README.md` and in the
    [design specification](SPEC.md#agents).
 1. Run `npm run lint:content`.
@@ -109,6 +122,9 @@ load this file. To add a hook, do these steps:
 1. Make the script do nothing in a repository that did not opt in. A hook
    runs in every repository of the user, and code of the repository is
    untrusted.
+1. To find the check or the test command of the repository, import
+   `checkCommand` or `testCommand` from `claude/hooks/repo-commands.mjs`.
+   The Gate script of `dot-factory` uses the same module.
 1. Make sure that the hook cannot loop. For example, `check.mjs` allows the
    second stop, and shows the user a warning instead.
 1. For an event of Claude Code only, such as `SubagentStop`, make sure that
@@ -144,8 +160,8 @@ and that the `README.md` lists every skill and agent. When you add a page to
 
 To copy a skill or a rule from another repository, do these steps:
 
-1. Copy the skill directory to `skills/`, or the rules file to
-   `rules/`.
+1. Copy the skill directory to `skills/` or `claude/skills/`, or the
+   rules file to `rules/`.
 1. Record the origin. For a skill, create `UPSTREAM.json` in the skill
    directory. For a rule, create `NAME.upstream.json` next to the rules file.
    Include the following fields:

@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, test } from "node:test";
 import { exists, git, read, sandbox, write, type Sandbox } from "./helpers.ts";
 
@@ -156,4 +158,15 @@ test("update says that Claude Code reads the rules from AGENTS.md when it remove
   assert.equal(result.status, 0, result.output);
   assert.ok(!exists(claudeRulesFile(repo)));
   assert.match(result.output, /Claude Code now reads the rules from AGENTS\.md\./);
+});
+
+test("the catalog leaves out the Claude Code only skills", () => {
+  const claudeSkills = fs.readdirSync(fileURLToPath(new URL("../claude/skills/", import.meta.url)));
+
+  const result = box.run(["list"]);
+
+  assert.equal(result.status, 0, result.output);
+  assert.match(result.output, /^dot-plan$/m);
+  assert.ok(claudeSkills.length > 0);
+  for (const name of claudeSkills) assert.doesNotMatch(result.output, new RegExp(`^${name}$`, "m"));
 });

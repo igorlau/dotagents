@@ -88,8 +88,8 @@ The agent splits the changes into small, logical commits, and shows each
 group and its message before it commits. It uses the commit convention of
 the repository, or Conventional Commits.
 
-When the commits finish a roadmap task, `dot-commit` ticks the task in the
-roadmap `README.md`. The next `dot-implement` run with the roadmap directory
-then picks the next task.
+When the commits finish a roadmap task, tick the task in the roadmap
+`README.md` by hand: change `- [ ]` to `- [x]`. The next `dot-implement` run
+with the roadmap directory then picks the next task.
 
 Next: [Rules and principles](06-rules-and-principles.md).
