@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/vercel-labs/web-interface-guidelines",
+  "path": "command.md",
+  "commit": "434b7f91364665f2f733b310ec54809bf8f37937",
+  "license": "MIT",
+  "modified": true,
+  "notes": "Copied command.md as references/web-interface-guidelines.md. Replaced 7 em dashes and the contraction \"don't\" so that the file passes the writing lint. Changed no rule. The own SKILL.md ignores the frontmatter, the $ARGUMENTS line, and the Output Format section of the file."
+}

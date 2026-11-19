@@ -17,28 +17,49 @@ const MAX_OUTPUT = 4000;
 const input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
 const cwd = input.cwd ?? process.cwd();
 // A subagent has its own snapshot, so each agent answers only for the changes that it made.
-const snapshotFile = path.join(os.tmpdir(), "dotagents-check", `${hash(input.agent_id ?? input.session_id ?? cwd)}.txt`);
+const snapshotFile = path.join(
+  os.tmpdir(),
+  "dotagents-check",
+  `${hash(input.agent_id ?? input.session_id ?? cwd)}.txt`,
+);
 
 let decision = {};
 if (checkEnabled()) {
-  if (process.argv[2] === "snapshot") saveSnapshot();
-  else {
+  if (process.argv[2] === "snapshot") {
+    saveSnapshot();
+  } else {
     const command = turnChangedTree() && checkCommand();
-    if (command) decision = runCheck(command);
+    if (command) {
+      decision = runCheck(command);
+    }
     // A blocked agent stops again, and that retry needs the snapshot.
-    if (decision.decision !== "block") fs.rmSync(snapshotFile, { force: true });
+    if (decision.decision !== "block") {
+      fs.rmSync(snapshotFile, { force: true });
+    }
   }
 }
 console.log(JSON.stringify(decision));
 
 function checkEnabled() {
-  const top = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd, encoding: "utf8" });
-  if (top.status !== 0) return false;
+  const top = spawnSync("git", ["rev-parse", "--show-toplevel"], {
+    cwd,
+    encoding: "utf8",
+  });
+  if (top.status !== 0) {
+    return false;
+  }
   // Same path as configDir() in the CLI's src/paths.ts.
-  const configDir = process.env.XDG_CONFIG_HOME ? path.join(process.env.XDG_CONFIG_HOME, "dotagents") : path.join(os.homedir(), ".config", "dotagents");
+  const configDir = process.env.XDG_CONFIG_HOME
+    ? path.join(process.env.XDG_CONFIG_HOME, "dotagents")
+    : path.join(os.homedir(), ".config", "dotagents");
   try {
-    const { checkRepos = [] } = JSON.parse(fs.readFileSync(path.join(configDir, "config.json"), "utf8"));
-    return Array.isArray(checkRepos) && checkRepos.includes(fs.realpathSync(top.stdout.trim()));
+    const { checkRepos = [] } = JSON.parse(
+      fs.readFileSync(path.join(configDir, "config.json"), "utf8"),
+    );
+    return (
+      Array.isArray(checkRepos) &&
+      checkRepos.includes(fs.realpathSync(top.stdout.trim()))
+    );
   } catch {
     return false;
   }
@@ -65,11 +86,24 @@ function treeHash() {
   const env = { ...process.env, GIT_INDEX_FILE: index };
   try {
     // Starting from a copy of the real index reuses its file stat cache, so unchanged files aren't rehashed.
-    const realIndex = spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-path", "index"], { cwd, encoding: "utf8" });
-    if (realIndex.status === 0 && fs.existsSync(realIndex.stdout.trim())) fs.copyFileSync(realIndex.stdout.trim(), index);
-    const add = spawnSync("git", ["add", "--all", "."], { cwd, env, encoding: "utf8" });
+    const realIndex = spawnSync(
+      "git",
+      ["rev-parse", "--path-format=absolute", "--git-path", "index"],
+      { cwd, encoding: "utf8" },
+    );
+    if (realIndex.status === 0 && fs.existsSync(realIndex.stdout.trim()))
+      fs.copyFileSync(realIndex.stdout.trim(), index);
+    const add = spawnSync("git", ["add", "--all", "."], {
+      cwd,
+      env,
+      encoding: "utf8",
+    });
     if (add.status !== 0) return undefined;
-    const tree = spawnSync("git", ["write-tree"], { cwd, env, encoding: "utf8" });
+    const tree = spawnSync("git", ["write-tree"], {
+      cwd,
+      env,
+      encoding: "utf8",
+    });
     return tree.status === 0 ? tree.stdout.trim() : undefined;
   } finally {
     fs.rmSync(index, { force: true });
@@ -85,7 +119,10 @@ function checkCommand() {
 
 function hasNpmCheck() {
   try {
-    return Boolean(JSON.parse(fs.readFileSync(path.join(cwd, "package.json"), "utf8")).scripts?.check);
+    return Boolean(
+      JSON.parse(fs.readFileSync(path.join(cwd, "package.json"), "utf8"))
+        .scripts?.check,
+    );
   } catch {
     return false;
   }
@@ -100,12 +137,21 @@ function hasMakeCheck() {
 }
 
 function runCheck([command, ...args]) {
-  const result = spawnSync(command, args, { cwd, encoding: "utf8", shell: process.platform === "win32" });
+  const result = spawnSync(command, args, {
+    cwd,
+    encoding: "utf8",
+    shell: process.platform === "win32",
+  });
   // A runner that isn't installed can't prove a failure.
   if (result.status === 0 || result.error) return {};
-  const output = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim().slice(-MAX_OUTPUT) || "It printed nothing.";
+  const output =
+    `${result.stdout ?? ""}${result.stderr ?? ""}`.trim().slice(-MAX_OUTPUT) ||
+    "It printed nothing.";
   const failure = `\`${[command, ...args.filter((arg) => arg !== "--silent")].join(" ")}\` failed with exit code ${result.status}.`;
-  if (input.stop_hook_active) return { systemMessage: `${failure} The agent already tried to fix it, so the check still fails:\n${output}` };
+  if (input.stop_hook_active)
+    return {
+      systemMessage: `${failure} The agent already tried to fix it, so the check still fails:\n${output}`,
+    };
   return {
     decision: "block",
     reason: `${failure} Fix the problems that your changes caused, then finish. If a problem was there before your changes, leave it and tell the user:\n${output}`,

@@ -23,14 +23,14 @@ each class of finding. To add one, use `dot-correct`. See [Make it yours](07-mak
 
 Ask the agent to fix the findings that you accept, then review again.
 
-## Review a branch as a stack with dot-stack-review
+## Review a branch as a stack with dot-walkthrough-branch
 
-Start [`dot-stack-review`](../../skills/dot-stack-review/SKILL.md)
+Start [`dot-walkthrough-branch`](../../skills/dot-walkthrough-branch/SKILL.md)
 with a head branch and a base branch, or with no arguments for the current
 branch against the default branch:
 
 ```text
-/dotagents:dot-stack-review feat/my-change against main
+/dotagents:dot-walkthrough-branch feat/my-change against main
 ```
 
 Use it for a large branch. It groups the committed changes into layers by
@@ -41,12 +41,27 @@ After the report, the agent offers an HTML page of the stack, with the diff
 of each file and its findings. To get the page without the offer, add `page`:
 
 ```text
-/dotagents:dot-stack-review page
+/dotagents:dot-walkthrough-branch page
 ```
 
-The agent writes the page to `.tmp/stack-review/` in the repository, and
+The agent writes the page to `.tmp/walkthrough/` in the repository, and
 prints its path. The page makes no network requests. Git must ignore `.tmp`,
 or the agent stops before it writes the page.
+
+## Other reviews
+
+Each of these skills reviews one kind of problem:
+
+- [`dot-walkthrough-changes`](../../skills/dot-walkthrough-changes/SKILL.md):
+  walk through the uncommitted changes as a stack of layers.
+- [`dot-security-audit`](../../skills/dot-security-audit/SKILL.md): audit a
+  whole codebase, a branch, or a path for security problems.
+- [`dot-security-changes`](../../skills/dot-security-changes/SKILL.md): check
+  the uncommitted changes for security problems.
+- [`dot-ux-review`](../../skills/dot-ux-review/SKILL.md): review UI code for
+  UX and accessibility rules by reading the code.
+- [`dot-ui-review`](../../skills/dot-ui-review/SKILL.md): review UI changes in
+  a browser, against a live preview.
 
 ## Delete comments with dot-comments
 

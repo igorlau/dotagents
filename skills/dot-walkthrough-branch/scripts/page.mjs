@@ -1,7 +1,10 @@
 // Usage: node page.mjs <layers.json>, from inside the repository. Writes
-// .tmp/stack-review/<branch-slug>.html at the repository root, and prints its path.
+// .tmp/walkthrough/<slug>.html at the repository root, and prints its path.
+// The layers file names the target with "base" and "head" (a branch), with "oldTree" and
+// "newTree" (a tree range), or with none of them (the working tree against HEAD).
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const SEVERITIES = ["high", "medium", "low"];
@@ -14,18 +17,19 @@ const stack = readStack(layersFile);
 validate(stack);
 
 const root = git(["rev-parse", "--show-toplevel"]);
-const mergeBase = git(["merge-base", stack.base, stack.head]);
+const target = resolveTarget();
 // shortcut: a file that is split between 2 layers shows its full diff in both layers, split the diff by hunk when readers need only the hunks of each layer.
 const diffs = new Map();
 stack.layers.forEach((layer, i) => {
   layer.files.forEach((file, j) => {
-    if (!diffs.has(file)) diffs.set(file, git(["--literal-pathspecs", "diff", "--no-color", "--no-ext-diff", mergeBase, stack.head, "--", file], root));
-    if (!diffs.get(file)) invalid(`layers[${i}].files[${j}]`, "has no changes between the merge base and head");
+    if (!diffs.has(file)) diffs.set(file, git(["--literal-pathspecs", "diff", "--no-color", "--no-ext-diff", target.from, target.to, "--", file], root));
+    if (!diffs.get(file)) invalid(`layers[${i}].files[${j}]`, "has no changes in the target");
   });
 });
 
-const page = path.join(root, ".tmp", "stack-review", `${stack.head.replace(/[^\w.-]/g, "-")}.html`);
+const page = path.join(root, ".tmp", "walkthrough", `${target.slug.replace(/[^\w.-]/g, "-")}.html`);
 fs.mkdirSync(path.dirname(page), { recursive: true });
+fs.rmSync(page, { force: true });
 fs.writeFileSync(page, renderPage());
 console.log(page);
 
@@ -56,8 +60,14 @@ function isText(value) {
 function validate(stack) {
   if (!isObject(stack)) invalid("the root", "must be an object");
   for (const key of ["base", "head"]) {
-    if (typeof stack[key] !== "string" || !/^[^-\s]\S*$/.test(stack[key])) invalid(key, "must be a branch or commit name without spaces that does not start with -");
+    if (key in stack && (typeof stack[key] !== "string" || !/^[^-\s]\S*$/.test(stack[key]))) invalid(key, "must be a branch or commit name without spaces that does not start with -");
   }
+  if ("base" in stack !== "head" in stack) invalid("base and head", "must both be present or both be absent");
+  for (const key of ["oldTree", "newTree"]) {
+    if (key in stack && (typeof stack[key] !== "string" || !/^[0-9a-f]{4,64}$/.test(stack[key]))) invalid(key, "must be a tree id in lowercase hexadecimal");
+  }
+  if ("oldTree" in stack !== "newTree" in stack) invalid("oldTree and newTree", "must both be present or both be absent");
+  if ("base" in stack && "oldTree" in stack) invalid("base", "cannot go with oldTree: name a branch or a tree range, not both");
   if (!Array.isArray(stack.layers) || stack.layers.length === 0) invalid("layers", "must be a non-empty array");
   stack.layers.forEach((layer, index) => {
     const at = `layers[${index}]`;
@@ -84,8 +94,27 @@ function validate(stack) {
   });
 }
 
-function git(args, cwd) {
-  const result = spawnSync("git", args, { cwd, encoding: "utf8", maxBuffer: MAX_DIFF });
+function resolveTarget() {
+  if ("head" in stack) {
+    const mergeBase = git(["merge-base", stack.base, stack.head]);
+    return { from: mergeBase, slug: stack.head, subtitle: `Merge base <code>${mergeBase.slice(0, 7)}</code>`, title: `${stack.head} vs ${stack.base}`, to: stack.head };
+  }
+  if ("oldTree" in stack) {
+    const [from, to] = [stack.oldTree, stack.newTree].map((id) => git(["rev-parse", "--verify", "--end-of-options", `${id}^{tree}`], root));
+    const range = `${from.slice(0, 12)}..${to.slice(0, 12)}`;
+    return { from, slug: `tree-${range}`, subtitle: "Tree range", title: range, to };
+  }
+  const indexDir = fs.mkdtempSync(path.join(os.tmpdir(), "walkthrough-"));
+  process.once("exit", () => fs.rmSync(indexDir, { recursive: true, force: true }));
+  const env = { ...process.env, GIT_INDEX_FILE: path.join(indexDir, "index") };
+  git(["read-tree", "HEAD"], root, env);
+  // shortcut: git add writes every changed and untracked file as a loose object into the real object database, point GIT_OBJECT_DIRECTORY at a temporary directory with the real one as an alternate when that growth matters.
+  git(["add", "--all", "--", "."], root, env);
+  return { from: "HEAD", slug: "working-tree", subtitle: "Working tree against <code>HEAD</code>", title: "working tree", to: git(["write-tree"], root, env) };
+}
+
+function git(args, cwd, env = process.env) {
+  const result = spawnSync("git", args, { cwd, env, encoding: "utf8", maxBuffer: MAX_DIFF });
   if (result.status !== 0) fail(`git ${args.join(" ")} failed: ${(result.stderr || result.error?.message || "").trim()}`);
   return result.stdout.trimEnd();
 }
@@ -209,7 +238,7 @@ function renderOverviewRow(layer, index) {
 }
 
 function renderPage() {
-  const title = `${stack.head} vs ${stack.base}`;
+  const { subtitle, title } = target;
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -336,7 +365,7 @@ table.diff tr:target td { background: color-mix(in srgb, var(--blue) 18%, transp
 <main>
 <div class="hero">
 <h1>${escapeHtml(title)}</h1>
-<p>Merge base <code>${mergeBase.slice(0, 7)}</code></p>
+<p>${subtitle}</p>
 </div>
 <h2 class="section-title">Layers</h2>
 <ol class="stack">
